@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>364</width>
+    <height>321</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MSF</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout" stretch="0">
+    <item>
+     <widget class="QStackedWidget" name="stack">
+      <property name="currentIndex">
+       <number>2</number>
+      </property>
+      <widget class="QWidget" name="pageLanding">
+       <layout class="QVBoxLayout" name="vlLanding">
+        <property name="spacing">
+         <number>18</number>
+        </property>
+        <item>
+         <spacer name="spTop">
+          <property name="orientation">
+           <enum>Qt::Orientation::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QLabel" name="logo">
+          <property name="pixmap">
+           <pixmap resource="../assets/resources.qrc">:/img/logo_msf.svg</pixmap>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnGoLogin">
+          <property name="text">
+           <string>Connexion</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnGoForgot">
+          <property name="styleSheet">
+           <string notr="true">QPushButton{background:transparent;color:palette(link);text-decoration:underline;border:none;}</string>
+          </property>
+          <property name="text">
+           <string>Forgot your password ?</string>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="spBottom">
+          <property name="orientation">
+           <enum>Qt::Orientation::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pageLogin">
+       <layout class="QVBoxLayout" name="vlLogin">
+        <item>
+         <widget class="QLabel" name="loginTitle">
+          <property name="styleSheet">
+           <string>QLabel{font-size:22px;font-weight:600;}</string>
+          </property>
+          <property name="text">
+           <string>Connexion</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignHCenter</set>
+          </property>
+          <property name="margin">
+           <number>6</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QGridLayout" name="gridLogin">
+          <property name="horizontalSpacing">
+           <number>10</number>
+          </property>
+          <property name="verticalSpacing">
+           <number>8</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="lblEmail">
+            <property name="text">
+             <string>Enter your email :</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <widget class="QLineEdit" name="editEmail"/>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="lblPwd">
+            <property name="text">
+             <string>Enter your password :</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0" colspan="2">
+           <widget class="QLineEdit" name="editPwd">
+            <property name="echoMode">
+             <enum>QLineEdit::EchoMode::Password</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0" colspan="2">
+           <widget class="QLabel" name="pwdHelp">
+            <property name="styleSheet">
+             <string>QLabel{color:palette(mid);font-size:12px;}</string>
+            </property>
+            <property name="text">
+             <string>• 8+ characters  • at least 1 uppercase  • at least 1 number</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QPushButton" name="linkForgot">
+            <property name="styleSheet">
+             <string>QPushButton{background:transparent;color:palette(link);text-decoration:underline;border:none;}</string>
+            </property>
+            <property name="text">
+             <string>Forgot your password ?</string>
+            </property>
+            <property name="flat">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QPushButton" name="btnLogin">
+            <property name="text">
+             <string>Connexion</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pageForgot">
+       <layout class="QVBoxLayout" name="vlForgot">
+        <item>
+         <widget class="QLabel" name="forgotTitle">
+          <property name="styleSheet">
+           <string>QLabel{font-size:22px;font-weight:600;}</string>
+          </property>
+          <property name="text">
+           <string>Password forgotten ?
+No problem</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignHCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QGridLayout" name="gridForgot">
+          <property name="horizontalSpacing">
+           <number>10</number>
+          </property>
+          <property name="verticalSpacing">
+           <number>8</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="lblReset">
+            <property name="text">
+             <string>Enter the email address you used to register</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLineEdit" name="editResetEmail">
+            <property name="placeholderText">
+             <string>example@email.org</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QPushButton" name="btnReceive">
+            <property name="text">
+             <string>Receive your email</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>364</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionLight"/>
+    <addaction name="actionDark"/>
+    <addaction name="actionSunlight"/>
+   </widget>
+   <widget class="QMenu" name="menuNavigate">
+    <property name="title">
+     <string>Navigate</string>
+    </property>
+    <addaction name="actionGoLanding"/>
+    <addaction name="actionGoLogin"/>
+    <addaction name="actionGoForgot"/>
+   </widget>
+   <addaction name="menuView"/>
+   <addaction name="menuNavigate"/>
+  </widget>
+  <action name="actionLight">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Theme Light (D)</string>
+   </property>
+  </action>
+  <action name="actionDark">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Theme Dark (C)</string>
+   </property>
+  </action>
+  <action name="actionSunlight">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Plein soleil</string>
+   </property>
+  </action>
+  <action name="actionGoLanding">
+   <property name="text">
+    <string>Accueil</string>
+   </property>
+  </action>
+  <action name="actionGoLogin">
+   <property name="text">
+    <string>Connexion</string>
+   </property>
+  </action>
+  <action name="actionGoForgot">
+   <property name="text">
+    <string>Mot de passe oublié</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="../assets/resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

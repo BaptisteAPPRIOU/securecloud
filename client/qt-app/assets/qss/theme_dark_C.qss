@@ -1,0 +1,43 @@
+QWidget { background: #0B0B0C; color: #FFFFFF; }
+QFrame, QGroupBox, QStackedWidget, QScrollArea QWidget { background: #16181A; }
+
+
+/* Champs */
+QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox, QDateEdit, QTimeEdit {
+background: #16181A;
+color: #FFFFFF;
+border: 1.8px solid #2C2F33;
+border-radius: 8px;
+padding: 6px 8px;
+}
+QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus,
+QComboBox:focus, QDateEdit:focus, QTimeEdit:focus {
+border: 2px solid #FFFFFF;
+}
+
+
+/* Boutons */
+QPushButton {
+background: #FF2B1C; color: #FFFFFF;
+border: none; border-radius: 8px; padding: 8px 12px; font-weight: 600;
+}
+QPushButton:hover { background: #E5271A; }
+QPushButton:pressed { background: #CC2216; }
+QPushButton:disabled { background: #2C2F33; color: #D1D5DB; }
+
+
+/* Listes / tables */
+QListView, QTreeView, QTableView {
+background: #16181A; color: #FFFFFF; border: 1.8px solid #2C2F33; border-radius: 8px;
+}
+QHeaderView::section { background: #16181A; color: #FFFFFF; border: 0; border-bottom: 1px solid #2C2F33; }
+
+
+/* GroupBox */
+QGroupBox { border: 1.8px solid #2C2F33; border-radius: 8px; margin-top: 10px; }
+QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: 0 6px; }
+
+
+/* Liens sous forme de QPushButton à plat */
+QPushButton.link { background: transparent; color: #64B5F6; border: none; padding: 0; text-decoration: underline; }
+QPushButton.link:hover { color: #4a9fdf; }

@@ -1,0 +1,5 @@
+/* Renforce les bords et ajoute un outline discret aux boutons */
+QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox, QDateEdit, QTimeEdit {
+border-width: 2.4px;
+}
+QPushButton { border: 2px solid #000000; }

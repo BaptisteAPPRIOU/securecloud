@@ -14,6 +14,9 @@ add_executable(${PROJECT_NAME}
     src/ThemeManager.h src/ThemeManager.cpp
     src/MainWindow.h src/MainWindow.cpp src/MainWindow.ui
     assets/resources.qrc
+    src/landingpage.h src/landingpage.cpp src/landingpage.ui
+    src/loginpage.h src/loginpage.cpp src/loginpage.ui
+    src/forgotpage.h src/forgotpage.cpp src/forgotpage.ui
 )
 
 target_link_libraries(${PROJECT_NAME} Qt6::Widgets) # ou Qt5::Widgets

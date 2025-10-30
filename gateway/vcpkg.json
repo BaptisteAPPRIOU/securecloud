@@ -2,7 +2,7 @@
 "name": "securecloud-gateway",
 "version": "0.1.0",
 "dependencies": [
-"boost-asio",
+// "boost-asio",
 "openssl",
 "jwt-cpp",
 "nlohmann-json",

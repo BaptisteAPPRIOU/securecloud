@@ -1,0 +1,83 @@
+version: "3.9"
+
+x-db-env: &db-env
+  POSTGRES_USER: ${DB_USER}
+  POSTGRES_PASSWORD: ${DB_PASS}
+  POSTGRES_DB: ${DB_NAME}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sc_pg
+    environment: *db-env
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - sc_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # Flyway par schéma = versions indépendantes
+  flyway-auth:
+    image: flyway/flyway:10
+    depends_on: { postgres: { condition: service_healthy } }
+    volumes:
+      - ../../db/migrations/auth:/flyway/sql:ro
+    command: >
+      -url=jdbc:postgresql://postgres:5432/${DB_NAME}
+      -user=${DB_USER}
+      -password=${DB_PASS}
+      -schemas=auth
+      -connectRetries=60
+      migrate
+
+  flyway-messaging:
+    image: flyway/flyway:10
+    depends_on: { postgres: { condition: service_healthy } }
+    volumes:
+      - ../../db/migrations/messaging:/flyway/sql:ro
+    command: >
+      -url=jdbc:postgresql://postgres:5432/${DB_NAME}
+      -user=${DB_USER}
+      -password=${DB_PASS}
+      -schemas=messaging
+      -connectRetries=60
+      migrate
+
+  flyway-files:
+    image: flyway/flyway:10
+    depends_on: { postgres: { condition: service_healthy } }
+    volumes:
+      - ../../db/migrations/files:/flyway/sql:ro
+    command: >
+      -url=jdbc:postgresql://postgres:5432/${DB_NAME}
+      -user=${DB_USER}
+      -password=${DB_PASS}
+      -schemas=files
+      -connectRetries=60
+      migrate
+
+  flyway-audit:
+    image: flyway/flyway:10
+    depends_on: { postgres: { condition: service_healthy } }
+    volumes:
+      - ../../db/migrations/audit:/flyway/sql:ro
+    command: >
+      -url=jdbc:postgresql://postgres:5432/${DB_NAME}
+      -user=${DB_USER}
+      -password=${DB_PASS}
+      -schemas=audit
+      -connectRetries=60
+      migrate
+
+  adminer:
+    image: adminer
+    depends_on: [postgres]
+    ports:
+      - "8080:8080"
+
+volumes:
+  sc_pgdata: {}

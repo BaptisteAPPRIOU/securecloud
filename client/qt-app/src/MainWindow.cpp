@@ -1,62 +1,70 @@
+// MainWindow.cpp
 #include "MainWindow.h"
-#include "ui_MainWindow.h"
 #include "ThemeManager.h"
+#include "landingpage.h"
+#include "loginpage.h"
+#include "forgotpage.h"
+#include <QStackedWidget>
+#include <QMenuBar>
+#include <QAction>
 #include <QApplication>
 
-MainWindow::MainWindow(ThemeManager *themeMgr, QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), m_theme(themeMgr) {
-  ui->setupUi(this);
-
-  // Centered widths for landing controls
-  ui->btnGoLogin->setMinimumWidth(220);
-  ui->btnGoForgot->setMinimumWidth(220);
-  ui->btnGoForgot->setProperty("class", "link");
-
-  // Navigation connections respecting wireframes
-  connect(ui->btnGoLogin, &QPushButton::clicked, this, &MainWindow::toLogin);
-  connect(ui->btnGoForgot, &QPushButton::clicked, this, &MainWindow::toForgot);
-  connect(ui->linkForgot, &QPushButton::clicked, this, &MainWindow::toForgot);
-
-  // Menu navigation
-  connect(ui->actionGoLanding, &QAction::triggered, this,
-          &MainWindow::toLanding);
-  connect(ui->actionGoLogin, &QAction::triggered, this, &MainWindow::toLogin);
-  connect(ui->actionGoForgot, &QAction::triggered, this, &MainWindow::toForgot);
-
-  // Theme actions
-  ui->actionLight->setCheckable(true);
-  ui->actionDark->setCheckable(true);
-
-  connect(ui->actionLight, &QAction::triggered, this,
-          &MainWindow::setLightTheme);
-  connect(ui->actionDark, &QAction::triggered, this, &MainWindow::setDarkTheme);
-  connect(ui->actionSunlight, &QAction::toggled, this,
-          &MainWindow::toggleSunlight);
-
-  toLanding();
-}
-
-MainWindow::~MainWindow() { delete ui; }
-
-void MainWindow::toLanding() { ui->stack->setCurrentWidget(ui->pageLanding); }
-void MainWindow::toLogin() { ui->stack->setCurrentWidget(ui->pageLogin); }
-void MainWindow::toForgot() { ui->stack->setCurrentWidget(ui->pageForgot); }
-
-void MainWindow::setLightTheme() {
-  ui->actionLight->setChecked(true);
-  ui->actionDark->setChecked(false);
-  m_theme->applyLightD(*qApp, ui->actionSunlight->isChecked());
-}
-
-void MainWindow::setDarkTheme() {
-  ui->actionLight->setChecked(false);
-  ui->actionDark->setChecked(true);
-  m_theme->applyDarkC(*qApp, ui->actionSunlight->isChecked());
-}
-
-void MainWindow::toggleSunlight(bool on) { m_theme->setSunlight(*qApp, on); }
-void MainWindow::on_logo_customContextMenuRequested(const QPoint &pos)
+MainWindow::MainWindow(ThemeManager* themeMgr, QWidget* parent)
+    : QMainWindow(parent), m_theme(themeMgr)
 {
+    // Menu
+    auto view = menuBar()->addMenu("View");
+    auto actLight = view->addAction("Theme Light (D)"); actLight->setCheckable(true); actLight->setChecked(true);
+    auto actDark  = view->addAction("Theme Dark (C)");  actDark->setCheckable(true);
+    auto actSun   = view->addAction("Plein soleil");    actSun->setCheckable(true);
+    connect(actLight, &QAction::triggered, this, &MainWindow::setLightTheme);
+    connect(actDark,  &QAction::triggered, this, &MainWindow::setDarkTheme);
+    connect(actSun,   &QAction::toggled,   this, &MainWindow::toggleSunlight);
 
+    auto nav = menuBar()->addMenu("Navigate");
+    auto goLanding = nav->addAction("Accueil");
+    auto goLogin   = nav->addAction("Connexion");
+    auto goForgot  = nav->addAction("Mot de passe oublié");
+    connect(goLanding, &QAction::triggered, this, &MainWindow::toLanding);
+    connect(goLogin,   &QAction::triggered, this, &MainWindow::toLogin);
+    connect(goForgot,  &QAction::triggered, this, &MainWindow::toForgot);
+
+    // Stack + pages
+    m_stack = new QStackedWidget(this);
+    setCentralWidget(m_stack);
+
+    m_landing = new LandingPage(this);
+    m_login   = new LoginPage(this);
+    m_forgot  = new ForgotPage(this);
+
+    m_stack->addWidget(m_landing); // 0
+    m_stack->addWidget(m_login);   // 1
+    m_stack->addWidget(m_forgot);  // 2
+
+    // Connexions inter-pages
+    connect(m_landing, &LandingPage::requestLogin,  this, &MainWindow::toLogin);
+    connect(m_landing, &LandingPage::requestForgot, this, &MainWindow::toForgot);
+
+    connect(m_login, &LoginPage::requestForgot, this, &MainWindow::toForgot);
+    connect(m_login, &LoginPage::requestLoginSubmit, this, [](const QString& email, const QString& pwd){
+        // TODO: logique d’auth (placeholder)
+        qInfo() << "[Login]" << email << pwd;
+    });
+
+    connect(m_forgot, &ForgotPage::requestSendReset, this, [](const QString& email){
+        qInfo() << "[Forgot] send reset to" << email;
+    });
+    connect(m_forgot, &ForgotPage::requestBackToLogin, this, &MainWindow::toLogin);
+
+    toLanding();
 }
 
+MainWindow::~MainWindow() = default;
+
+void MainWindow::toLanding() { m_stack->setCurrentIndex(0); }
+void MainWindow::toLogin()   { m_stack->setCurrentIndex(1); }
+void MainWindow::toForgot()  { m_stack->setCurrentIndex(2); }
+
+void MainWindow::setLightTheme() { m_theme->applyLightD(*qApp, false); }
+void MainWindow::setDarkTheme()  { m_theme->applyDarkC(*qApp, false); }
+void MainWindow::toggleSunlight(bool on) { m_theme->setSunlight(*qApp, on); }

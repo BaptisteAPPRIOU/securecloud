@@ -12,7 +12,7 @@ find_package(Qt6 6.2 COMPONENTS Widgets REQUIRED)
 add_executable(${PROJECT_NAME}
     src/main.cpp
     src/ThemeManager.h src/ThemeManager.cpp
-    src/MainWindow.h src/MainWindow.cpp src/MainWindow.ui
+    src/MainWindow.h src/MainWindow.cpp
     assets/resources.qrc
     src/landingpage.h src/landingpage.cpp src/landingpage.ui
     src/loginpage.h src/loginpage.cpp src/loginpage.ui

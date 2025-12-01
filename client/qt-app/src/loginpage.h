@@ -1,22 +1,20 @@
-#ifndef LOGINPAGE_H
-#define LOGINPAGE_H
-
+#pragma once
 #include <QWidget>
 
-namespace Ui {
-class LoginPage;
-}
+QT_BEGIN_NAMESPACE
+namespace Ui { class LoginPage; }
+QT_END_NAMESPACE
 
-class LoginPage : public QWidget
-{
+class LoginPage : public QWidget {
     Q_OBJECT
-
 public:
-    explicit LoginPage(QWidget *parent = nullptr);
+    explicit LoginPage(QWidget* parent = nullptr);
     ~LoginPage();
 
-private:
-    Ui::LoginPage *ui;
-};
+signals:
+    void requestForgot();
+    void requestLoginSubmit(const QString& email, const QString& password);
 
-#endif // LOGINPAGE_H
+private:
+    Ui::LoginPage* ui;
+};

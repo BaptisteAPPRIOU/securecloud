@@ -1,22 +1,20 @@
-#ifndef LANDINGPAGE_H
-#define LANDINGPAGE_H
-
+#pragma once
 #include <QWidget>
 
-namespace Ui {
-class LandingPage;
-}
+QT_BEGIN_NAMESPACE
+namespace Ui { class LandingPage; }
+QT_END_NAMESPACE
 
-class LandingPage : public QWidget
-{
+class LandingPage : public QWidget {
     Q_OBJECT
-
 public:
-    explicit LandingPage(QWidget *parent = nullptr);
+    explicit LandingPage(QWidget* parent = nullptr);
     ~LandingPage();
 
-private:
-    Ui::LandingPage *ui;
-};
+signals:
+    void requestLogin();
+    void requestForgot();
 
-#endif // LANDINGPAGE_H
+private:
+    Ui::LandingPage* ui;
+};

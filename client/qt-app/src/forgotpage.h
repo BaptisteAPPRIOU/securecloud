@@ -1,22 +1,20 @@
-#ifndef FORGOTPAGE_H
-#define FORGOTPAGE_H
-
+#pragma once
 #include <QWidget>
 
-namespace Ui {
-class ForgotPage;
-}
+QT_BEGIN_NAMESPACE
+namespace Ui { class ForgotPage; }
+QT_END_NAMESPACE
 
-class ForgotPage : public QWidget
-{
+class ForgotPage : public QWidget {
     Q_OBJECT
-
 public:
-    explicit ForgotPage(QWidget *parent = nullptr);
+    explicit ForgotPage(QWidget* parent = nullptr);
     ~ForgotPage();
 
-private:
-    Ui::ForgotPage *ui;
-};
+signals:
+    void requestSendReset(const QString& email);
+    void requestBackToLogin();
 
-#endif // FORGOTPAGE_H
+private:
+    Ui::ForgotPage* ui;
+};

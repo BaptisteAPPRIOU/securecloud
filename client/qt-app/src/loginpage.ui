@@ -2,17 +2,67 @@
 <ui version="4.0">
  <class>LoginPage</class>
  <widget class="QWidget" name="LoginPage">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>400</width>
-    <height>300</height>
-   </rect>
-  </property>
-  <property name="windowTitle">
-   <string>Form</string>
-  </property>
+  <layout class="QVBoxLayout" name="vlLogin">
+   <item>
+    <widget class="QLabel" name="loginTitle">
+     <property name="text"><string>Connexion</string></property>
+     <property name="alignment"><set>Qt::AlignHCenter</set></property>
+     <property name="margin"><number>6</number></property>
+     <property name="styleSheet"><string>QLabel{font-size:22px;font-weight:600;}</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="formLogin">
+     <layout class="QGridLayout" name="gridLogin">
+      <property name="horizontalSpacing"><number>10</number></property>
+      <property name="verticalSpacing"><number>8</number></property>
+
+      <item row="0" column="0">
+       <widget class="QLabel" name="lblEmail">
+        <property name="text"><string>Enter your email :</string></property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="2">
+       <widget class="QLineEdit" name="editEmail"/>
+      </item>
+
+      <item row="2" column="0">
+       <widget class="QLabel" name="lblPwd">
+        <property name="text"><string>Enter your password :</string></property>
+       </widget>
+      </item>
+      <item row="3" column="0" colspan="2">
+       <widget class="QLineEdit" name="editPwd">
+        <property name="echoMode"><enum>QLineEdit::Password</enum></property>
+       </widget>
+      </item>
+
+      <item row="4" column="0" colspan="2">
+       <widget class="QLabel" name="pwdHelp">
+        <property name="text"><string>• 8+ characters  • at least 1 uppercase  • at least 1 number</string></property>
+        <property name="styleSheet"><string>QLabel{color:palette(mid);font-size:12px;}</string></property>
+       </widget>
+      </item>
+
+      <item row="5" column="0">
+       <widget class="QPushButton" name="linkForgot">
+        <property name="text"><string>Forgot your password ?</string></property>
+        <property name="flat"><bool>true</bool></property>
+        <property name="styleSheet">
+         <string>QPushButton{background:transparent;color:palette(link);text-decoration:underline;border:none;}</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QPushButton" name="btnLogin">
+        <property name="text"><string>Connexion</string></property>
+        <property name="minimumWidth"><number>120</number></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>

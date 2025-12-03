@@ -7,6 +7,7 @@
 #include "gateway/metrics.hpp"
 #include "gateway/auditSink.hpp"
 #include <spdlog/spdlog.h>
+#include <boost/asio/io_context.hpp>
 #include <fstream>
 #include <algorithm>
 #include <cctype>
@@ -14,19 +15,24 @@
 using namespace gateway;
 
 int main() {
-    spdlog::info("SecureCloud Gateway (kit minimal)");
+    spdlog::info("SecureCloud Gateway (Steps 1-6 Complete)");
 
-    ServerConfig server_config = load_server_config();
+    // Load complete gateway configuration
+    GatewayConfig config = load_gateway_config("config/gateway.dev.yaml", "dev");
     spdlog::info("Server config: {}:{} with {} workers",
-                 server_config.host, server_config.port, server_config.thread_pool_size);
+                 config.server.host, config.server.port, config.server.thread_pool_size);
 
+    // Create io_context for async operations
+    boost::asio::io_context io_ctx;
+
+    // Initialize components with configuration
     Metrics metrics;
     AuditSink audit;
     JwtFilter jwt;
-    Router router;
-    UpstreamProxy proxy;
+    Router router(config.routes, config.upstreams);
+    UpstreamProxy proxy(io_ctx, config.upstreams);
     AuthzFilter authz;
-    HttpServer server(server_config);
+    HttpServer server(config.server);
 
     server.onRequest([&](const Request& r) -> Response {
         if (r.path == "/v1/healthz") {
@@ -42,7 +48,13 @@ int main() {
             return {403, R"({"error":"forbidden"})", {}};
         }
 
-        auto tgt = router.route(r);
+        auto tgt_opt = router.route(r);
+        if (!tgt_opt) {
+            spdlog::warn("No route found for: {} {}", r.method, r.path);
+            return {404, R"({"error":"not_found"})", {}};
+        }
+        
+        const auto& tgt = *tgt_opt;
         audit.record(r, tgt);
         metrics.incCounter("requests_total");
         return proxy.forwardHttp(r, tgt);

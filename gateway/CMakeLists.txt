@@ -51,6 +51,10 @@ add_library(gateway_lib
   src/metrics.cpp
   src/auditSink.cpp
   src/tlsContext.cpp
+  src/httpClient.cpp
+  src/udsClient.cpp
+  src/websocketHandler.cpp
+  src/restApiEndpoints.cpp
 )
 
 target_include_directories(gateway_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

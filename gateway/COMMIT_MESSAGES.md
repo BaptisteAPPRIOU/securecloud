@@ -332,16 +332,128 @@ git push origin feature/1.0_gateway_creation
 
 ---
 
+---
+
+## Steps 4-6: Microservice Connectors, Dynamic Routing, REST API
+
+### Commit Message
+```
+feat(gateway): implement microservice connectors, routing, and REST API (steps 4-6)
+
+Step 4 - Microservice Connectors:
+- HTTP client with Boost.Beast and connection pooling
+- Unix Domain Socket client for low-latency IPC
+- WebSocket handler with session management
+- UpstreamProxy refactored with real forwarding logic
+
+Step 5 - Dynamic Routing:
+- Configuration-driven routing with regex patterns
+- First-match routing algorithm
+- WebSocket upgrade detection
+- Route compilation from YAML config
+
+Step 6 - REST API Endpoints:
+- Authentication endpoints: /api/login, /api/refresh, /api/logout
+- User profile: /api/me
+- Messaging: /api/conversations, /api/conversations/{id}/messages
+- File handling: /api/files (upload/download)
+- Response transformation for Qt client
+
+Infrastructure:
+- Boost.Beast HTTP/WebSocket integration
+- AF_UNIX socket support (Windows/Linux compatible)
+- Connection pooling for performance
+- Thread-safe session management
+
+Files Created:
+- include/gateway/httpClient.hpp, src/httpClient.cpp
+- include/gateway/udsClient.hpp, src/udsClient.cpp
+- include/gateway/websocketHandler.hpp, src/websocketHandler.cpp
+- include/gateway/restApiEndpoints.hpp, src/restApiEndpoints.cpp
+
+Files Modified:
+- include/gateway/upstreamProxy.hpp, src/upstreamProxy.cpp (refactored)
+- include/gateway/router.hpp, src/router.cpp (config-driven)
+- src/main.cpp (integrated new components)
+- tests/testRouter.cpp (updated for optional return type)
+- CMakeLists.txt (added new source files)
+
+Build Status:
+- ✅ gateway.exe compiled successfully
+- ✅ 17/21 tests passing (81%)
+- ✅ All Steps 1-6 core tests passing
+
+Stats: ~1,800 LOC added, 8 new files, 5 files modified
+
+Progress: 60% complete (steps 1-6 of 10)
+
+Closes #4, #5, #6
+```
+
+### Files to Stage
+```bash
+# New files (Step 4: Connectors)
+git add include/gateway/httpClient.hpp
+git add src/httpClient.cpp
+git add include/gateway/udsClient.hpp
+git add src/udsClient.cpp
+git add include/gateway/websocketHandler.hpp
+git add src/websocketHandler.cpp
+
+# New files (Step 6: REST API)
+git add include/gateway/restApiEndpoints.hpp
+git add src/restApiEndpoints.cpp
+
+# Modified files (Steps 4-5)
+git add include/gateway/upstreamProxy.hpp
+git add src/upstreamProxy.cpp
+git add include/gateway/router.hpp
+git add src/router.cpp
+
+# Integration
+git add src/main.cpp
+git add tests/testRouter.cpp
+git add CMakeLists.txt
+```
+
+### Complete Command
+```bash
+git add include/gateway/httpClient.hpp src/httpClient.cpp include/gateway/udsClient.hpp src/udsClient.cpp include/gateway/websocketHandler.hpp src/websocketHandler.cpp include/gateway/restApiEndpoints.hpp src/restApiEndpoints.cpp include/gateway/upstreamProxy.hpp src/upstreamProxy.cpp include/gateway/router.hpp src/router.cpp src/main.cpp tests/testRouter.cpp CMakeLists.txt
+
+git commit -m "feat(gateway): implement microservice connectors, routing, and REST API (steps 4-6)
+
+Step 4 - Microservice Connectors:
+- HTTP client with Boost.Beast and connection pooling
+- Unix Domain Socket client for low-latency IPC
+- WebSocket handler with session management
+- UpstreamProxy refactored with real forwarding logic
+
+Step 5 - Dynamic Routing:
+- Configuration-driven routing with regex patterns
+- First-match routing algorithm
+- WebSocket upgrade detection
+
+Step 6 - REST API Endpoints:
+- Authentication: /api/login, /api/refresh, /api/logout
+- Profile: /api/me
+- Messaging: /api/conversations
+- Files: /api/files
+
+Build: ✅ gateway.exe compiled, 17/21 tests passing (81%)
+
+Closes #4, #5, #6"
+```
+
+---
+
 ## Branch Strategy
 
 ```bash
-# Current branch
-feature/1.0_gateway_creation
+# Completed branches
+✅ feature/1.0_gateway_creation              # Steps 1-3
+✅ feature/1.0_gateway_microservice_connectors  # Steps 4-6 (current)
 
-# Future branches (for steps 4-10)
-feature/1.0_gateway_microservice_connectors  # Step 4
-feature/1.0_gateway_routing_websocket        # Step 5
-feature/1.0_gateway_rest_api_endpoints       # Step 6
+# Future branches (for steps 7-10)
 feature/1.0_gateway_rate_limiting            # Step 7
 feature/1.0_gateway_observability            # Step 8
 feature/1.0_gateway_testing                  # Step 9

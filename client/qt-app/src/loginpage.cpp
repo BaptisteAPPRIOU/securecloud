@@ -1,4 +1,4 @@
-#include "LoginPage.h"
+#include "loginpage.h"
 #include "ui_LoginPage.h"
 #include <QPushButton>
 #include <QLineEdit>

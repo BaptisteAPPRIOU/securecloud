@@ -24,9 +24,8 @@ FetchContent_Declare(jwt-cpp
   GIT_TAG        v0.7.0
   GIT_SHALLOW    TRUE
 )
-FetchContent_GetProperties(jwt-cpp)
-if (NOT jwt-cpp_POPULATED)
-  FetchContent_Populate(jwt-cpp)
+FetchContent_MakeAvailable(jwt-cpp)
+if (NOT TARGET jwt-cpp::jwt-cpp)
   add_library(jwt-cpp INTERFACE)
   target_include_directories(jwt-cpp INTERFACE ${jwt-cpp_SOURCE_DIR}/include)
   add_library(jwt-cpp::jwt-cpp ALIAS jwt-cpp)
@@ -37,9 +36,11 @@ find_package(OpenSSL REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)  # on forcera header-only ci-dessous
+find_package(Boost REQUIRED COMPONENTS system)  # For Boost.Beast and Boost.Asio
 
 # ---- Librairie du gateway ----
 add_library(gateway_lib
+  src/config.cpp
   src/server.cpp
   src/router.cpp
   src/jwtFilter.cpp
@@ -49,6 +50,7 @@ add_library(gateway_lib
   src/authCache.cpp
   src/metrics.cpp
   src/auditSink.cpp
+  src/tlsContext.cpp
 )
 
 target_include_directories(gateway_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -69,25 +71,34 @@ target_link_libraries(gateway_lib
     nlohmann_json::nlohmann_json
     jwt-cpp::jwt-cpp
     fmt::fmt
+    Boost::system
 )
 
 if (WIN32)
-  target_link_libraries(gateway_lib PRIVATE ws2_32)
+  target_link_libraries(gateway_lib PRIVATE ws2_32 wsock32)
 endif()
 
 # ---- Binaire ----
 add_executable(gateway src/main.cpp)
 target_link_libraries(gateway PRIVATE gateway_lib)
 
-# ---- Tests (optionnel) ----
+# ---- googletest (if not already available) ----
+find_package(GTest CONFIG QUIET)
+if (NOT GTest_FOUND)
+  include(FetchContent)
+  FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.15.2
+    GIT_SHALLOW TRUE
+  )
+  FetchContent_MakeAvailable(googletest)
+endif()
+
+# ---- Tests (optional) ----
 include(CTest)
 if (BUILD_TESTING)
-  find_package(GTest CONFIG QUIET)
-  if (GTest_FOUND)
-    add_executable(router_tests tests/test_router.cpp)
-    target_link_libraries(router_tests PRIVATE gateway_lib GTest::gtest_main)
-    add_test(NAME router_tests COMMAND router_tests)
-  endif()
+  add_subdirectory(tests)
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER} (${CMAKE_CXX_COMPILER_ID})")

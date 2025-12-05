@@ -1,4 +1,5 @@
-#include "gateway/authCache.hpp"
+#include "authCache.hpp"
+#include "gatewayMetrics.hpp"
 #include <spdlog/spdlog.h>
 
 namespace gateway {
@@ -15,6 +16,7 @@ std::optional<Claims> AuthCache::get(const std::string& jwt) const {
     auto it = cache_.find(jwt);
     if (it == cache_.end()) {
         miss_count_++;
+        GatewayMetrics::instance().record_auth_cache_miss();
         return std::nullopt;
     }
 
@@ -31,12 +33,14 @@ std::optional<Claims> AuthCache::get(const std::string& jwt) const {
         cache_.erase(it);
         
         miss_count_++;
+        GatewayMetrics::instance().record_auth_cache_miss();
         return std::nullopt;
     }
 
     // Cache hit - update LRU
     touch_lru(jwt);
     hit_count_++;
+    GatewayMetrics::instance().record_auth_cache_hit();
     
     return it->second.claims;
 }

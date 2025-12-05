@@ -1,4 +1,4 @@
-#include "gateway/tokenIntrospector.hpp"
+#include "tokenIntrospector.hpp"
 #include <spdlog/spdlog.h>
 #include <jwt-cpp/jwt.h>
 #include <nlohmann/json.hpp>

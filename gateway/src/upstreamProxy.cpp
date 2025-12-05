@@ -1,4 +1,6 @@
-#include "gateway/upstreamProxy.hpp"
+#include "upstreamProxy.hpp"
+#include "requestContext.hpp"
+#include "gatewayMetrics.hpp"
 #include <spdlog/spdlog.h>
 #include <nlohmann/json.hpp>
 #include <boost/beast/http.hpp>
@@ -50,12 +52,17 @@ Response UpstreamProxy::forward(const Request& r, const std::string& upstream_na
     
     const auto& upstream = *upstream_opt;
     
-    spdlog::debug("Forwarding {} {} to upstream={} transport={} address={}",
-                  r.method, r.path, upstream.name, 
+    std::string ctx_str = r.context ? r.context->format() : "[no-ctx]";
+    spdlog::debug("{} Forwarding {} {} to upstream={} transport={} address={}",
+                  ctx_str, r.method, r.path, upstream.name, 
                   upstream.transport == UpstreamTransport::UDS ? "UDS" : "TCP",
                   upstream.address);
     
-    // Route based on transport type
+    // Record upstream request metric
+    std::string transport = upstream.transport == UpstreamTransport::UDS ? "uds" : "http";
+    GatewayMetrics::instance().record_upstream_request(upstream.name, transport);
+    
+    // Route based on transport type (timing is handled in specific methods)
     if (upstream.transport == UpstreamTransport::UDS) {
         return forward_via_uds(r, upstream);
     } else {
@@ -70,6 +77,8 @@ Response UpstreamProxy::forwardHttp(const Request& r, const UpstreamTarget& t) c
 
 Response UpstreamProxy::forward_via_http(const Request& r, const UpstreamConfig& upstream) const {
     Response resp;
+    auto start = std::chrono::steady_clock::now();
+    std::string ctx_str = r.context ? r.context->format() : "[no-ctx]";
     
     try {
         // Parse host:port from address
@@ -87,14 +96,7 @@ Response UpstreamProxy::forward_via_http(const Request& r, const UpstreamConfig&
         // Get HTTP client from pool
         auto client = http_pool_->get_client(host, port);
         
-        // Convert HTTP verb
-        boost::beast::http::verb verb = boost::beast::http::verb::get;
-        if (r.method == "POST") verb = boost::beast::http::verb::post;
-        else if (r.method == "PUT") verb = boost::beast::http::verb::put;
-        else if (r.method == "DELETE") verb = boost::beast::http::verb::delete_;
-        else if (r.method == "PATCH") verb = boost::beast::http::verb::patch;
-        
-        // Execute request based on method
+        // Execute request based on method (verb conversion happens in HttpClient)
         HttpResult result;
         if (r.method == "GET" || r.method == "DELETE") {
             result = client->get(r.path, r.headers);
@@ -107,16 +109,24 @@ Response UpstreamProxy::forward_via_http(const Request& r, const UpstreamConfig&
         resp.body = result.body;
         resp.headers = result.headers;
         
+        // Record metrics
+        auto end = std::chrono::steady_clock::now();
+        double duration = std::chrono::duration<double>(end - start).count();
+        
         if (!result.success) {
-            spdlog::warn("HTTP upstream request failed: {}", result.error_message);
+            spdlog::warn("{} HTTP upstream request failed: {}", ctx_str, result.error_message);
+            GatewayMetrics::instance().record_upstream_error(upstream.name, "connection_failed");
             if (resp.status == 0) {
                 resp.status = 502; // Bad Gateway
-                resp.body = R"({"error": "upstream_connection_failed"})";
+                resp.body = R"({"error": "upstream_connection_failed"})";;
             }
+        } else {
+            GatewayMetrics::instance().record_upstream_response(upstream.name, resp.status, duration);
         }
         
     } catch (const std::exception& e) {
-        spdlog::error("HTTP forwarding exception: {}", e.what());
+        spdlog::error("{} HTTP forwarding exception: {}", ctx_str, e.what());
+        GatewayMetrics::instance().record_upstream_error(upstream.name, "exception");
         resp.status = 502;
         resp.body = R"({"error": "upstream_error"})";
         resp.headers["Content-Type"] = "application/json";
@@ -127,6 +137,7 @@ Response UpstreamProxy::forward_via_http(const Request& r, const UpstreamConfig&
 
 Response UpstreamProxy::forward_via_uds(const Request& r, const UpstreamConfig& upstream) const {
     Response resp;
+    auto start = std::chrono::steady_clock::now();
     
     try {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -135,6 +146,7 @@ Response UpstreamProxy::forward_via_uds(const Request& r, const UpstreamConfig& 
         auto it = uds_clients_.find(upstream.name);
         if (it == uds_clients_.end()) {
             spdlog::error("UDS client not found for upstream: {}", upstream.name);
+            GatewayMetrics::instance().record_upstream_error(upstream.name, "client_not_found");
             resp.status = 502;
             resp.body = R"({"error": "uds_client_not_found"})";
             return resp;
@@ -155,6 +167,7 @@ Response UpstreamProxy::forward_via_uds(const Request& r, const UpstreamConfig& 
         
         if (!uds_response_opt) {
             spdlog::error("UDS request failed for upstream: {}", upstream.name);
+            GatewayMetrics::instance().record_upstream_error(upstream.name, "request_failed");
             resp.status = 502;
             resp.body = R"({"error": "uds_request_failed"})";
             return resp;
@@ -176,8 +189,14 @@ Response UpstreamProxy::forward_via_uds(const Request& r, const UpstreamConfig& 
         
         spdlog::debug("UDS response: status={} body_size={}", resp.status, resp.body.size());
         
+        // Record metrics
+        auto end = std::chrono::steady_clock::now();
+        double duration = std::chrono::duration<double>(end - start).count();
+        GatewayMetrics::instance().record_upstream_response(upstream.name, resp.status, duration);
+        
     } catch (const std::exception& e) {
         spdlog::error("UDS forwarding exception: {}", e.what());
+        GatewayMetrics::instance().record_upstream_error(upstream.name, "exception");
         resp.status = 502;
         resp.body = R"({"error": "uds_error"})";
         resp.headers["Content-Type"] = "application/json";

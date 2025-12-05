@@ -1,7 +1,7 @@
 #pragma once
-#include "gateway/types.hpp"
-#include "gateway/tokenIntrospector.hpp"
-#include "gateway/authCache.hpp"
+#include "types.hpp"
+#include "tokenIntrospector.hpp"
+#include "authCache.hpp"
 #include <optional>
 #include <memory>
 

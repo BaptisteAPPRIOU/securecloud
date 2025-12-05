@@ -1,5 +1,5 @@
 #pragma once
-#include "gateway/types.hpp"
+#include "types.hpp"
 #include <string>
 #include <thread>
 #include <vector>
@@ -9,6 +9,11 @@
 #include <atomic>
 
 namespace gateway {
+
+struct ClientConnection {
+    void* socket;
+    std::string client_ip;
+};
 
 struct ServerConfig {
     std::string host = "127.0.0.1";
@@ -32,13 +37,13 @@ private:
     ServerConfig config_;
     std::atomic<bool> running_{false};
     std::vector<std::thread> worker_threads_;
-    std::queue<void*> connection_queue_;
+    std::queue<ClientConnection> connection_queue_;
     std::mutex queue_mutex_;
     std::condition_variable queue_cv_;
     
     void worker_thread_fn();
-    void handle_client(void* client_socket);
-    Request parse_http_request(const std::string& raw_request);
+    void handle_client(const ClientConnection& conn);
+    Request parse_http_request(const std::string& raw_request, const std::string& client_ip);
     std::string format_http_response(const Response& resp);
 };
 

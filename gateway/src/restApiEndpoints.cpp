@@ -1,4 +1,4 @@
-#include "gateway/restApiEndpoints.hpp"
+#include "restApiEndpoints.hpp"
 #include <spdlog/spdlog.h>
 
 namespace gateway {

@@ -1,4 +1,6 @@
-#include "gateway/router.hpp"
+#include "router.hpp"
+#include "requestContext.hpp"
+#include "gatewayMetrics.hpp"
 #include <spdlog/spdlog.h>
 
 namespace gateway {
@@ -31,7 +33,8 @@ std::optional<UpstreamConfig> Router::find_upstream(const std::string& name) con
 }
 
 std::optional<UpstreamTarget> Router::route(const Request& r) const {
-    spdlog::debug("Routing request: {} {}", r.method, r.path);
+    std::string ctx_str = r.context ? r.context->format() : "[no-ctx]";
+    spdlog::debug("{} Routing request: {} {}", ctx_str, r.method, r.path);
     
     // Try to match each route in order (first match wins)
     for (const auto& matcher : route_matchers_) {
@@ -51,15 +54,22 @@ std::optional<UpstreamTarget> Router::route(const Request& r) const {
             target.address = upstream.address;
             target.websocket = matcher.config.upgrade_websocket;
             
-            spdlog::debug("Route matched: pattern='{}' -> upstream='{}' address='{}' ws={}",
-                         matcher.config.match_pattern, target.name, target.address, 
+            spdlog::debug("{} Route matched: pattern='{}' -> upstream='{}' address='{}' ws={}",
+                         ctx_str, matcher.config.match_pattern, target.name, target.address, 
                          target.websocket);
+            
+            // Record route match metric
+            GatewayMetrics::instance().record_route_match(matcher.config.match_pattern);
             
             return target;
         }
     }
     
-    spdlog::warn("No route matched for: {} {}", r.method, r.path);
+    spdlog::warn("{} No route matched for: {} {}", ctx_str, r.method, r.path);
+    
+    // Record route miss metric
+    GatewayMetrics::instance().record_route_miss();
+    
     return std::nullopt;
 }
 

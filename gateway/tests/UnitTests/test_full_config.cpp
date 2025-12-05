@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "gateway/config.hpp"
+#include "config.hpp"
 #include <fstream>
 #include <algorithm>
 

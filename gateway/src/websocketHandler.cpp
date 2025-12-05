@@ -1,4 +1,4 @@
-#include "gateway/websocketHandler.hpp"
+#include "websocketHandler.hpp"
 #include <spdlog/spdlog.h>
 
 namespace gateway {

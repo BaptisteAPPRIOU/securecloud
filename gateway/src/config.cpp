@@ -1,5 +1,5 @@
-#include "gateway/config.hpp"
-#include "gateway/httpServer.hpp"
+#include "config.hpp"
+#include "httpServer.hpp"
 #include <spdlog/spdlog.h>
 #include <fstream>
 #include <algorithm>
@@ -71,6 +71,8 @@ public:
                     parse_upstreams_section(config.upstreams);
                 } else if (trimmed.rfind("security:", 0) == 0) {
                     parse_security_section(config.security);
+                } else if (trimmed.rfind("rate_limits:", 0) == 0) {
+                    parse_rate_limits_section(config.rate_limits);
                 } else if (trimmed.rfind("observability:", 0) == 0) {
                     parse_observability_section(config.observability);
                 }
@@ -276,6 +278,61 @@ private:
                         // TODO: Parse providers array when needed
                     }
                     jwks_pos = file_.tellg();
+                }
+            }
+            pos = file_.tellg();
+        }
+    }
+    
+    void parse_rate_limits_section(RateLimitConfig& rate_limits) {
+        std::string line;
+        long pos = file_.tellg();
+        
+        while (std::getline(file_, line)) {
+            std::string trimmed = trim_str(line);
+            if (trimmed.empty()) continue;
+            
+            int indent = get_indent(line);
+            if (indent == 0) {
+                file_.seekg(pos);
+                return;
+            }
+            
+            if (indent == 2) {
+                if (trimmed.rfind("enabled:", 0) == 0) {
+                    rate_limits.enabled = parse_bool(trim_str(trimmed.substr(8)));
+                } else if (trimmed.rfind("global_capacity:", 0) == 0) {
+                    try {
+                        rate_limits.global_capacity = std::stoul(trim_str(trimmed.substr(16)));
+                    } catch (...) {}
+                } else if (trimmed.rfind("global_refill_rate:", 0) == 0) {
+                    try {
+                        rate_limits.global_refill_rate = std::stod(trim_str(trimmed.substr(19)));
+                    } catch (...) {}
+                } else if (trimmed.rfind("ip_capacity:", 0) == 0) {
+                    try {
+                        rate_limits.ip_capacity = std::stoul(trim_str(trimmed.substr(12)));
+                    } catch (...) {}
+                } else if (trimmed.rfind("ip_refill_rate:", 0) == 0) {
+                    try {
+                        rate_limits.ip_refill_rate = std::stod(trim_str(trimmed.substr(15)));
+                    } catch (...) {}
+                } else if (trimmed.rfind("user_capacity:", 0) == 0) {
+                    try {
+                        rate_limits.user_capacity = std::stoul(trim_str(trimmed.substr(14)));
+                    } catch (...) {}
+                } else if (trimmed.rfind("user_refill_rate:", 0) == 0) {
+                    try {
+                        rate_limits.user_refill_rate = std::stod(trim_str(trimmed.substr(17)));
+                    } catch (...) {}
+                } else if (trimmed.rfind("endpoint_capacity:", 0) == 0) {
+                    try {
+                        rate_limits.endpoint_capacity = std::stoul(trim_str(trimmed.substr(18)));
+                    } catch (...) {}
+                } else if (trimmed.rfind("endpoint_refill_rate:", 0) == 0) {
+                    try {
+                        rate_limits.endpoint_refill_rate = std::stod(trim_str(trimmed.substr(21)));
+                    } catch (...) {}
                 }
             }
             pos = file_.tellg();

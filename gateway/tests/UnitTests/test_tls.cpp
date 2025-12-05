@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "gateway/tlsContext.hpp"
+#include "tlsContext.hpp"
 #include <fstream>
 
 using namespace gateway;

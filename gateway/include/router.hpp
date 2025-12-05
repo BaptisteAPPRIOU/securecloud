@@ -1,7 +1,7 @@
 #pragma once
 
-#include "gateway/types.hpp"
-#include "gateway/config.hpp"
+#include "types.hpp"
+#include "config.hpp"
 #include <vector>
 #include <regex>
 #include <optional>

@@ -1,4 +1,4 @@
-#include "gateway/jwtFilter.hpp"
+#include "jwtFilter.hpp"
 #include <spdlog/spdlog.h>
 #include <algorithm>
 

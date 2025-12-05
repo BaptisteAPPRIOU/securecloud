@@ -1,4 +1,4 @@
-#include "gateway/auditSink.hpp"
+#include "auditSink.hpp"
 #include <spdlog/spdlog.h>
 
 

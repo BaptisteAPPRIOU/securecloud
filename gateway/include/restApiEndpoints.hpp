@@ -1,7 +1,7 @@
 #pragma once
 
-#include "gateway/types.hpp"
-#include "gateway/upstreamProxy.hpp"
+#include "types.hpp"
+#include "upstreamProxy.hpp"
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>

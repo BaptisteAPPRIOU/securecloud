@@ -1,4 +1,5 @@
-#include "gateway/httpServer.hpp"
+#include "httpServer.hpp"
+#include "requestContext.hpp"
 #include <spdlog/spdlog.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -49,8 +50,10 @@ void HttpServer::stop() {
     worker_threads_.clear();
 }
 
-Request HttpServer::parse_http_request(const std::string& raw_request) {
+Request HttpServer::parse_http_request(const std::string& raw_request, const std::string& client_ip) {
     Request req;
+    req.context = std::make_shared<RequestContext>(client_ip);
+    
     std::istringstream stream(raw_request);
     std::string line;
     bool first_line = true;
@@ -84,6 +87,15 @@ Request HttpServer::parse_http_request(const std::string& raw_request) {
 
             req.headers[key] = value;
         }
+    }
+
+    // Set correlation ID from X-Correlation-ID header if present
+    auto corr_it = req.headers.find("x-correlation-id");
+    if (corr_it == req.headers.end()) {
+        corr_it = req.headers.find("X-Correlation-ID");
+    }
+    if (corr_it != req.headers.end()) {
+        req.context->set_correlation_id(corr_it->second);
     }
 
     // Parse body
@@ -127,8 +139,8 @@ std::string HttpServer::format_http_response(const Response& resp) {
     return response.str();
 }
 
-void HttpServer::handle_client(void* client_socket_ptr) {
-    SOCKET client_socket = static_cast<SOCKET>(reinterpret_cast<uintptr_t>(client_socket_ptr));
+void HttpServer::handle_client(const ClientConnection& conn) {
+    SOCKET client_socket = static_cast<SOCKET>(reinterpret_cast<uintptr_t>(conn.socket));
     char buffer[4096];
     int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
 
@@ -137,8 +149,8 @@ void HttpServer::handle_client(void* client_socket_ptr) {
         std::string raw_request(buffer);
 
         try {
-            Request req = parse_http_request(raw_request);
-            spdlog::debug("{} {}", req.method, req.path);
+            Request req = parse_http_request(raw_request, conn.client_ip);
+            spdlog::info("{} {} {} {}", req.context->format(), req.method, req.path, conn.client_ip);
 
             Response resp = {500, "Handler not configured", {}};
             if (handler_) {
@@ -166,11 +178,11 @@ void HttpServer::worker_thread_fn() {
         if (!running_) break;
 
         if (!connection_queue_.empty()) {
-            void* sock_ptr = connection_queue_.front();
+            ClientConnection conn = connection_queue_.front();
             connection_queue_.pop();
             lock.unlock();
 
-            handle_client(sock_ptr);
+            handle_client(conn);
         }
     }
 }
@@ -253,10 +265,14 @@ void HttpServer::start() {
 
         spdlog::debug("Client connected from {}", inet_ntoa(client_addr.sin_addr));
 
-        // Queue the connection for a worker thread
+        // Queue the connection with client IP for a worker thread
+        ClientConnection conn{
+            reinterpret_cast<void*>(static_cast<uintptr_t>(client_socket)),
+            inet_ntoa(client_addr.sin_addr)
+        };
         {
             std::lock_guard<std::mutex> lock(queue_mutex_);
-            connection_queue_.push(reinterpret_cast<void*>(static_cast<uintptr_t>(client_socket)));
+            connection_queue_.push(conn);
         }
         queue_cv_.notify_one();
     }

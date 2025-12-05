@@ -1,9 +1,9 @@
 #pragma once
 
-#include "gateway/types.hpp"
-#include "gateway/config.hpp"
-#include "gateway/httpClient.hpp"
-#include "gateway/udsClient.hpp"
+#include "types.hpp"
+#include "config.hpp"
+#include "httpClient.hpp"
+#include "udsClient.hpp"
 #include <boost/asio/io_context.hpp>
 #include <memory>
 

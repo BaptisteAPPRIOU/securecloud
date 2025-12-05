@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "gateway/authCache.hpp"
+#include "authCache.hpp"
 #include <thread>
 #include <chrono>
 

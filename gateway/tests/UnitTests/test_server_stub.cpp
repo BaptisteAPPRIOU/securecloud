@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "gateway/httpServer.hpp"
+#include "httpServer.hpp"
 
 using namespace gateway;
 

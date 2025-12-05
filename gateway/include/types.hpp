@@ -3,14 +3,19 @@
 #include <unordered_map>
 #include <functional>
 #include <optional>
-
+#include <memory>
 
 namespace gateway {
+
+// Forward declaration
+class RequestContext;
+
 struct Request {
 std::string method;
 std::string path;
 std::unordered_map<std::string, std::string> headers;
 std::string body;
+std::shared_ptr<RequestContext> context; // Request context for logging/tracing
 };
 
 

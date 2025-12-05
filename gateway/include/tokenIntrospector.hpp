@@ -1,5 +1,5 @@
 #pragma once
-#include "gateway/types.hpp"
+#include "types.hpp"
 #include <optional>
 #include <string>
 #include <memory>

@@ -55,6 +55,11 @@ add_library(gateway_lib
   src/udsClient.cpp
   src/websocketHandler.cpp
   src/restApiEndpoints.cpp
+  src/rateLimiter.cpp
+  src/rateLimitMiddleware.cpp
+  src/prometheusExporter.cpp
+  src/gatewayMetrics.cpp
+  src/requestContext.cpp
 )
 
 target_include_directories(gateway_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

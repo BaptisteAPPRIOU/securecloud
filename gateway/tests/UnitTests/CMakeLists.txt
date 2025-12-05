@@ -7,6 +7,7 @@ add_executable(unit_tests
   test_tls.cpp
   test_auth_cache.cpp
   test_server_stub.cpp
+  test_rate_limiter.cpp
 )
 
 target_include_directories(unit_tests PRIVATE ${CMAKE_SOURCE_DIR}/include)

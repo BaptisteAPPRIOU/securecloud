@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <optional>
-#include "gateway/httpServer.hpp"
+#include "httpServer.hpp"
 
 namespace gateway {
 
@@ -56,6 +56,27 @@ struct SecurityConfig {
     // TODO: Add rate_limit config here
 };
 
+// Rate limiting configuration
+struct RateLimitConfig {
+    bool enabled{true};
+    
+    // Global limits (entire gateway)
+    size_t global_capacity{1000};
+    double global_refill_rate{100.0};  // requests/second
+    
+    // Per-IP limits
+    size_t ip_capacity{100};
+    double ip_refill_rate{10.0};
+    
+    // Per-user limits (authenticated)
+    size_t user_capacity{500};
+    double user_refill_rate{50.0};
+    
+    // Per-endpoint limits
+    size_t endpoint_capacity{200};
+    double endpoint_refill_rate{20.0};
+};
+
 // Prometheus configuration
 struct PrometheusConfig {
     std::string bind_address{"0.0.0.0:9090"};
@@ -82,6 +103,7 @@ struct GatewayConfig {
     std::vector<RouteConfig> routes;
     std::vector<UpstreamConfig> upstreams;
     SecurityConfig security;
+    RateLimitConfig rate_limits;
     ObservabilityConfig observability;
     
     // Environment (dev/test/prod) - can be used for feature flags

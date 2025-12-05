@@ -50,12 +50,27 @@ security:
     # providers:
     #   - url: "http://auth-service:8080/.well-known/jwks.json"
     #     cache_ttl_s: 300
-  # TODO: Add rate limiting configuration
-  # rate_limit:
-  #   requests_per_second: 100
-  #   burst: 200
-  #   by_ip: true
-  #   by_user: true
+
+# Rate limiting configuration
+# Implements token bucket algorithm with multi-strategy limiting
+rate_limits:
+  enabled: true  # Set to false to disable all rate limiting
+  
+  # Global limits - applies to entire gateway (prevents resource exhaustion)
+  global_capacity: 1000  # Max burst requests
+  global_refill_rate: 100.0  # Requests per second sustained
+  
+  # Per-IP limits - prevents abuse from single IP address
+  ip_capacity: 100  # Max burst per IP
+  ip_refill_rate: 10.0  # Requests/second per IP
+  
+  # Per-user limits - applies to authenticated users (from JWT sub claim)
+  user_capacity: 500  # Higher limit for authenticated users
+  user_refill_rate: 50.0  # Requests/second per user
+  
+  # Per-endpoint limits - protects specific API endpoints
+  endpoint_capacity: 200  # Max burst per endpoint
+  endpoint_refill_rate: 20.0  # Requests/second per endpoint
 
 # Observability: metrics and logging
 observability:

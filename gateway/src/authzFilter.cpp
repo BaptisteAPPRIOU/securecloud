@@ -1,4 +1,4 @@
-#include "gateway/authzFilter.hpp"
+#include "authzFilter.hpp"
 
 
 namespace gateway {

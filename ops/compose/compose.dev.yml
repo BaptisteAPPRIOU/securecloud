@@ -9,7 +9,7 @@ services:
     container_name: sc_pg
     environment: *db-env
     ports:
-      - "${DB_PORT}:5432"
+    - "15432:5432"
     volumes:
       - sc_pgdata:/var/lib/postgresql/data
     healthcheck:

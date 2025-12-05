@@ -5,14 +5,20 @@
 
 namespace gateway {
 
-TokenIntrospector::TokenIntrospector(const std::string& jwks_url, int cache_ttl_s)
-    : jwks_url_(jwks_url), cache_ttl_s_(cache_ttl_s) {
+TokenIntrospector::TokenIntrospector(const std::string& jwt_secret, const std::string& jwks_url, int cache_ttl_s)
+    : jwt_secret_(jwt_secret), jwks_url_(jwks_url), cache_ttl_s_(cache_ttl_s) {
+    
+    if (!jwt_secret_.empty()) {
+        spdlog::info("TokenIntrospector initialized with JWT secret for HS256 verification");
+    }
     
     if (!jwks_url_.empty()) {
         spdlog::info("TokenIntrospector initialized with JWKS URL: {} (cache TTL: {}s)",
                      jwks_url_, cache_ttl_s_);
-    } else {
-        spdlog::warn("TokenIntrospector running in DEV mode (no JWKS URL configured)");
+    }
+    
+    if (jwt_secret_.empty() && jwks_url_.empty()) {
+        spdlog::warn("TokenIntrospector running in DEV mode (no JWT secret or JWKS URL configured)");
     }
 }
 
@@ -47,14 +53,33 @@ std::optional<Claims> TokenIntrospector::localVerifyJWT(const std::string& jwt) 
         std::string alg = decoded.get_algorithm();
         spdlog::debug("JWT algorithm: {}", alg);
 
-        auto verifier = jwt::verify()
-            .allow_algorithm(jwt::algorithm::rs256(public_key))  // RSA SHA-256
-            // TODO: Support other algorithms (ES256, RS512, etc.)
-            .with_issuer("securecloud-auth")  // TODO: Make configurable
+        // Create verifier based on algorithm
+        auto verifier_builder = jwt::verify()
+            .with_issuer("securecloud-auth");  // TODO: Make configurable
             // .with_audience("gateway")  // Uncomment if needed
-            ;
 
-        verifier.verify(decoded);
+        if (alg == "HS256") {
+            // Symmetric HMAC SHA-256 verification (development/simple deployments)
+            if (jwt_secret_.empty()) {
+                spdlog::error("JWT uses HS256 but no jwt_secret configured");
+                return std::nullopt;
+            }
+            verifier_builder.allow_algorithm(jwt::algorithm::hs256{jwt_secret_});
+            spdlog::debug("Using HS256 verification with shared secret");
+        } else if (alg == "RS256") {
+            // Asymmetric RSA SHA-256 verification (production with JWKS)
+            if (public_key.empty()) {
+                spdlog::error("JWT uses RS256 but no public key available");
+                return std::nullopt;
+            }
+            verifier_builder.allow_algorithm(jwt::algorithm::rs256(public_key));
+            spdlog::debug("Using RS256 verification with public key");
+        } else {
+            spdlog::error("Unsupported JWT algorithm: {}", alg);
+            return std::nullopt;
+        }
+
+        verifier_builder.verify(decoded);
         spdlog::debug("JWT signature verified successfully");
 
         // Step 5: Validate expiration

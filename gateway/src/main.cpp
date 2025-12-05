@@ -33,16 +33,70 @@ spdlog::level::level_enum parse_log_level(const std::string& level) {
 
 int main() {
     // Load complete gateway configuration
-    GatewayConfig config = load_gateway_config("config/gateway.dev.yaml", "dev");
+    GatewayConfig config;
+    
+    try {
+        config = load_gateway_config("config/gateway.dev.yaml", "dev");
+    } catch (const std::exception& e) {
+        spdlog::critical("Failed to load gateway configuration: {}", e.what());
+        spdlog::critical("Please check your configuration file and environment variables.");
+        return EXIT_FAILURE;
+    }
     
     // Configure logging from config
     spdlog::level::level_enum log_level = parse_log_level(config.observability.logs.level);
     spdlog::set_level(log_level);
     
-    spdlog::info("SecureCloud Gateway (Steps 1-9 Complete) - Log Level: {}", 
-                 config.observability.logs.level);
+    spdlog::info("SecureCloud Gateway Starting - Environment: {}", config.environment);
+    spdlog::info("Log Level: {}", config.observability.logs.level);
+    
+    // ===== CONFIGURATION VALIDATION =====
+    spdlog::info("Validating gateway configuration...");
+    
+    // Validate JWT secret is configured
+    if (config.security.jwt_secret.empty()) {
+        spdlog::critical("JWT secret is not configured!");
+        spdlog::critical("Please set the JWT_SECRET environment variable before starting the gateway.");
+        spdlog::critical("Example: export JWT_SECRET=your-secret-key");
+        return EXIT_FAILURE;
+    }
+    spdlog::info("✓ JWT secret configured (HS256 symmetric verification enabled)");
+    
+    // Validate upstream configurations
+    for (const auto& upstream : config.upstreams) {
+        if (upstream.transport == UpstreamTransport::TCP) {
+            // Validate TCP address format (host:port)
+            if (upstream.address.find(':') == std::string::npos) {
+                spdlog::critical("Invalid TCP upstream address for '{}': {}", 
+                               upstream.name, upstream.address);
+                spdlog::critical("Expected format: host:port (e.g., localhost:8081)");
+                return EXIT_FAILURE;
+            }
+            spdlog::info("✓ Upstream '{}': TCP transport -> {}", upstream.name, upstream.address);
+        } else if (upstream.transport == UpstreamTransport::UDS) {
+            // Validate UDS socket path is absolute
+            if (upstream.address.empty() || upstream.address[0] != '/') {
+                spdlog::critical("Invalid UDS socket path for '{}': {}", 
+                               upstream.name, upstream.address);
+                spdlog::critical("Expected absolute path (e.g., /run/securecloud/auth.sock)");
+                return EXIT_FAILURE;
+            }
+            spdlog::info("✓ Upstream '{}': UDS transport -> {}", upstream.name, upstream.address);
+        }
+    }
+    
+    // Log routing configuration
+    spdlog::info("Routing rules configured: {} routes", config.routes.size());
+    for (const auto& route : config.routes) {
+        spdlog::debug("  Route: {} -> upstream '{}'", route.match_pattern, route.target);
+    }
+    
+    // Log server configuration
     spdlog::info("Server config: {}:{} with {} workers",
                  config.server.host, config.server.port, config.server.thread_pool_size);
+    
+    spdlog::info("✓ Configuration validation complete");
+    // ===== END VALIDATION =====
 
     // Create io_context for async operations
     boost::asio::io_context io_ctx;
@@ -50,7 +104,12 @@ int main() {
     // Initialize components with configuration
     Metrics metrics;
     AuditSink audit;
-    JwtFilter jwt;
+    
+    // Initialize JWT verification with configured secret
+    auto introspector = std::make_shared<TokenIntrospector>(config.security.jwt_secret);
+    auto auth_cache = std::make_shared<AuthCache>();
+    JwtFilter jwt(introspector, auth_cache);
+    
     Router router(config.routes, config.upstreams);
     UpstreamProxy proxy(io_ctx, config.upstreams);
     AuthzFilter authz;

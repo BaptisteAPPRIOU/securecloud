@@ -24,6 +24,41 @@ static inline std::string unquote(const std::string& s) {
     return v;
 }
 
+/**
+ * Expand environment variables in configuration values.
+ * Supports ${VAR_NAME} syntax. Throws runtime_error if variable is not set.
+ * 
+ * @param value String that may contain ${VAR_NAME} syntax
+ * @return Expanded string with environment variable substituted
+ * @throws std::runtime_error if environment variable is not set
+ */
+static inline std::string expand_env_vars(const std::string& value) {
+    std::string result = value;
+    size_t pos = 0;
+    
+    while ((pos = result.find("${", pos)) != std::string::npos) {
+        size_t end_pos = result.find('}', pos);
+        if (end_pos == std::string::npos) {
+            throw std::runtime_error("Malformed environment variable syntax: missing closing '}' in: " + value);
+        }
+        
+        std::string var_name = result.substr(pos + 2, end_pos - pos - 2);
+        const char* env_value = std::getenv(var_name.c_str());
+        
+        if (env_value == nullptr) {
+            throw std::runtime_error(
+                "Environment variable '" + var_name + "' is not set. " +
+                "Please set it before starting the gateway (e.g., export " + var_name + "=<value>)"
+            );
+        }
+        
+        result.replace(pos, end_pos - pos + 1, env_value);
+        pos += std::strlen(env_value);
+    }
+    
+    return result;
+}
+
 static inline int get_indent(const std::string& line) {
     size_t pos = line.find_first_not_of(' ');
     return pos == std::string::npos ? 0 : static_cast<int>(pos);
@@ -228,9 +263,9 @@ private:
                     if (transport == "uds") current_upstream.transport = UpstreamTransport::UDS;
                     else current_upstream.transport = UpstreamTransport::TCP;
                 } else if (trimmed.rfind("socket:", 0) == 0) {
-                    current_upstream.address = unquote(trimmed.substr(7));
+                    current_upstream.address = expand_env_vars(unquote(trimmed.substr(7)));
                 } else if (trimmed.rfind("address:", 0) == 0) {
-                    current_upstream.address = unquote(trimmed.substr(8));
+                    current_upstream.address = expand_env_vars(unquote(trimmed.substr(8)));
                 }
             }
             pos = file_.tellg();
@@ -256,7 +291,9 @@ private:
                 return;
             }
             
-            if (indent == 2 && trimmed.rfind("jwks:", 0) == 0) {
+            if (indent == 2 && trimmed.rfind("jwt_secret:", 0) == 0) {
+                security.jwt_secret = expand_env_vars(unquote(trimmed.substr(11)));
+            } else if (indent == 2 && trimmed.rfind("jwks:", 0) == 0) {
                 // Parse JWKS subsection
                 long jwks_pos = file_.tellg();
                 while (std::getline(file_, line)) {

@@ -51,9 +51,10 @@ struct JWKSProviderConfig {
 
 // Security configuration
 struct SecurityConfig {
+    std::string jwt_secret;  // JWT secret for HS256 symmetric verification (from ${JWT_SECRET})
     std::vector<JWKSProviderConfig> jwks_providers;
     int jwks_cache_ttl_s{300};
-    // TODO: Add rate_limit config here
+    // TODO: Migrate to RS256 + JWKS for production (asymmetric verification)
 };
 
 // Rate limiting configuration

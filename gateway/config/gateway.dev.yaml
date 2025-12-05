@@ -25,11 +25,18 @@ routing:
 # Upstream microservices definitions
 # NOTE: IPC messages currently use JSON format
 # TODO: Consider Protocol Buffers/MessagePack for better performance
+#
+# Transport modes:
+#   - tcp: Use for Windows development, Docker containers, or cross-host communication
+#   - uds: Use for Linux production deployments (better performance, local-only communication)
 upstreams:
   auth:
     kind: http
-    transport: uds  # Unix Domain Socket for local communication
-    socket: "/run/securecloud/auth.sock"
+    transport: tcp  # TCP for Windows/Docker development (use 'uds' for Linux production)
+    address: "localhost:8081"  # Auth-service TCP listener
+    # For Linux production with UDS, use:
+    #   transport: uds
+    #   socket: "/run/securecloud/auth.sock"
     # TODO: Add timeout_ms, connection_pool_size
   messaging:
     kind: ws  # WebSocket support
@@ -40,13 +47,20 @@ upstreams:
     kind: http
     transport: uds
     socket: "/run/securecloud/files.sock"
+    # For Windows/Docker development with TCP, use:
+    #   transport: tcp
+    #   address: "localhost:8082"
     # TODO: Add streaming config for large file uploads/downloads
 
 # Security configuration
+# NOTE: Currently using HS256 (symmetric) JWT verification for development simplicity.
+# PRODUCTION RECOMMENDATION: Migrate to RS256 (asymmetric) with JWKS endpoint in auth-service
+# for better security and key rotation support.
 security:
+  jwt_secret: "${JWT_SECRET}"  # Shared secret for HS256 verification (must match auth-service)
   jwks:
     cache_ttl_s: 300  # Cache JWKS public keys for 5 minutes
-    # TODO: Add providers array with auth-service JWKS endpoint
+    # TODO: Implement JWKS fetching for RS256 production deployment
     # providers:
     #   - url: "http://auth-service:8080/.well-known/jwks.json"
     #     cache_ttl_s: 300

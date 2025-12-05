@@ -35,12 +35,14 @@ struct JWKSCacheEntry {
 class TokenIntrospector {
 public:
     /**
-     * Construct introspector with optional JWKS config.
+     * Construct introspector with JWT secret and optional JWKS config.
      * 
+     * @param jwt_secret Shared secret for HS256 symmetric JWT verification (from config)
      * @param jwks_url URL to fetch JWKS (e.g., http://auth-service/.well-known/jwks.json)
      * @param cache_ttl_s JWKS cache TTL in seconds (default: 300 = 5 minutes)
      */
     explicit TokenIntrospector(
+        const std::string& jwt_secret = "",
         const std::string& jwks_url = "",
         int cache_ttl_s = 300
     );
@@ -81,6 +83,7 @@ public:
     void set_dev_public_key(const std::string& public_key_pem);
 
 private:
+    std::string jwt_secret_;  // Shared secret for HS256 symmetric verification
     std::string jwks_url_;
     int cache_ttl_s_;
     

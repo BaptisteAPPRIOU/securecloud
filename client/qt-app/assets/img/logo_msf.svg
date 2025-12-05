@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="120" viewBox="0 0 320 120">
+<rect width="100%" height="100%" fill="none"/>
+<g fill="#E2211C">
+<rect x="60" y="30" width="140" height="18" rx="3" transform="skewX(-15)"/>
+<rect x="100" y="60" width="120" height="18" rx="3" transform="skewX(15)"/>
+</g>
+<text x="160" y="100" font-family="Segoe UI, Arial" font-weight="700" font-size="18" text-anchor="middle" fill="#111">Médecins Sans Frontières</text>
+</svg>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ForgotPage</class>
+ <widget class="QWidget" name="ForgotPage">
+  <layout class="QVBoxLayout" name="vlForgot">
+   <item>
+    <widget class="QLabel" name="forgotTitle">
+     <property name="text">
+      <string>Password forgotten ?&#10;No problem</string>
+     </property>
+     <property name="alignment"><set>Qt::AlignHCenter</set></property>
+     <property name="styleSheet"><string>QLabel{font-size:22px;font-weight:600;}</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="formForgot">
+     <layout class="QGridLayout" name="gridForgot">
+      <property name="horizontalSpacing"><number>10</number></property>
+      <property name="verticalSpacing"><number>8</number></property>
+
+      <item row="0" column="0">
+       <widget class="QLabel" name="lblReset">
+        <property name="text"><string>Enter the email address you used to register</string></property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLineEdit" name="editResetEmail">
+        <property name="placeholderText"><string>example@email.org</string></property>
+       </widget>
+      </item>
+      <item row="2" column="0" alignment="Qt::AlignHCenter">
+       <widget class="QPushButton" name="btnReceive">
+        <property name="text"><string>Receive your email</string></property>
+        <property name="minimumWidth"><number>180</number></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

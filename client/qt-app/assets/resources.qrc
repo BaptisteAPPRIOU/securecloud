@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qss/theme_light_D.qss</file>
+        <file>qss/theme_dark_C.qss</file>
+        <file>qss/sunlight_overlay.qss</file>
+        <file>img/logo_msf.svg</file>
+    </qresource>
+</RCC>

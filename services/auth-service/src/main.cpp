@@ -166,28 +166,26 @@ handle_login(const http::request<http::string_body>& req,
         auto access_exp  = now + access_ttl;
         auto refresh_exp = now + refresh_ttl;
 
+        // Simplified approach - no custom claims
         auto access_token = jwt::create()
             .set_type("JWT")
             .set_issuer(jwt_issuer)
-            .set_subject(user_id)
+            .set_subject(user_id)  // Contains user_identifier
             .set_audience("securecloud-client")
             .set_issued_at(now)
             .set_expires_at(access_exp)
-            .set_payload_claim("email",  jwt::claim(user_email))
-            .set_payload_claim("tenant", jwt::claim(tenant_id))
-            .set_payload_claim("name",   jwt::claim(display_name))
             .sign(jwt::algorithm::hs256{jwt_secret});
 
         auto refresh_token = jwt::create()
             .set_type("JWT")
             .set_issuer(jwt_issuer)
-            .set_subject(user_id)
+            .set_subject(user_id)  // Contains user_identifier
             .set_audience("securecloud-client")
             .set_issued_at(now)
             .set_expires_at(refresh_exp)
-            .set_payload_claim("typ", jwt::claim(std::string("refresh")))
             .sign(jwt::algorithm::hs256{jwt_secret});
 
+        // Return additional user info in HTTP response body instead of JWT
         auto to_epoch = [](const clock::time_point& tp) {
             return std::chrono::duration_cast<std::chrono::seconds>(
                 tp.time_since_epoch()).count();
@@ -199,7 +197,11 @@ handle_login(const http::request<http::string_body>& req,
             {"token_type",    "Bearer"},
             {"access_exp",    to_epoch(access_exp)},
             {"refresh_exp",   to_epoch(refresh_exp)},
-            {"mfa_required",  mfa_required}
+            {"mfa_required",  mfa_required},
+            {"user_id",       user_id},
+            {"email",         user_email},
+            {"tenant",        tenant_id},
+            {"name",          display_name}  // Return in response, not in JWT
         };
 
         res.result(http::status::ok);

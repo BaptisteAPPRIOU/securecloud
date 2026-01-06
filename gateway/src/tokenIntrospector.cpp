@@ -33,30 +33,31 @@ std::optional<Claims> TokenIntrospector::localVerifyJWT(const std::string& jwt) 
         // Step 1: Decode JWT without verification to extract header
         auto decoded = jwt::decode(jwt);
         
-        // Step 2: Extract key ID (kid) from header if present
+        // Step 2: Extract algorithm from header
+        std::string alg = decoded.get_algorithm();
+        spdlog::debug("JWT algorithm: {}", alg);
+        
+        // Step 3: Extract key ID (kid) from header if present
         std::string kid;
         if (decoded.has_header_claim("kid")) {
             kid = decoded.get_header_claim("kid").as_string();
             spdlog::debug("JWT kid: {}", kid);
         }
 
-        // Step 3: Get public key for verification
-        std::string public_key = get_public_key(kid);
-        if (public_key.empty()) {
-            spdlog::warn("No public key available for JWT verification (kid: {})", 
-                        kid.empty() ? "none" : kid);
-            return std::nullopt;
+        // Step 4: Get public key for verification (if using RS256)
+        std::string public_key;
+        if (alg == "RS256") {
+            public_key = get_public_key(kid);
+            if (public_key.empty()) {
+                spdlog::warn("No public key available for JWT verification (kid: {})", 
+                            kid.empty() ? "none" : kid);
+                return std::nullopt;
+            }
         }
 
-        // Step 4: Verify JWT signature
-        // Determine algorithm from JWT header
-        std::string alg = decoded.get_algorithm();
-        spdlog::debug("JWT algorithm: {}", alg);
-
-        // Create verifier based on algorithm
+        // Step 5: Verify JWT signature based on algorithm
         auto verifier_builder = jwt::verify()
             .with_issuer("securecloud-auth");  // TODO: Make configurable
-            // .with_audience("gateway")  // Uncomment if needed
 
         if (alg == "HS256") {
             // Symmetric HMAC SHA-256 verification (development/simple deployments)
@@ -68,10 +69,6 @@ std::optional<Claims> TokenIntrospector::localVerifyJWT(const std::string& jwt) 
             spdlog::debug("Using HS256 verification with shared secret");
         } else if (alg == "RS256") {
             // Asymmetric RSA SHA-256 verification (production with JWKS)
-            if (public_key.empty()) {
-                spdlog::error("JWT uses RS256 but no public key available");
-                return std::nullopt;
-            }
             verifier_builder.allow_algorithm(jwt::algorithm::rs256(public_key));
             spdlog::debug("Using RS256 verification with public key");
         } else {
@@ -82,7 +79,7 @@ std::optional<Claims> TokenIntrospector::localVerifyJWT(const std::string& jwt) 
         verifier_builder.verify(decoded);
         spdlog::debug("JWT signature verified successfully");
 
-        // Step 5: Validate expiration
+        // Step 6: Validate expiration
         if (decoded.has_expires_at()) {
             auto exp = decoded.get_expires_at();
             auto now = std::chrono::system_clock::now();
@@ -92,24 +89,22 @@ std::optional<Claims> TokenIntrospector::localVerifyJWT(const std::string& jwt) 
             }
         }
 
-        // Step 6: Extract claims
+        // Step 7: Extract claims
         Claims claims;
         
         if (decoded.has_subject()) {
             claims.sub = decoded.get_subject();
         }
 
-        // Extract custom claims (roles, permissions, etc.)
+        // Extract custom claims if present
+        if (decoded.has_payload_claim("email")) {
+            claims.values["email"] = decoded.get_payload_claim("email").as_string();
+        }
         if (decoded.has_payload_claim("role")) {
             claims.values["role"] = decoded.get_payload_claim("role").as_string();
         }
-        if (decoded.has_payload_claim("permissions")) {
-            // TODO: Handle array claims properly
-            // For now, store as JSON string
-            claims.values["permissions"] = decoded.get_payload_claim("permissions").to_json().serialize();
-        }
-        if (decoded.has_payload_claim("email")) {
-            claims.values["email"] = decoded.get_payload_claim("email").as_string();
+        if (decoded.has_payload_claim("tenant")) {
+            claims.values["tenant"] = decoded.get_payload_claim("tenant").as_string();
         }
 
         spdlog::debug("JWT verified for subject: {}", claims.sub);
@@ -126,17 +121,6 @@ std::optional<Claims> TokenIntrospector::localVerifyJWT(const std::string& jwt) 
 
 std::optional<Claims> TokenIntrospector::remoteValidate(const std::string& jwt) const {
     // TODO: Implement remote validation via auth-service
-    // This is useful for checking token revocation (cannot be detected locally)
-    // 
-    // Steps:
-    // 1. HTTP POST to auth-service /auth/validate endpoint
-    // 2. Send JWT in request body (JSON: {"token": "..."})  
-    // 3. Parse response: {"valid": true/false, "claims": {...}}
-    // 4. Return claims if valid
-    // 
-    // NOTE: Protocol can be JSON over IPC (UDS or TCP) instead of HTTP
-    //       See upstreamProxy for IPC client implementation.
-    
     (void)jwt;
     spdlog::debug("Remote token validation not implemented (TODO)");
     return std::nullopt;
@@ -144,19 +128,6 @@ std::optional<Claims> TokenIntrospector::remoteValidate(const std::string& jwt) 
 
 bool TokenIntrospector::fetch_jwks() const {
     // TODO: Implement JWKS fetching from auth-service
-    // 
-    // Steps:
-    // 1. HTTP GET to jwks_url_ (e.g., http://auth-service/.well-known/jwks.json)
-    // 2. Parse JSON response: {"keys": [{"kid": "...", "kty": "RSA", "n": "...", "e": "..."}]}
-    // 3. Convert JWK to PEM format using jwt-cpp utilities
-    // 4. Store in jwks_cache_ with expiration time
-    // 
-    // NOTE: Can use Boost.Beast HTTP client or custom IPC client
-    //       See httpClient.cpp for HTTP implementation (Step 4)
-    // 
-    // NOTE: For now, using Protocol Buffers/MessagePack could optimize this,
-    //       but JSON is sufficient for JWKS (infrequent fetch, small payload)
-    
     spdlog::debug("JWKS fetching not implemented (TODO)");
     return false;
 }
@@ -168,7 +139,6 @@ std::string TokenIntrospector::get_public_key(const std::string& kid) const {
     if (!kid.empty()) {
         auto it = jwks_cache_.find(kid);
         if (it != jwks_cache_.end()) {
-            // Check if cache entry expired
             auto now = std::chrono::steady_clock::now();
             if (it->second.expires_at > now) {
                 spdlog::debug("Using cached JWKS key (kid: {})", kid);
@@ -183,7 +153,6 @@ std::string TokenIntrospector::get_public_key(const std::string& kid) const {
     // Priority 2: Fetch from JWKS service (if configured)
     if (!jwks_url_.empty()) {
         // TODO: Call fetch_jwks() and retry cache lookup
-        // For now, fall through to dev key
     }
 
     // Priority 3: Use dev public key (development/testing only)
@@ -196,4 +165,4 @@ std::string TokenIntrospector::get_public_key(const std::string& kid) const {
     return "";
 }
 
-} // namespace gateway
+}

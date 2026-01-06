@@ -6,7 +6,7 @@ version: '3.8'
 
 x-common-env: &common-env
   DB_HOST: postgres
-  DB_PORT: 5432
+  DB_PORT: 15432
   DB_NAME: ${DB_NAME:-securecloud}
   DB_USER: ${DB_USER:-scuser}
   DB_PASSWORD: ${DB_PASS:-scpassword}

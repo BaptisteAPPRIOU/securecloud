@@ -149,7 +149,7 @@ make build-client
 DB_NAME=securecloud_dev
 DB_USER=securecloud
 DB_PASS=securecloud
-DB_PORT=5432
+DB_PORT=15432
 DB_HOST=127.0.0.1
 ```
 

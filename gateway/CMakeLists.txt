@@ -12,8 +12,8 @@ endif()
 
 # Aide CMake à trouver les paquets MSYS2 quand VS Code n'est pas lancé depuis le terminal MSYS2
 if (MINGW AND NOT CMAKE_PREFIX_PATH)
-  if (EXISTS "C:/msys64/mingw64")
-    list(APPEND CMAKE_PREFIX_PATH "C:/msys64/mingw64")
+  if (EXISTS "C:/msys64/ucrt64")
+    list(APPEND CMAKE_PREFIX_PATH "C:/msys64/ucrt64")
   endif()
 endif()
 

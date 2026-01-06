@@ -14,8 +14,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Configure MinGW64 paths
 # ==========================================
 if (MINGW)
-    set(CMAKE_PREFIX_PATH "C:/msys64/mingw64" ${CMAKE_PREFIX_PATH})
-    set(OPENSSL_ROOT_DIR "C:/msys64/mingw64")
+    set(CMAKE_PREFIX_PATH "C:/msys64/ucrt64" ${CMAKE_PREFIX_PATH})
+    set(OPENSSL_ROOT_DIR "C:/msys64/ucrt64")
 endif()
 
 # ==========================================

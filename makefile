@@ -1,5 +1,7 @@
 # SecureCloud - Makefile
 # Usage: make <target> ou mingw32-make <target>
+SHELL := cmd.exe
+.SHELLFLAGS := /C
 
 .PHONY: help db-up db-down db-migrate db-reset db-adminer db-logs db-psql setup status clean build-gateway build-auth build-client build-all
 
@@ -8,7 +10,7 @@ ENV_FILE := config/env/dev/.env
 COMPOSE_FILE := ops/compose/compose.dev.yml
 DOCKER_COMPOSE := docker compose --env-file $(ENV_FILE) -f $(COMPOSE_FILE)
 QT_PATH := C:/Qt/6.8.1/mingw_64
-MINGW_PATH := C:/msys64/mingw64
+UCRT_PATH := C:/msys64/ucrt64
 
 # Database connection (Docker uses port 15432 mapped to 5432 inside container)
 DB_HOST := 127.0.0.1
@@ -132,13 +134,13 @@ status: ## Affiche le statut des services
 build-gateway: ## Compile la Gateway
 	@echo === Compilation Gateway ===
 	@if not exist "gateway\build" mkdir gateway\build
-	@cd gateway\build && cmake -DCMAKE_PREFIX_PATH="$(MINGW_PATH)" -G "MinGW Makefiles" .. && mingw32-make
+	@cd gateway\build && cmake -DCMAKE_PREFIX_PATH="$(UCRT_PATH)" -G "MinGW Makefiles" .. && mingw32-make
 	@echo [OK] Gateway compile
 
 build-auth: ## Compile Auth Service
 	@echo === Compilation Auth Service ===
 	@if not exist "services\auth-service\build" mkdir services\auth-service\build
-	@cd services\auth-service\build && cmake -DCMAKE_PREFIX_PATH="$(MINGW_PATH)" -G "MinGW Makefiles" .. && mingw32-make
+	@cd services\auth-service\build && cmake -DCMAKE_PREFIX_PATH="$(UCRT_PATH)" -G "MinGW Makefiles" .. && mingw32-make
 	@echo [OK] Auth Service compile
 
 build-client: ## Compile le client Qt

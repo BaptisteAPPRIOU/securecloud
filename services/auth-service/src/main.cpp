@@ -224,7 +224,7 @@ int main() {
     // Connexion DB
     std::string conn =
         "host=" + env("DB_HOST","127.0.0.1") +
-        " port=" + env("DB_PORT","5432") +
+        " port=" + env("DB_PORT","15432") +
         " dbname=" + env("DB_NAME","securecloud_dev") +
         " user=" + env("DB_USER","securecloud") +
         " password=" + env("DB_PASS","securecloud");

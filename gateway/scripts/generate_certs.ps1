@@ -42,8 +42,8 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "Generated: $CERT_DIR\test-cert.pem and $CERT_DIR\test-key.pem" -ForegroundColor Green
 
-Write-Host "`n✓ Development and test certificates generated successfully!" -ForegroundColor Green
-Write-Host "`n⚠️  WARNING: These are self-signed certificates for DEVELOPMENT ONLY" -ForegroundColor Yellow
+Write-Host "`n Development and test certificates generated successfully!" -ForegroundColor Green
+Write-Host "`n  WARNING: These are self-signed certificates for DEVELOPMENT ONLY" -ForegroundColor Yellow
 Write-Host "   For production, use certificates from a trusted CA (Let's Encrypt, etc.)" -ForegroundColor Yellow
 
 Write-Host "`nCertificate details:" -ForegroundColor Cyan

@@ -36,9 +36,9 @@ echo "Generated: $CERT_DIR/test-cert.pem and $CERT_DIR/test-key.pem"
 chmod 600 "$CERT_DIR"/*.pem
 
 echo ""
-echo "✓ Development and test certificates generated successfully!"
+echo " Development and test certificates generated successfully!"
 echo ""
-echo "⚠️  WARNING: These are self-signed certificates for DEVELOPMENT ONLY"
+echo "  WARNING: These are self-signed certificates for DEVELOPMENT ONLY"
 echo "   For production, use certificates from a trusted CA (Let's Encrypt, etc.)"
 echo ""
 echo "Certificate details:"

@@ -4,56 +4,62 @@
 
 HTTP/HTTPS gateway with TLS termination, JWT validation, dynamic routing, rate limiting, and WebSocket support.
 
-## 🎯 Features
+## Features
 
-### ✅ Implemented (Steps 1-9 Complete)
+### Implemented (Steps 1-9 Complete)
 
 **Core Infrastructure:**
-- ✅ **YAML Configuration**: Complete server, TLS, routing, upstreams, security, observability config
-- ✅ **Multi-threaded HTTP Server**: Async I/O with connection pooling and client IP tracking
-- ✅ **TLS/HTTPS Termination**: OpenSSL integration with optional mutual TLS
-- ✅ **Request Routing**: Regex-based dynamic routing with WebSocket upgrade support
-- ✅ **Upstream Proxy**: HTTP and Unix Domain Socket (UDS) forwarding
+
+- [V] **YAML Configuration**: Complete server, TLS, routing, upstreams, security, observability config
+- [V] **Multi-threaded HTTP Server**: Async I/O with connection pooling and client IP tracking
+- [V] **TLS/HTTPS Termination**: OpenSSL integration with optional mutual TLS
+- [V] **Request Routing**: Regex-based dynamic routing with WebSocket upgrade support
+- [V] **Upstream Proxy**: HTTP and Unix Domain Socket (UDS) forwarding
 
 **Security & Authentication:**
-- ✅ **JWT Authentication**: Cryptographic verification with jwt-cpp
-- ✅ **Token Introspection**: JWKS cache with configurable TTL
-- ✅ **Authorization Filter**: Role-based access control (RBAC)
-- ✅ **High-Performance Cache**: AuthCache with TTL and LRU eviction, thread-safe
+
+- [V] **JWT Authentication**: Cryptographic verification with jwt-cpp
+- [V] **Token Introspection**: JWKS cache with configurable TTL
+- [V] **Authorization Filter**: Role-based access control (RBAC)
+- [V] **High-Performance Cache**: AuthCache with TTL and LRU eviction, thread-safe
 
 **Rate Limiting & Protection:**
-- ✅ **Multi-Strategy Rate Limiter**: Token bucket algorithm
-- ✅ **Global Rate Limits**: Gateway-wide request throttling
-- ✅ **Per-IP Limits**: DoS protection per client
-- ✅ **Per-User Limits**: Authenticated user quotas
-- ✅ **Per-Endpoint Limits**: Route-specific rate limiting
+
+- [V] **Multi-Strategy Rate Limiter**: Token bucket algorithm
+- [V] **Global Rate Limits**: Gateway-wide request throttling
+- [V] **Per-IP Limits**: DoS protection per client
+- [V] **Per-User Limits**: Authenticated user quotas
+- [V] **Per-Endpoint Limits**: Route-specific rate limiting
 
 **Observability:**
-- ✅ **Prometheus Metrics**: Comprehensive metrics exporter on :9090
-- ✅ **Structured Logging**: Request IDs, correlation IDs, context propagation
-- ✅ **Gateway Metrics**: 14+ metrics covering requests, routing, upstreams, rate limits
-- ✅ **Request Tracing**: UUID generation and correlation across services
+
+- **Prometheus Metrics**: Comprehensive metrics exporter on :9090
+- **Structured Logging**: Request IDs, correlation IDs, context propagation
+- **Gateway Metrics**: 14+ metrics covering requests, routing, upstreams, rate limits
+- **Request Tracing**: UUID generation and correlation across services
 
 **Testing:**
-- ✅ **Test Coverage**: 85% (28/33 tests passing)
-- ✅ **Unit Tests**: Configuration, routing, auth cache, rate limiter, TLS
-- ✅ **Null-Safe Metrics**: Graceful degradation when metrics disabled
 
-### 🚀 Production Readiness (Planned)
+- **Test Coverage**: 85% (28/33 tests passing)
+- **Unit Tests**: Configuration, routing, auth cache, rate limiter, TLS
+- **Null-Safe Metrics**: Graceful degradation when metrics disabled
+
+### Production Readiness (Planned)
 
 See [PRODUCTION_READINESS_PLAN.md](PRODUCTION_READINESS_PLAN.md) for complete roadmap:
-- 🔲 **Connection Pooling**: HTTP and UDS connection pools
-- 🔲 **Health Checking**: Active/passive upstream health monitoring
-- 🔲 **Circuit Breaker**: Fault tolerance pattern
-- 🔲 **Graceful Shutdown**: Request draining with timeout
-- 🔲 **Integration Tests**: End-to-end test suite
-- 🔲 **Load Testing**: 10K req/s, < 100ms p99 latency targets
 
-## 🏗️ Architecture
+- [X] **Connection Pooling**: HTTP and UDS connection pools
+- [X] **Health Checking**: Active/passive upstream health monitoring
+- [X] **Circuit Breaker**: Fault tolerance pattern
+- [X] **Graceful Shutdown**: Request draining with timeout
+- [X] **Integration Tests**: End-to-end test suite
+- [X] **Load Testing**: 10K req/s, < 100ms p99 latency targets
+
+## Architecture
 
 ### Request Flow
 
-```
+```text
 Client Request
     ↓
 [TLS Termination]
@@ -76,7 +82,7 @@ Client Request
 ### Key Components
 
 | Component | Responsibility |
-|-----------|----------------|
+| ----------- | ---------------- |
 | **httpServer** | TLS termination, connection management, request handling |
 | **jwtFilter** | Cryptographic JWT validation, JWKS caching |
 | **authzFilter** | Role-based access control (RBAC) |
@@ -88,6 +94,7 @@ Client Request
 ### Observability Architecture
 
 **Prometheus Metrics (14 metrics):**
+
 - `gateway_requests_total{method, route, status}` - HTTP request counter
 - `gateway_request_duration_seconds` - Latency histogram
 - `gateway_routing_matches_total` - Route matching success/failure
@@ -98,6 +105,7 @@ Client Request
 - See full metrics list in `include/metrics.hpp`
 
 **Structured Logging Fields:**
+
 - `request_id` - Unique UUID-like ID (timestamp-random)
 - `correlation_id` - Cross-service tracing (from X-Correlation-ID header)
 - `client_ip` - Source IP address
@@ -106,11 +114,12 @@ Client Request
 - `status` - Response status code
 - `latency_ms` - Request duration
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
 **MSYS2 MINGW64 Environment Required** (Windows):
+
 ```bash
 # Install MSYS2 from https://www.msys2.org/
 
@@ -122,6 +131,7 @@ pacman -S mingw-w64-x86_64-spdlog mingw-w64-x86_64-yaml-cpp
 ```
 
 **Or use vcpkg** (alternative):
+
 ```bash
 vcpkg install boost-asio boost-beast openssl spdlog yaml-cpp jwt-cpp prometheus-cpp gtest
 ```
@@ -168,7 +178,7 @@ curl -k https://localhost:8443/api/v1/resource \
 curl http://localhost:9090/metrics
 ```
 
-## 🧪 Testing
+## Testing
 
 ### Run Test Suite
 
@@ -184,12 +194,13 @@ ctest --output-on-failure
 ### Test Categories
 
 | Category | Tests | Status |
-|----------|-------|--------|
-| **Router Tests** | 10 | ✅ 100% |
-| **AuthCache Tests** | 18 | ✅ 100% |
-| **Config Tests** | 5 | ⚠️ 0% (known issues) |
+| ---------- | ------- | -------- |
+| **Router Tests** | 10 | [V] 100% |
+| **AuthCache Tests** | 18 | [V] 100% |
+| **Config Tests** | 5 | [X] 0% (known issues) |
 
 **Passing Tests:**
+
 - Exact path routing
 - Prefix routing (`/api/v1/*`)
 - Regex routing (`/users/{id:[0-9]+}`)
@@ -200,7 +211,7 @@ ctest --output-on-failure
 - LRU eviction (capacity limits)
 - Thread-safety validation
 
-## ⚙️ Configuration
+## Configuration
 
 ### YAML Structure
 
@@ -280,17 +291,17 @@ observability:
 
 See `config/gateway.dev.yaml` for complete example.
 
-## 📊 Performance Targets
+## Performance Targets
 
 | Metric | Target | Status |
-|--------|--------|--------|
-| **Requests/sec** | 10,000+ | 🚀 Planned |
-| **P95 Latency** | < 50ms | 🚀 Planned |
-| **P99 Latency** | < 100ms | 🚀 Planned |
-| **Concurrent Connections** | 10,000+ | 🚀 Planned |
-| **Uptime** | 99.9% | 🚀 Planned |
+| -------- | -------- | -------- |
+| **Requests/sec** | 10,000+ | Planned |
+| **P95 Latency** | < 50ms | Planned |
+| **P99 Latency** | < 100ms | Planned |
+| **Concurrent Connections** | 10,000+ | Planned |
+| **Uptime** | 99.9% | Planned |
 
-## 📝 Development
+## Development
 
 ### Build System
 
@@ -301,7 +312,7 @@ See `config/gateway.dev.yaml` for complete example.
 
 ### Code Structure
 
-```
+```text
 gateway/
 ├── include/             # Public headers
 │   ├── config.hpp       # YAML configuration
@@ -350,17 +361,19 @@ gateway/
 - **Memory Safety**: RAII, smart pointers, no raw new/delete
 - **Logging**: Structured JSON logs with request context
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 ### Build Issues
 
 **Issue**: CMake can't find Boost/OpenSSL
+
 ```bash
 # Solution: Ensure MINGW64 environment
 pacman -S mingw-w64-x86_64-boost mingw-w64-x86_64-openssl
 ```
 
 **Issue**: Linking errors with Prometheus-cpp
+
 ```bash
 # Solution: Use vcpkg for prometheus-cpp
 vcpkg install prometheus-cpp
@@ -369,6 +382,7 @@ vcpkg install prometheus-cpp
 ### Runtime Issues
 
 **Issue**: "Failed to bind to port 8443"
+
 ```bash
 # Solution: Port already in use
 netstat -ano | findstr :8443
@@ -376,6 +390,7 @@ netstat -ano | findstr :8443
 ```
 
 **Issue**: JWT validation failing
+
 ```bash
 # Solution: Check JWKS URI reachable
 curl https://auth.example.com/.well-known/jwks.json
@@ -383,6 +398,7 @@ curl https://auth.example.com/.well-known/jwks.json
 ```
 
 **Issue**: Rate limiting too aggressive
+
 ```bash
 # Solution: Adjust limits in gateway.dev.yaml
 security:
@@ -391,13 +407,13 @@ security:
       requests_per_second: 200  # Increase limit
 ```
 
-## 📚 Documentation
+## Documentation
 
 - **[IMPLEMENTATION_PROGRESS.md](IMPLEMENTATION_PROGRESS.md)**: Detailed step-by-step progress tracker
 - **[SESSION_SUMMARY.md](SESSION_SUMMARY.md)**: Development session notes and changelog
 - **[PRODUCTION_READINESS_PLAN.md](PRODUCTION_READINESS_PLAN.md)**: 6-week roadmap to production deployment
 
-## 🤝 Contributing
+## Contributing
 
 1. **Branch**: Create feature branch from `main`
 2. **Code**: Follow C++20 standards, add tests
@@ -406,16 +422,16 @@ security:
 5. **Commit**: Use conventional commits (feat:, fix:, docs:)
 6. **PR**: Submit with clear description
 
-## 📄 License
+## License
 
 MIT License - See LICENSE file for details
 
-## 🎯 Project Status
+## Project Status
 
 **Current Phase**: Steps 1-9 Complete (85% test coverage)  
 **Next Milestone**: Production Readiness (See PRODUCTION_READINESS_PLAN.md)  
 **Target**: Production deployment Q1 2025
 
----
+**Built with using C++20, Boost.Asio, OpenSSL, and Prometheus**
 
-**Built with ❤️ using C++20, Boost.Asio, OpenSSL, and Prometheus**
+---

@@ -2,7 +2,7 @@
 
 This directory contains scripts to generate self-signed TLS certificates for development and testing.
 
-## ⚠️ WARNING
+##  WARNING
 
 **These certificates are for DEVELOPMENT and TESTING ONLY.**  
 Never use self-signed certificates in production!

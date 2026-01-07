@@ -1,71 +1,73 @@
-# 🚀 Guide d'Installation - SecureCloud
+# Guide d'Installation - SecureCloud
 
 Guide complet pour installer et configurer l'environnement de développement SecureCloud.
 
-## 📋 Prérequis
+## Prérequis
 
 ### Windows avec MSYS2
 
-1. **Installer MSYS2** : https://www.msys2.org/
-2. **Installer Docker Desktop** : https://www.docker.com/products/docker-desktop/
-3. **Ouvrir MSYS2 UCRT64** (pas MinGW64, pas MSYS)
+1. **Installer MSYS2** : <https://www.msys2.org/>
+2. **Installer Docker Desktop** : <https://www.docker.com/products/docker-desktop/>
+3. **Installer Qt 6.8+** : <https://www.qt.io/download-qt-installer> (installer dans `C:\Qt\6.8.1\mingw_64`)
+4. **Ouvrir MSYS2 UCRT64** (icône violette, pas MinGW64, pas MSYS)
 
-## ⚙️ Installation des Dépendances
+> **Important** : Utilisez toujours le terminal **UCRT64** pour éviter les erreurs de compilation.
 
-### Méthode Automatique
+##  Installation des Dépendances
+
+### Méthode Recommandée (CMake)
+
 ```bash
-make install-deps
-# ou
-mingw32-make install-deps
-```
+# Mettre à jour la base de paquets
+pacman -Syu
 
-### Méthode Manuelle
-```bash
+# Installer tous les outils nécessaires
 pacman -S --needed \
-  mingw-w64-ucrt-x86_64-gcc \
+  mingw-w64-ucrt-x86_64-toolchain \
   mingw-w64-ucrt-x86_64-cmake \
   mingw-w64-ucrt-x86_64-ninja \
   mingw-w64-ucrt-x86_64-boost \
   mingw-w64-ucrt-x86_64-openssl \
-  mingw-w64-ucrt-x86_64-libpqxx \
-  mingw-w64-ucrt-x86_64-postgresql-libs \
   mingw-w64-ucrt-x86_64-nlohmann-json \
-  mingw-w64-ucrt-x86_64-fmt \
   mingw-w64-ucrt-x86_64-spdlog \
-  mingw-w64-ucrt-x86_64-qt6
+  mingw-w64-ucrt-x86_64-fmt \
+  mingw-w64-ucrt-x86_64-postgresql \
+  mingw-w64-ucrt-x86_64-gtest
 ```
 
-## 🗄️ Configuration de la Base de Données
+### Configuration du PATH (VS Code / PowerShell)
 
-### 1. Copier le fichier de configuration
+Si vous utilisez VS Code ou PowerShell (hors terminal UCRT64), ajoutez UCRT64 au PATH :
+
+```powershell
+$env:Path = "C:\msys64\ucrt64\bin;" + $env:Path
+```
+
+Pour rendre permanent, ajoutez à votre profil PowerShell (`$PROFILE`).
+
+##  Configuration de la Base de Données
+
+### 1. Configurer le projet
+
 ```bash
-cp config/env/dev/.env.example config/env/dev/.env
+cmake -B build --preset dev
 ```
 
 ### 2. Lancer PostgreSQL
+
 ```bash
-make db-up
-# ou
-mingw32-make db-up
+cmake --build build --target db-up
 ```
 
 PostgreSQL sera accessible sur `localhost:15432`
 
 ### 3. Exécuter les migrations
+
 ```bash
-make db-migrate
-# ou
-mingw32-make db-migrate
+cmake --build build --target db-migrate
 ```
 
-### ⚠️ Si `make` n'est pas détecté
-Utilisez `mingw32-make` à la place de `make` :
-```bash
-mingw32-make db-up
-mingw32-make db-migrate
-```
-
-### ⚠️ Si erreur sur db-migrate
+### Si erreur sur db-migrate
 
 Exécutez les migrations manuellement **depuis PowerShell** :
 
@@ -80,6 +82,7 @@ docker compose --env-file $envFile -f $compose run --rm flyway-audit
 ```
 
 Ou depuis **MSYS2** :
+
 ```bash
 ENV_FILE="config/env/dev/.env"
 COMPOSE="ops/compose/compose.dev.yml"
@@ -90,9 +93,10 @@ docker compose --env-file $ENV_FILE -f $COMPOSE run --rm flyway-files
 docker compose --env-file $ENV_FILE -f $COMPOSE run --rm flyway-audit
 ```
 
-## 🌐 Interface Web de la Base de Données (Adminer)
+## Interface Web de la Base de Données (Adminer)
 
 ### Lancer Adminer
+
 ```bash
 make db-adminer
 # ou
@@ -100,9 +104,11 @@ mingw32-make db-adminer
 ```
 
 ### Accéder à l'interface
-Ouvrez votre navigateur : **http://localhost:8080**
+
+Ouvrez votre navigateur : **<http://localhost:8080>**
 
 ### Identifiants de connexion
+
 | Champ    | Valeur           |
 |----------|------------------|
 | System   | PostgreSQL       |
@@ -111,89 +117,89 @@ Ouvrez votre navigateur : **http://localhost:8080**
 | Password | securecloud      |
 | Database | securecloud_dev  |
 
-## 🏗️ Compilation des Services
+## Compilation des Services
 
-### Gateway
+### Compilation complète (recommandé)
+
 ```bash
-make build-gateway
-# ou
-cd gateway
-cmake -B build -DCMAKE_BUILD_TYPE=Debug
-cmake --build build
+# Configure avec Ninja (rapide)
+cmake -B build --preset dev
+
+# Compile tout avec 16 cœurs CPU (~2 minutes)
+cmake --build build -j 16
 ```
 
-### Service d'Authentification
+### Composants spécifiques
+
 ```bash
-make build-auth
-# ou
-cd services/auth-service
-cmake -B build -DCMAKE_BUILD_TYPE=Debug
-cmake --build build
+cmake --build build --target gateway        # Gateway
+cmake --build build --target auth-service   # Auth Service
+cmake --build build --target MSF_Login      # Client Qt
 ```
 
-### Client Qt
+### Presets disponibles
+
+| Preset             | Description                                |
+| ------------------ | ------------------------------------------ |
+| `dev`              | Développement complet (Debug, Ninja)       |
+| `dev-makefiles`    | Alternative si Ninja n'est pas installé  |
+| `dev-gateway-only` | Gateway uniquement                         |
+| `dev-auth-only`    | Auth Service uniquement                    |
+| `dev-client-only`  | Client Qt uniquement                       |
+| `release`          | Build optimisé (Release)                   |
+
+##  Exécution des Tests
+
 ```bash
-make build-client
-# ou
-cd client/qt-app
-cmake -B build
-cmake --build build
+# Exécuter tous les tests
+ctest --test-dir build --output-on-failure
+
+# Tests Gateway uniquement
+ctest --test-dir build -R gateway
+
+# Tests avec détails
+ctest --test-dir build -V
 ```
 
-## 🧪 Exécution des Tests
-
-### Tests Gateway
-```bash
-make test-gateway
-# ou
-cd gateway/build
-ctest --output-on-failure
-```
-
-### Tests Auth Service
-```bash
-make test-auth
-# ou
-cd services/auth-service/build
-ctest --output-on-failure
-```
-
-## 🐳 Utilisation avec Docker Compose
+##  Utilisation avec Docker Compose
 
 ### Lancer tous les services
+
 ```bash
 docker compose up -d
 ```
 
 ### Voir les logs
+
 ```bash
 docker compose logs -f gateway
 docker compose logs -f auth-service
 ```
 
 ### Arrêter les services
+
 ```bash
 docker compose down
 ```
 
-## 📝 Commandes Make Utiles
+## Commandes CMake Utiles
 
 | Commande | Description |
-|----------|-------------|
-| `make help` | Affiche toutes les commandes disponibles |
-| `make setup` | Configuration initiale (.env) |
-| `make db-up` | Lance PostgreSQL |
-| `make db-down` | Arrête PostgreSQL |
-| `make db-migrate` | Exécute toutes les migrations |
-| `make db-reset` | Réinitialise la base de données |
-| `make db-adminer` | Lance l'interface Adminer |
-| `make db-logs` | Affiche les logs PostgreSQL |
-| `make db-psql` | Connexion psql interactive |
-| `make status` | Affiche l'état des services |
-| `make clean` | Nettoie les fichiers de build |
-| `make clean-all` | Nettoie tout (build + volumes) |
+| ---------- | ------------- |
+| `cmake -B build --preset dev` | Configure le projet |
+| `cmake --build build -j 16` | Compile tout (parallèle) |
+| `cmake --build build --target help-targets` | Liste toutes les cibles |
+| `cmake --build build --target db-up` | Lance PostgreSQL |
+| `cmake --build build --target db-down` | Arrête PostgreSQL |
+| `cmake --build build --target db-migrate` | Exécute les migrations |
+| `cmake --build build --target db-reset` | Réinitialise la DB |
+| `cmake --build build --target db-adminer` | Lance Adminer |
+| `cmake --build build --target db-psql` | Connexion psql interactive |
+| `cmake --build build --target run-gateway` | Lance la Gateway |
+| `cmake --build build --target run-client` | Lance le Client Qt |
+| `ctest --test-dir build` | Exécute les tests |
 
-## 🔧 Configuration (.env)
+## Configuration (.env)
 
 Le fichier `config/env/dev/.env` contient :
 
@@ -216,45 +222,74 @@ GATEWAY_HTTP_PORT=8080
 LOG_LEVEL=debug
 ```
 
-## 🐛 Dépannage
+##  Dépannage
+
+### "Ninja not found"
+
+Installez Ninja :
+
+```bash
+pacman -S mingw-w64-ucrt-x86_64-ninja
+```
+
+Ou utilisez le preset de repli : `cmake -B build --preset dev-makefiles`
+
+### Erreurs "at_quick_exit / quick_exit / timespec_get"
+
+Vous utilisez le mauvais environnement (MINGW64 au lieu de UCRT64). Vérifiez :
+
+1. Utilisez le terminal **UCRT64** (icône violette), pas MINGW64
+2. Le PATH contient `C:\msys64\ucrt64\bin` en premier
+3. Nettoyez et reconfigurez :
+
+```bash
+rm -rf build
+cmake -B build --preset dev
+```
+
+### Build très lent (30+ minutes)
+
+Vous utilisez probablement MinGW Makefiles. Passez à Ninja :
+
+```bash
+rm -rf build
+cmake -B build --preset dev          # Utilise Ninja
+cmake --build build -j 16            # Build parallèle (~2 min)
+```
+
+### "Generator doesn't match"
+
+Nettoyez le répertoire build :
+
+```bash
+rm -rf build
+cmake -B build --preset dev
+```
 
 ### PostgreSQL ne démarre pas
+
 ```bash
 # Vérifier les logs
-make db-logs
+cmake --build build --target db-logs
+
+# Vérifier que Docker est lancé
+docker ps
 
 # Réinitialiser
-make db-reset
+cmake --build build --target db-reset
 ```
 
-### Migrations échouent
-```bash
-# Vérifier que PostgreSQL est démarré
-make status
+### Qt non trouvé
 
-# Exécuter une migration spécifique
-make db-migrate-auth
-```
-
-### Erreur de compilation
-```bash
-# Nettoyer et recompiler
-make clean
-make build-gateway
-```
+Assurez-vous que Qt est installé dans `C:\Qt\6.8.1\mingw_64` ou modifiez `CMAKE_PREFIX_PATH` dans CMakePresets.json.
 
 ### Docker n'est pas reconnu
-Assurez-vous que Docker Desktop est lancé et que vous êtes dans MSYS2 UCRT64.
 
-### Make n'est pas reconnu
-Utilisez `mingw32-make` à la place de `make` :
-```bash
-mingw32-make db-up
-```
+Assurez-vous que Docker Desktop est lancé et que vous êtes dans le terminal UCRT64.
 
-## 📚 Architecture
+##  Architecture
 
-```
+```text
 secureCloud/
 ├── gateway/              # API Gateway (C++, Boost.Beast)
 ├── services/
@@ -274,32 +309,30 @@ secureCloud/
     └── env/             # Fichiers .env
 ```
 
-## 🔐 Sécurité en Développement
+##  Sécurité en Développement
 
-⚠️ **Important** : Les identifiants par défaut sont pour le développement uniquement.
+**Important** : Les identifiants par défaut sont pour le développement uniquement.
 
 En production, changez :
+
 - `DB_PASS`
 - `JWT_SECRET` (min 32 caractères)
 - `REDIS_PASSWORD`
 - Activez TLS (`ENABLE_TLS=true`)
 
-## 🚀 Prochaines Étapes
+## Prochaines Étapes
 
-1. ✅ Installer les dépendances
-2. ✅ Configurer la base de données
-3. ✅ Compiler les services
-4. 📖 Lire la documentation API dans `docs/api/`
-5. 🧪 Exécuter les tests
-6. 💻 Commencer le développement !
+1. [V] Installer les dépendances
+2. [V] Configurer la base de données
+3. [V] Compiler les services
+4. [ ] Lire la documentation API dans `docs/api/`
+5. [ ] Exécuter les tests
+6. [ ] Commencer le développement !
 
-## 📞 Support
+##  Support
 
-- Issues GitHub : [Créer une issue](#)
 - Documentation : `docs/`
 - Architecture : `docs/architecture.md`
 - Sécurité : `docs/security.md`
 
 ---
-
-**Bon développement ! 🎉**

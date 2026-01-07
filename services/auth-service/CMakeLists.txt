@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.22)
 
-# Evite le warning récent sur FindBoost supprimé
+# ---- CMake Policies ----
+# CMP0135: Set timestamps of extracted files to time of extraction
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
+# CMP0167: Use Boost's CMake config instead of FindBoost
 if(POLICY CMP0167)
     cmake_policy(SET CMP0167 NEW)
 endif()
@@ -27,24 +32,25 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(PostgreSQL REQUIRED)
 
 # ==========================================
-# jwt-cpp en header-only SANS add_subdirectory
-# (évite la détection du compilateur C chez tes collègues)
+# jwt-cpp en header-only
+# Check if target already exists (when built from root CMakeLists)
 # ==========================================
-include(FetchContent)
-FetchContent_Declare(jwt_cpp
-    GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git
-    GIT_TAG v0.7.0
-)
-FetchContent_GetProperties(jwt_cpp)
-if(NOT jwt_cpp_POPULATED)
-    FetchContent_Populate(jwt_cpp)
+if(NOT TARGET jwt-cpp::jwt-cpp)
+    include(FetchContent)
+    FetchContent_Declare(jwt_cpp
+        URL https://github.com/Thalhammer/jwt-cpp/archive/refs/tags/v0.7.1.tar.gz
+        URL_HASH SHA256=e52f247d5e62fac5da6191170998271a70ce27f747f2ce8fde9b09f96a5375a4
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        SOURCE_SUBDIR _no_cmake_  # Skip jwt-cpp's CMakeLists.txt to avoid CMP0135 warning
+    )
+    
+    FetchContent_MakeAvailable(jwt_cpp)
+    
+    # Create interface library pointing to the headers
+    add_library(jwt-cpp INTERFACE)
+    target_include_directories(jwt-cpp SYSTEM INTERFACE ${jwt_cpp_SOURCE_DIR}/include)
+    add_library(jwt-cpp::jwt-cpp ALIAS jwt-cpp)
 endif()
-
-add_library(jwt-cpp INTERFACE)
-target_include_directories(jwt-cpp INTERFACE
-    ${jwt_cpp_SOURCE_DIR}/include
-)
-add_library(jwt-cpp::jwt-cpp ALIAS jwt-cpp)
 
 # ==========================================
 # Binaire

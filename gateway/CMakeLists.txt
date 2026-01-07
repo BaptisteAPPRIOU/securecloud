@@ -1,4 +1,15 @@
 cmake_minimum_required(VERSION 3.24)
+
+# ---- CMake Policies ----
+# CMP0135: Set timestamps of extracted files to time of extraction
+if(POLICY CMP0135)
+  cmake_policy(SET CMP0135 NEW)
+endif()
+# CMP0167: Use Boost's CMake config instead of FindBoost
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
+
 project(securecloud_gateway LANGUAGES CXX)
 
 # ---- C++ toolchain ----
@@ -8,6 +19,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter)
+  # GCC 15 on MSYS2 workaround: C++ stdlib headers reference C11 functions
+  # (at_quick_exit, quick_exit, timespec_get) that aren't exposed by default
+  if (MINGW)
+    add_compile_definitions(_UCRT __STDC_WANT_LIB_EXT1__=1)
+  endif()
 endif()
 
 # Aide CMake à trouver les paquets MSYS2 quand VS Code n'est pas lancé depuis le terminal MSYS2
@@ -17,17 +33,30 @@ if (MINGW AND NOT CMAKE_PREFIX_PATH)
   endif()
 endif()
 
-# ---- jwt-cpp (INTERFACE, sans construire les examples) ----
+# ---- jwt-cpp (Header-only library) ----
+# Using v0.7.1 - fetch as header-only without processing its CMakeLists.txt
+# SOURCE_SUBDIR set to non-existent path prevents add_subdirectory on the fetched content
 include(FetchContent)
 FetchContent_Declare(jwt-cpp
-  GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git
-  GIT_TAG        v0.7.0
-  GIT_SHALLOW    TRUE
+  URL https://github.com/Thalhammer/jwt-cpp/archive/refs/tags/v0.7.1.tar.gz
+  URL_HASH SHA256=e52f247d5e62fac5da6191170998271a70ce27f747f2ce8fde9b09f96a5375a4
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+  SOURCE_SUBDIR _no_cmake_  # Non-existent subdir prevents processing jwt-cpp's CMakeLists.txt
 )
+
 FetchContent_MakeAvailable(jwt-cpp)
+
+# Create interface library pointing to the headers
+if(NOT TARGET jwt-cpp::jwt-cpp)
+  add_library(jwt-cpp INTERFACE)
+  target_include_directories(jwt-cpp SYSTEM INTERFACE ${jwt-cpp_SOURCE_DIR}/include)
+  add_library(jwt-cpp::jwt-cpp ALIAS jwt-cpp)
+endif()
+
+# Ensure the target exists (jwt-cpp creates jwt-cpp::jwt-cpp)
 if (NOT TARGET jwt-cpp::jwt-cpp)
   add_library(jwt-cpp INTERFACE)
-  target_include_directories(jwt-cpp INTERFACE ${jwt-cpp_SOURCE_DIR}/include)
+  target_include_directories(jwt-cpp SYSTEM INTERFACE ${jwt-cpp_SOURCE_DIR}/include)
   add_library(jwt-cpp::jwt-cpp ALIAS jwt-cpp)
 endif()
 

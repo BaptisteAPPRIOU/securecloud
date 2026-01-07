@@ -11,6 +11,16 @@
 
 ---
 
+## ⚠️ Configuration VS Code
+
+**Pour les utilisateurs de VS Code** : Lors de l'utilisation de l'extension CMake :
+1. Ouvrez le fichier workspace : `securecloud.code-workspace`
+2. Sélectionnez **"SecureCloud (Root)"** dans la barre d'état lors de la configuration
+3. Cela garantit que CMake trouve les presets dans [CMakePresets.json](CMakePresets.json) racine
+4. Les dossiers individuels (Gateway, Auth Service, etc.) ont leurs propres presets locaux
+
+---
+
 ## En 3 Minutes
 
 ### 1⃣ Configuration initiale
@@ -59,6 +69,35 @@ cmake --build build --target run-gateway
 | `dev-auth-only`    | Auth Service uniquement                    |
 | `dev-client-only`  | Client Qt uniquement                       |
 | `release`          | Build optimisé (Release)                   |
+
+### Builds Indépendants par Service
+
+Chaque service peut être compilé indépendamment :
+
+```bash
+# Depuis le dossier d'un service spécifique
+cd services/auth-service
+cmake -B build --preset auth-dev
+cmake --build build
+
+# Depuis le dossier Gateway
+cd gateway
+cmake -B build --preset gateway-dev
+cmake --build build
+
+# Depuis le dossier Client Qt
+cd client/qt-app
+cmake -B build --preset client-dev
+cmake --build build
+```
+
+**Presets disponibles par service** :
+- `gateway-dev` (dossier gateway/)
+- `auth-dev` (services/auth-service/)
+- `files-dev` (services/files-service/)
+- `messaging-dev` (services/messaging-service/)
+- `audit-dev` (services/audit-service/)
+- `client-dev` (client/qt-app/)
 
 ### Utilisation des presets
 

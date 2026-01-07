@@ -148,6 +148,27 @@ cmake --build build --target MSF_Login      # Client Qt
 | `dev-client-only`  | Client Qt uniquement                       |
 | `release`          | Build optimisé (Release)                   |
 
+### Builds Indépendants
+
+Chaque sous-projet peut être compilé séparément avec son propre preset :
+
+```bash
+# Gateway uniquement
+cd gateway
+cmake -B build --preset gateway-dev
+cmake --build build
+
+# Auth Service uniquement
+cd services/auth-service
+cmake -B build --preset auth-dev
+cmake --build build
+
+# Qt Client uniquement
+cd client/qt-app
+cmake -B build --preset client-dev
+cmake --build build
+```
+
 ##  Exécution des Tests
 
 ```bash

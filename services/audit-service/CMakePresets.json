@@ -1,0 +1,26 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 24,
+        "patch": 0
+    },
+    "include": [
+        "../../CMakePresets.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "audit-dev",
+            "displayName": "Audit Service Development",
+            "description": "Development build for Audit Service using root presets",
+            "inherits": "dev",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "BUILD_GATEWAY": "OFF",
+                "BUILD_AUTH_SERVICE": "OFF",
+                "BUILD_AUDIT_SERVICE": "ON",
+                "BUILD_QT_CLIENT": "OFF"
+            }
+        }
+    ]
+}

@@ -68,6 +68,12 @@ Or add permanently to your PowerShell profile (`$PROFILE`).
 
 ## Building the Project
 
+> **⚠️ IMPORTANT for VS Code Users**: When using the CMake extension, make sure to:
+> 1. Open the workspace file: `securecloud.code-workspace`
+> 2. Select **"SecureCloud (Root)"** folder in the status bar when configuring
+> 3. This ensures CMake finds the presets in the root [CMakePresets.json](CMakePresets.json)
+> 4. Individual folders (Gateway, Auth Service, etc.) have their own local presets
+
 ### 1. Configure the project
 
 ```bash
@@ -105,6 +111,35 @@ cmake --build build --target run-gateway
 | `dev-auth-only`    | Build Auth Service only                          |
 | `dev-client-only`  | Build Qt Client only                             |
 | `release`          | Optimized release build                          |
+
+### Independent Subproject Builds
+
+Each subproject can be built independently using its own preset:
+
+```bash
+# Gateway only
+cd gateway
+cmake -B build --preset gateway-dev
+cmake --build build
+
+# Auth Service only
+cd services/auth-service
+cmake -B build --preset auth-dev
+cmake --build build
+
+# Qt Client only
+cd client/qt-app
+cmake -B build --preset client-dev
+cmake --build build
+```
+
+**Available service presets**:
+- `gateway-dev` (gateway/)
+- `auth-dev` (services/auth-service/)
+- `files-dev` (services/files-service/)
+- `messaging-dev` (services/messaging-service/)
+- `audit-dev` (services/audit-service/)
+- `client-dev` (client/qt-app/)
 
 **Note**: If `dev` fails with "Ninja not found", install it:
 

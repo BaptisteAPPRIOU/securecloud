@@ -1,0 +1,385 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "SecureCloud (Root)"
+    },
+    {
+      "path": "gateway",
+      "name": "Gateway (C++)"
+    },
+    {
+      "path": "services/auth-service",
+      "name": "Auth Service"
+    },
+    {
+      "path": "services/files-service",
+      "name": "Files Service"
+    },
+    {
+      "path": "services/messaging-service",
+      "name": "Messaging Service"
+    },
+    {
+      "path": "services/audit-service",
+      "name": "Audit Service"
+    },
+    {
+      "path": "client/qt-app",
+      "name": "Qt Client"
+    },
+    {
+      "path": "docs",
+      "name": "Documentation"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/.git": true,
+      "**/.DS_Store": true,
+      "**/node_modules": true,
+      "**/build": true,
+      "**/dist": true,
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/vcpkg_installed": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/build": true,
+      "**/dist": true,
+      "**/.venv": true,
+      "**/vcpkg_installed": true
+    },
+    "files.associations": {
+      "*.yaml": "yaml",
+      "*.yml": "yaml",
+      "Dockerfile*": "dockerfile",
+      "*.Dockerfile": "dockerfile",
+      "makefile": "makefile",
+      "Makefile": "makefile",
+      "*.md": "markdown"
+    },
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "[cpp]": {
+      "editor.tabSize": 4,
+      "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "[python]": {
+      "editor.tabSize": 4,
+      "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "[markdown]": {
+      "editor.wordWrap": "on",
+      "editor.quickSuggestions": {
+        "comments": "off",
+        "strings": "off",
+        "other": "off"
+      }
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "cmake.configureOnOpen": true,
+    "cmake.sourceDirectory": "${workspaceFolder:SecureCloud (Root)}",
+    "cmake.buildDirectory": "${workspaceFolder:SecureCloud (Root)}/build/${buildPreset}",
+    "cmake.useCMakePresets": "always",
+    "cmake.configureSettings": {
+      "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+    },
+    "docker.dockerComposeBuild": true,
+    "docker.dockerComposeDetached": true,
+    "yaml.schemas": {
+      "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json": [
+        "docker-compose*.yml",
+        "docker-compose*.yaml",
+        "**/compose/*.yml",
+        "**/compose/*.yaml"
+      ]
+    },
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
+    "terminal.integrated.profiles.windows": {
+      "MSYS2": {
+        "path": "C:\\msys64\\usr\\bin\\bash.exe",
+        "args": ["--login", "-i"],
+        "env": {
+          "MSYSTEM": "MINGW64",
+          "CHERE_INVOKING": "1"
+        }
+      }
+    },
+    "containers.composeBuild": true,
+    "containers.composeDetached": true,
+    "makefile.configurations": [
+      {
+        "makefile-tools.makePath": "${workspaceFolder}/Makefile",
+        "makefile-tools.makefilePath": "${workspaceFolder}/Makefile",
+        "makefile-tools.configurations": {
+          "default": {
+            "shell": "cmd.exe"
+          }
+        },
+        "name": "Unnamed configuration 1"
+      }
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-vscode.cpptools",
+      "ms-vscode.cmake-tools",
+      "twxs.cmake",
+      "ms-azuretools.vscode-docker",
+      "redhat.vscode-yaml",
+      "ms-python.python",
+      "ms-python.black-formatter",
+      "github.copilot",
+      "eamodio.gitlens",
+      "davidanson.vscode-markdownlint",
+      "yzhang.markdown-all-in-one",
+      "hediet.vscode-drawio",
+      "bierner.markdown-mermaid"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Gateway (GDB)",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder:SecureCloud (Root)}/build/dev/gateway/gateway",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder:Gateway (C++)}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "C:/msys64/ucrt64/bin/gdb.exe",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for gdb",
+            "text": "-enable-pretty-printing",
+            "ignoreFailures": true
+          }
+        ],
+        "preLaunchTask": "Build Gateway"
+      },
+      {
+        "name": "Auth Service (GDB)",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder:SecureCloud (Root)}/build/dev/services/auth-service/auth-service",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder:Auth Service}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "C:/msys64/ucrt64/bin/gdb.exe",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for gdb",
+            "text": "-enable-pretty-printing",
+            "ignoreFailures": true
+          }
+        ],
+        "preLaunchTask": "Build Auth Service"
+      },
+      {
+        "name": "Qt Client (GDB)",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder:SecureCloud (Root)}/build/dev/client/qt-app/MSF_Login",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder:Qt Client}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "C:/msys64/ucrt64/bin/gdb.exe",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for gdb",
+            "text": "-enable-pretty-printing",
+            "ignoreFailures": true
+          }
+        ],
+        "preLaunchTask": "Build Qt Client"
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "CMake: Configure",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["-B", "build", "--preset", "dev"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "build",
+        "problemMatcher": []
+      },
+      {
+        "label": "CMake: Build All",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["--build", "build/dev"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "problemMatcher": ["$gcc"],
+        "dependsOn": "CMake: Configure"
+      },
+      {
+        "label": "Build Gateway",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["--build", "build/dev", "--target", "gateway"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "build",
+        "problemMatcher": ["$gcc"]
+      },
+      {
+        "label": "Build Auth Service",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["--build", "build/dev", "--target", "auth-service"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "build",
+        "problemMatcher": ["$gcc"]
+      },
+      {
+        "label": "Build Qt Client",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["--build", "build/dev", "--target", "MSF_Login"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "build",
+        "problemMatcher": ["$gcc"]
+      },
+      {
+        "label": "Database: Start",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["--build", "build/dev", "--target", "db-up"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "none",
+        "problemMatcher": []
+      },
+      {
+        "label": "Database: Migrate",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["--build", "build/dev", "--target", "db-migrate"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "none",
+        "problemMatcher": []
+      },
+      {
+        "label": "Database: Stop",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["--build", "build/dev", "--target", "db-down"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "none",
+        "problemMatcher": []
+      },
+      {
+        "label": "Database: Adminer",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["--build", "build/dev", "--target", "db-adminer"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "none",
+        "problemMatcher": []
+      },
+      {
+        "label": "Docker: Up",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["--build", "build/dev", "--target", "docker-up"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "none",
+        "problemMatcher": []
+      },
+      {
+        "label": "Docker: Down",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["--build", "build/dev", "--target", "docker-down"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "none",
+        "problemMatcher": []
+      },
+      {
+        "label": "Docker: Status",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["--build", "build/dev", "--target", "docker-status"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "none",
+        "problemMatcher": []
+      },
+      {
+        "label": "Run Gateway",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["--build", "build/dev", "--target", "run-gateway"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "none",
+        "problemMatcher": []
+      },
+      {
+        "label": "Run Qt Client",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["--build", "build/dev", "--target", "run-client"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "none",
+        "problemMatcher": []
+      },
+      {
+        "label": "Show Available Targets",
+        "type": "shell",
+        "command": "cmake",
+        "args": ["--build", "build/dev", "--target", "help-targets"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "none",
+        "problemMatcher": []
+      }
+    ]
+  }
+}

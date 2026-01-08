@@ -1,5 +1,5 @@
 # Build stage
-FROM gcc:13 AS build
+FROM gcc:15 AS build
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \

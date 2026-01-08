@@ -1,6 +1,7 @@
 # Build stage
 FROM gcc:15 AS build
 
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     cmake \
     git \
@@ -13,10 +14,12 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /src
 
-COPY services/deploy-serrvice ./services/deploy-serrvice
+# Copy source
+COPY services/audit-service ./services/audit-service
 COPY libs ./libs
 
-WORKDIR /src/services/deploy-serrvice
+# Build
+WORKDIR /src/services/audit-service
 RUN cmake -B build -DCMAKE_BUILD_TYPE=Release
 RUN cmake --build build -j$(nproc)
 
@@ -28,16 +31,16 @@ RUN apt-get update && apt-get install -y \
     libboost-system1.83.0 \
     ca-certificates \
     curl \
-    docker.io \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY --from=build /src/services/deploy-serrvice/build/deploy-service /app/
-COPY services/deploy-serrvice/config /app/config
+# Copy binary and config
+COPY --from=build /src/services/audit-service/build/audit-service /app/
+COPY services/audit-service/config /app/config
 
 RUN mkdir -p /app/logs
 
-EXPOSE 8006
+EXPOSE 8002
 
-ENTRYPOINT ["/app/deploy-service"]
+ENTRYPOINT ["/app/audit-service"]

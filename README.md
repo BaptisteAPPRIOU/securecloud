@@ -78,26 +78,26 @@ Or add permanently to your PowerShell profile (`$PROFILE`).
 ### 1. Configure the project
 
 ```bash
-cmake -B build --preset dev
+cmake -B build/dev --preset dev
 ```
 
 ### 2. Build everything
 
 ```bash
-cmake --build build -j 16    # Use all CPU cores
+cmake --build build/dev -j 16    # Use all CPU cores
 ```
 
 ### 3. Start the database
 
 ```bash
-cmake --build build --target db-up
-cmake --build build --target db-migrate
+cmake --build build/dev --target db-up
+cmake --build build/dev --target db-migrate
 ```
 
 ### 4. Run a service
 
 ```bash
-cmake --build build --target run-gateway
+cmake --build build/dev --target run-gateway
 ```
 
 ---
@@ -120,18 +120,18 @@ Each subproject can be built independently using its own preset:
 ```bash
 # Gateway only
 cd gateway
-cmake -B build --preset gateway-dev
-cmake --build build
+cmake -B build/gateway-dev --preset gateway-dev
+cmake --build build/gateway-dev
 
 # Auth Service only
 cd services/auth-service
-cmake -B build --preset auth-dev
-cmake --build build
+cmake -B build/auth-dev --preset auth-dev
+cmake --build build/auth-dev
 
 # Qt Client only
 cd client/qt-app
-cmake -B build --preset client-dev
-cmake --build build
+cmake -B build/client-dev --preset client-dev
+cmake --build build/client-dev
 ```
 
 **Available service presets**:
@@ -161,42 +161,42 @@ as a slower fallback.
 ### Build Targets
 
 ```bash
-cmake --build build --target gateway        # Gateway
-cmake --build build --target auth-service   # Auth Service
-cmake --build build --target MSF_Login      # Qt Client
+cmake --build build/dev --target gateway        # Gateway
+cmake --build build/dev --target auth-service   # Auth Service
+cmake --build build/dev --target MSF_Login      # Qt Client
 ```
 
 ### Database Targets
 
 ```bash
-cmake --build build --target db-up          # Start PostgreSQL
-cmake --build build --target db-down        # Stop PostgreSQL
-cmake --build build --target db-migrate     # Run migrations
-cmake --build build --target db-reset       # Reset database
-cmake --build build --target db-adminer     # Start Adminer UI
-cmake --build build --target db-psql        # Interactive psql
+cmake --build build/dev --target db-up          # Start PostgreSQL
+cmake --build build/dev --target db-down        # Stop PostgreSQL
+cmake --build build/dev --target db-migrate     # Run migrations
+cmake --build build/dev --target db-reset       # Reset database
+cmake --build build/dev --target db-adminer     # Start Adminer UI
+cmake --build build/dev --target db-psql        # Interactive psql
 ```
 
 ### Docker Targets
 
 ```bash
-cmake --build build --target docker-up      # Start all services
-cmake --build build --target docker-down    # Stop all services
-cmake --build build --target docker-status  # Show status
+cmake --build build/dev --target docker-up      # Start all services
+cmake --build build/dev --target docker-down    # Stop all services
+cmake --build build/dev --target docker-status  # Show status
 ```
 
 ### Run Targets
 
 ```bash
-cmake --build build --target run-gateway    # Run Gateway
-cmake --build build --target run-auth       # Run Auth Service
-cmake --build build --target run-client     # Run Qt Client
+cmake --build build/dev --target run-gateway    # Run Gateway
+cmake --build build/dev --target run-auth       # Run Auth Service
+cmake --build build/dev --target run-client     # Run Qt Client
 ```
 
 ### Help
 
 ```bash
-cmake --build build --target help-targets   # Show all targets
+cmake --build build/dev --target help-targets   # Show all targets
 ```
 
 ## Project Structure
@@ -280,7 +280,7 @@ You're using the wrong toolchain (MINGW64 instead of UCRT64). Ensure:
 
 1. Use UCRT64 terminal, not MINGW64
 2. PATH has `C:\msys64\ucrt64\bin` **before** any mingw64 paths
-3. Clean rebuild: `rm -rf build && cmake -B build --preset dev`
+3. Clean rebuild: `rm -rf build && cmake -B build/dev --preset dev`
 
 ### Build is very slow (30+ minutes)
 
@@ -288,8 +288,8 @@ You're probably using MinGW Makefiles. Switch to Ninja:
 
 ```bash
 rm -rf build
-cmake -B build --preset dev          # Uses Ninja
-cmake --build build -j 16            # Parallel build
+cmake -B build/dev --preset dev          # Uses Ninja
+cmake --build build/dev -j 16            # Parallel build
 ```
 
 ### "Generator doesn't match"
@@ -298,7 +298,7 @@ Clean the build directory and reconfigure:
 
 ```bash
 rm -rf build
-cmake -B build --preset dev
+cmake -B build/dev --preset dev
 ```
 
 ### Qt not found
@@ -310,8 +310,8 @@ Ensure Qt is installed at `C:\Qt\6.8.1\mingw_64` or update `CMAKE_PREFIX_PATH` i
 Start the database first:
 
 ```bash
-cmake --build build --target db-up
-cmake --build build --target db-migrate
+cmake --build build/dev --target db-up
+cmake --build build/dev --target db-migrate
 ```
 
 ---

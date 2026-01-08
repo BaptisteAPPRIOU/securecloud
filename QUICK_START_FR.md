@@ -23,36 +23,36 @@
 
 ## En 3 Minutes
 
-### 1⃣ Configuration initiale
+### 1 Configuration initiale
 
 ```bash
-# Configurer le projet avec CMake (utilise Ninja par défaut)
-cmake -B build --preset dev
+# Configurer le projet avec CMake (utilise Ninja par defaut)
+cmake -B build/dev --preset dev
 ```
 
-### 2⃣ Lancer la base de données
+### 2 Lancer la base de donnees
 
 ```bash
-cmake --build build --target db-up
-cmake --build build --target db-migrate
+cmake --build build/dev --target db-up
+cmake --build build/dev --target db-migrate
 ```
 
-### 3⃣ Compiler le projet
+### 3 Compiler le projet
 
 ```bash
-# Compiler tout (utilise 16 cœurs CPU)
-cmake --build build -j 16
+# Compiler tout (utilise 16 coeurs CPU)
+cmake --build build/dev -j 16
 
-# Ou compiler un composant spécifique
-cmake --build build --target gateway
-cmake --build build --target auth-service
-cmake --build build --target MSF_Login
+# Ou compiler un composant specifique
+cmake --build build/dev --target gateway
+cmake --build build/dev --target auth-service
+cmake --build build/dev --target MSF_Login
 ```
 
-### 4⃣ Lancer un service
+### 4 Lancer un service
 
 ```bash
-cmake --build build --target run-gateway
+cmake --build build/dev --target run-gateway
 ```
 
 ---
@@ -75,20 +75,20 @@ cmake --build build --target run-gateway
 Chaque service peut être compilé indépendamment :
 
 ```bash
-# Depuis le dossier d'un service spécifique
+# Depuis le dossier d'un service specifique
 cd services/auth-service
-cmake -B build --preset auth-dev
-cmake --build build
+cmake -B build/auth-dev --preset auth-dev
+cmake --build build/auth-dev
 
 # Depuis le dossier Gateway
 cd gateway
-cmake -B build --preset gateway-dev
-cmake --build build
+cmake -B build/gateway-dev --preset gateway-dev
+cmake --build build/gateway-dev
 
 # Depuis le dossier Client Qt
 cd client/qt-app
-cmake -B build --preset client-dev
-cmake --build build
+cmake -B build/client-dev --preset client-dev
+cmake --build build/client-dev
 ```
 
 **Presets disponibles par service** :
@@ -103,13 +103,13 @@ cmake --build build
 
 ```bash
 # Configuration avec un preset
-cmake -B build --preset dev
+cmake -B build/dev --preset dev
 
-# Build avec parallélisation
-cmake --build build -j 16
+# Build avec parallelisation
+cmake --build build/dev -j 16
 
 # Tests
-ctest --test-dir build
+ctest --test-dir build/dev
 ```
 
 ---
@@ -119,42 +119,42 @@ ctest --test-dir build
 ### Voir toutes les commandes
 
 ```bash
-cmake --build build --target help-targets
+cmake --build build/dev --target help-targets
 ```
 
-### Base de données
+### Base de donnees
 
 ```bash
-cmake --build build --target db-up        # Démarrer PostgreSQL
-cmake --build build --target db-down      # Arrêter PostgreSQL
-cmake --build build --target db-migrate   # Exécuter les migrations
-cmake --build build --target db-reset     # Réinitialiser la DB
-cmake --build build --target db-adminer   # Lancer Adminer
-cmake --build build --target db-logs      # Voir les logs
-cmake --build build --target db-psql      # Session psql interactive
+cmake --build build/dev --target db-up        # Demarrer PostgreSQL
+cmake --build build/dev --target db-down      # Arreter PostgreSQL
+cmake --build build/dev --target db-migrate   # Executer les migrations
+cmake --build build/dev --target db-reset     # Reinitialiser la DB
+cmake --build build/dev --target db-adminer   # Lancer Adminer
+cmake --build build/dev --target db-logs      # Voir les logs
+cmake --build build/dev --target db-psql      # Session psql interactive
 ```
 
 ### Docker
 
 ```bash
-cmake --build build --target docker-up      # Démarrer tous les services
-cmake --build build --target docker-down    # Arrêter tous les services
-cmake --build build --target docker-status  # Voir le statut
-cmake --build build --target docker-logs    # Voir les logs
+cmake --build build/dev --target docker-up      # Demarrer tous les services
+cmake --build build/dev --target docker-down    # Arreter tous les services
+cmake --build build/dev --target docker-status  # Voir le statut
+cmake --build build/dev --target docker-logs    # Voir les logs
 ```
 
-### Exécution
+### Execution
 
 ```bash
-cmake --build build --target run-gateway  # Lancer la Gateway
-cmake --build build --target run-auth     # Lancer Auth Service
-cmake --build build --target run-client   # Lancer le Client Qt
+cmake --build build/dev --target run-gateway  # Lancer la Gateway
+cmake --build build/dev --target run-auth     # Lancer Auth Service
+cmake --build build/dev --target run-client   # Lancer le Client Qt
 ```
 
 ### Nettoyage
 
 ```bash
-cmake --build build --target clean-all    # Nettoyer build + volumes Docker
+cmake --build build/dev --target clean-all    # Nettoyer build + volumes Docker
 ```
 
 ---
@@ -164,7 +164,7 @@ cmake --build build --target clean-all    # Nettoyer build + volumes Docker
 ### Lancer Adminer
 
 ```bash
-cmake --build build --target db-adminer
+cmake --build build/dev --target db-adminer
 ```
 
 ### Ouvrir l'interface
@@ -221,7 +221,7 @@ Installez Ninja :
 pacman -S mingw-w64-ucrt-x86_64-ninja
 ```
 
-Ou utilisez le preset de repli : `cmake -B build --preset dev-makefiles`
+Ou utilisez le preset de repli : `cmake -B build/dev-makefiles --preset dev-makefiles`
 
 ### Erreurs "at_quick_exit / quick_exit / timespec_get"
 
@@ -229,7 +229,7 @@ Vous utilisez le mauvais environnement (MINGW64 au lieu de UCRT64). Vérifiez :
 
 1. Utilisez le terminal UCRT64, pas MINGW64
 2. Le PATH contient `C:\msys64\ucrt64\bin` en premier
-3. Nettoyez et reconfigurez : `rm -rf build && cmake -B build --preset dev`
+3. Nettoyez et reconfigurez : `rm -rf build && cmake -B build/dev --preset dev`
 
 ### Build très lent (30+ minutes)
 
@@ -237,17 +237,17 @@ Vous utilisez probablement MinGW Makefiles. Passez à Ninja :
 
 ```bash
 rm -rf build
-cmake -B build --preset dev          # Utilise Ninja
-cmake --build build -j 16            # Build parallèle
+cmake -B build/dev --preset dev          # Utilise Ninja
+cmake --build build/dev -j 16            # Build parallele
 ```
 
 ### "Generator doesn't match"
 
-Nettoyez le répertoire build :
+Nettoyez le repertoire build :
 
 ```bash
 rm -rf build
-cmake -B build --preset dev
+cmake -B build/dev --preset dev
 ```
 
 ---
@@ -286,40 +286,40 @@ cmake --workflow --preset release-build
 
 ---
 
-## Compilation spécifique
+## Compilation specifique
 
 ### Gateway uniquement
 
 ```bash
-cmake -B build --preset dev-gateway-only
-cmake --build build
+cmake -B build/dev-gateway-only --preset dev-gateway-only
+cmake --build build/dev-gateway-only
 ```
 
 ### Client Qt uniquement
 
 ```bash
-cmake -B build --preset dev-client-only
-cmake --build build
+cmake -B build/dev-client-only --preset dev-client-only
+cmake --build build/dev-client-only
 ```
 
 ---
 
-## Vérifier que tout fonctionne
+## Verifier que tout fonctionne
 
 ```bash
 # 1. Configurer et compiler
-cmake -B build --preset dev
-cmake --build build
+cmake -B build/dev --preset dev
+cmake --build build/dev
 
-# 2. Vérifier PostgreSQL
-cmake --build build --target docker-status
+# 2. Verifier PostgreSQL
+cmake --build build/dev --target docker-status
 
 # 3. Lancer la DB et migrer
-cmake --build build --target db-up
-cmake --build build --target db-migrate
+cmake --build build/dev --target db-up
+cmake --build build/dev --target db-migrate
 
 # 4. Ouvrir psql
-cmake --build build --target db-psql
+cmake --build build/dev --target db-psql
 
 # Dans psql:
 \dt auth.*
@@ -335,18 +335,19 @@ cmake --build build --target db-psql
 
 ```text
 SecureCloud/
-├── CMakeLists.txt          # Configuration racine CMake
-├── CMakePresets.json       # Presets de configuration
-├── build/                  # Dossier de build (créé par CMake)
-│   └── dev/               # Build pour le preset "dev"
-├── gateway/               # Service Gateway (C++)
-├── services/
-│   ├── auth-service/     # Service d'authentification
-│   ├── files-service/    # Service de fichiers
-│   ├── messaging-service/# Service de messagerie
-│   └── audit-service/    # Service d'audit
-├── client/qt-app/        # Application Qt
-└── ops/compose/          # Configuration Docker Compose
++-- CMakeLists.txt          # Configuration racine CMake
++-- CMakePresets.json       # Presets de configuration
++-- build/                  # Dossier de build (cree par CMake)
+|   +-- dev/                # Build pour le preset "dev"
+|   +-- release/            # Build pour le preset "release"
++-- gateway/                # Service Gateway (C++)
++-- services/
+|   +-- auth-service/       # Service d'authentification
+|   +-- files-service/      # Service de fichiers
+|   +-- messaging-service/  # Service de messagerie
+|   +-- audit-service/      # Service d'audit
++-- client/qt-app/          # Application Qt
++-- ops/compose/            # Configuration Docker Compose
 ```
 
 ---
@@ -361,13 +362,13 @@ Architecture : [docs/architecture.md](docs/architecture.md)
 
 ## Migration depuis Makefile
 
-| Ancien (make)       | Nouveau (CMake)                             |
-| ------------------- | ------------------------------------------- |
-| `make db-up`        | `cmake --build build --target db-up`        |
-| `make db-migrate`   | `cmake --build build --target db-migrate`   |
-| `make build-gateway`| `cmake --build build --target gateway`      |
-| `make build-auth`   | `cmake --build build --target auth-service` |
-| `make build-client` | `cmake --build build --target MSF_Login`    |
-| `make run-gateway`  | `cmake --build build --target run-gateway`  |
-| `make clean`        | `cmake --build build --target clean`        |
-| `make status`       | `cmake --build build --target docker-status`|
+| Ancien (make)       | Nouveau (CMake)                                 |
+| ------------------- | ----------------------------------------------- |
+| `make db-up`        | `cmake --build build/dev --target db-up`        |
+| `make db-migrate`   | `cmake --build build/dev --target db-migrate`   |
+| `make build-gateway`| `cmake --build build/dev --target gateway`      |
+| `make build-auth`   | `cmake --build build/dev --target auth-service` |
+| `make build-client` | `cmake --build build/dev --target MSF_Login`    |
+| `make run-gateway`  | `cmake --build build/dev --target run-gateway`  |
+| `make clean`        | `cmake --build build/dev --target clean`        |
+| `make status`       | `cmake --build build/dev --target docker-status`|

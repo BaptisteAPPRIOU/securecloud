@@ -186,8 +186,7 @@
       {
         "label": "Build Qt Client",
         "type": "shell",
-        "command": "make",
-        "args": ["build-client"],
+        "command": "cmake --build build/dev --target MSF_Login",
         "options": {
           "cwd": "${workspaceFolder:SecureCloud (Root)}"
         },
@@ -230,8 +229,7 @@
       {
         "label": "Run All Services",
         "type": "shell",
-        "command": "make",
-        "args": ["up"],
+        "command": "cmake --build build/dev --target docker-up",
         "options": {
           "cwd": "${workspaceFolder:SecureCloud (Root)}"
         },

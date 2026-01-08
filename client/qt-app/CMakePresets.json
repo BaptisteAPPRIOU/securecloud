@@ -14,7 +14,7 @@
             "displayName": "Qt Client Development",
             "description": "Development build for Qt Client using root presets",
             "inherits": "dev-client-only",
-            "binaryDir": "${sourceDir}/build"
+            "binaryDir": "${sourceDir}/build/${presetName}"
         }
     ]
 }

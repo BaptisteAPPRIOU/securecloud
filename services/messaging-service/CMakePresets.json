@@ -14,7 +14,7 @@
             "displayName": "Messaging Service Development",
             "description": "Development build for Messaging Service using root presets",
             "inherits": "dev",
-            "binaryDir": "${sourceDir}/build",
+            "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "BUILD_GATEWAY": "OFF",
                 "BUILD_AUTH_SERVICE": "OFF",

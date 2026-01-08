@@ -14,7 +14,7 @@
             "displayName": "Gateway Development",
             "description": "Development build for Gateway using root presets",
             "inherits": "dev-gateway-only",
-            "binaryDir": "${sourceDir}/build"
+            "binaryDir": "${sourceDir}/build/${presetName}"
         }
     ]
 }

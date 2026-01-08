@@ -132,26 +132,26 @@ pacman -S mingw-w64-x86_64-spdlog mingw-w64-x86_64-yaml-cpp
 
 ### Build Instructions
 
-**IMPORTANT**: Always use MSYS2 MINGW64 terminal:
+**IMPORTANT**: Always use MSYS2 UCRT64 terminal (not MINGW64):
 
 ```bash
 # Clone repository
 cd /c/Users/tslem/Desktop/Laplateforme/bachelore3/secureCloud/gateway
 
-# Configure (from MINGW64 terminal)
-cmake --preset=default
+# Configure (from UCRT64 terminal)
+cmake -B build/gateway-dev --preset gateway-dev
 
 # Build
-cmake --build build --config Release -j8
+cmake --build build/gateway-dev -j8
 
-# Build output: build/gateway.exe (81.5 MB with debug symbols)
+# Build output: build/gateway-dev/gateway.exe
 ```
 
 ### Run Gateway
 
 ```bash
 # Ensure config/gateway.dev.yaml exists
-./build/gateway.exe config/gateway.dev.yaml
+./build/gateway-dev/gateway.exe config/gateway.dev.yaml
 
 # Gateway listens on:
 # - :8443 (HTTPS with TLS)
@@ -177,9 +177,8 @@ curl http://localhost:9090/metrics
 ### Run Test Suite
 
 ```bash
-# From MSYS2 MINGW64 terminal
-cd build
-ctest --output-on-failure
+# From MSYS2 UCRT64 terminal
+ctest --test-dir build/gateway-dev --output-on-failure
 
 # Current Status: 28/33 tests passing (85% coverage)
 # Known failures: 5 config tests (pre-existing issues)

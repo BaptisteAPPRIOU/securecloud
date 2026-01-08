@@ -14,7 +14,7 @@
             "displayName": "Auth Service Development",
             "description": "Development build for Auth Service using root presets",
             "inherits": "dev-auth-only",
-            "binaryDir": "${sourceDir}/build"
+            "binaryDir": "${sourceDir}/build/${presetName}"
         }
     ]
 }

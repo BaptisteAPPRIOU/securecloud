@@ -50,21 +50,21 @@ Pour rendre permanent, ajoutez à votre profil PowerShell (`$PROFILE`).
 ### 1. Configurer le projet
 
 ```bash
-cmake -B build --preset dev
+cmake -B build/dev --preset dev
 ```
 
 ### 2. Lancer PostgreSQL
 
 ```bash
-cmake --build build --target db-up
+cmake --build build/dev --target db-up
 ```
 
 PostgreSQL sera accessible sur `localhost:15432`
 
-### 3. Exécuter les migrations
+### 3. Executer les migrations
 
 ```bash
-cmake --build build --target db-migrate
+cmake --build build/dev --target db-migrate
 ```
 
 ### Si erreur sur db-migrate
@@ -93,14 +93,12 @@ docker compose --env-file $ENV_FILE -f $COMPOSE run --rm flyway-files
 docker compose --env-file $ENV_FILE -f $COMPOSE run --rm flyway-audit
 ```
 
-## Interface Web de la Base de Données (Adminer)
+## Interface Web de la Base de Donnees (Adminer)
 
 ### Lancer Adminer
 
 ```bash
-make db-adminer
-# ou
-mingw32-make db-adminer
+cmake --build build/dev --target db-adminer
 ```
 
 ### Accéder à l'interface
@@ -119,22 +117,22 @@ Ouvrez votre navigateur : **<http://localhost:8080>**
 
 ## Compilation des Services
 
-### Compilation complète (recommandé)
+### Compilation complete (recommande)
 
 ```bash
 # Configure avec Ninja (rapide)
-cmake -B build --preset dev
+cmake -B build/dev --preset dev
 
-# Compile tout avec 16 cœurs CPU (~2 minutes)
-cmake --build build -j 16
+# Compile tout avec 16 coeurs CPU (~2 minutes)
+cmake --build build/dev -j 16
 ```
 
-### Composants spécifiques
+### Composants specifiques
 
 ```bash
-cmake --build build --target gateway        # Gateway
-cmake --build build --target auth-service   # Auth Service
-cmake --build build --target MSF_Login      # Client Qt
+cmake --build build/dev --target gateway        # Gateway
+cmake --build build/dev --target auth-service   # Auth Service
+cmake --build build/dev --target MSF_Login      # Client Qt
 ```
 
 ### Presets disponibles
@@ -148,38 +146,38 @@ cmake --build build --target MSF_Login      # Client Qt
 | `dev-client-only`  | Client Qt uniquement                       |
 | `release`          | Build optimisé (Release)                   |
 
-### Builds Indépendants
+### Builds Independants
 
-Chaque sous-projet peut être compilé séparément avec son propre preset :
+Chaque sous-projet peut etre compile separement avec son propre preset :
 
 ```bash
 # Gateway uniquement
 cd gateway
-cmake -B build --preset gateway-dev
-cmake --build build
+cmake -B build/gateway-dev --preset gateway-dev
+cmake --build build/gateway-dev
 
 # Auth Service uniquement
 cd services/auth-service
-cmake -B build --preset auth-dev
-cmake --build build
+cmake -B build/auth-dev --preset auth-dev
+cmake --build build/auth-dev
 
 # Qt Client uniquement
 cd client/qt-app
-cmake -B build --preset client-dev
-cmake --build build
+cmake -B build/client-dev --preset client-dev
+cmake --build build/client-dev
 ```
 
-##  Exécution des Tests
+##  Execution des Tests
 
 ```bash
-# Exécuter tous les tests
-ctest --test-dir build --output-on-failure
+# Executer tous les tests
+ctest --test-dir build/dev --output-on-failure
 
 # Tests Gateway uniquement
-ctest --test-dir build -R gateway
+ctest --test-dir build/dev -R gateway
 
-# Tests avec détails
-ctest --test-dir build -V
+# Tests avec details
+ctest --test-dir build/dev -V
 ```
 
 ##  Utilisation avec Docker Compose
@@ -207,18 +205,18 @@ docker compose down
 
 | Commande | Description |
 | ---------- | ------------- |
-| `cmake -B build --preset dev` | Configure le projet |
-| `cmake --build build -j 16` | Compile tout (parallèle) |
-| `cmake --build build --target help-targets` | Liste toutes les cibles |
-| `cmake --build build --target db-up` | Lance PostgreSQL |
-| `cmake --build build --target db-down` | Arrête PostgreSQL |
-| `cmake --build build --target db-migrate` | Exécute les migrations |
-| `cmake --build build --target db-reset` | Réinitialise la DB |
-| `cmake --build build --target db-adminer` | Lance Adminer |
-| `cmake --build build --target db-psql` | Connexion psql interactive |
-| `cmake --build build --target run-gateway` | Lance la Gateway |
-| `cmake --build build --target run-client` | Lance le Client Qt |
-| `ctest --test-dir build` | Exécute les tests |
+| `cmake -B build/dev --preset dev` | Configure le projet |
+| `cmake --build build/dev -j 16` | Compile tout (parallele) |
+| `cmake --build build/dev --target help-targets` | Liste toutes les cibles |
+| `cmake --build build/dev --target db-up` | Lance PostgreSQL |
+| `cmake --build build/dev --target db-down` | Arrete PostgreSQL |
+| `cmake --build build/dev --target db-migrate` | Execute les migrations |
+| `cmake --build build/dev --target db-reset` | Reinitialise la DB |
+| `cmake --build build/dev --target db-adminer` | Lance Adminer |
+| `cmake --build build/dev --target db-psql` | Connexion psql interactive |
+| `cmake --build build/dev --target run-gateway` | Lance la Gateway |
+| `cmake --build build/dev --target run-client` | Lance le Client Qt |
+| `ctest --test-dir build/dev` | Execute les tests |
 
 ## Configuration (.env)
 
@@ -265,39 +263,39 @@ Vous utilisez le mauvais environnement (MINGW64 au lieu de UCRT64). Vérifiez :
 
 ```bash
 rm -rf build
-cmake -B build --preset dev
+cmake -B build/dev --preset dev
 ```
 
-### Build très lent (30+ minutes)
+### Build tres lent (30+ minutes)
 
-Vous utilisez probablement MinGW Makefiles. Passez à Ninja :
+Vous utilisez probablement MinGW Makefiles. Passez a Ninja :
 
 ```bash
 rm -rf build
-cmake -B build --preset dev          # Utilise Ninja
-cmake --build build -j 16            # Build parallèle (~2 min)
+cmake -B build/dev --preset dev          # Utilise Ninja
+cmake --build build/dev -j 16            # Build parallele (~2 min)
 ```
 
 ### "Generator doesn't match"
 
-Nettoyez le répertoire build :
+Nettoyez le repertoire build :
 
 ```bash
 rm -rf build
-cmake -B build --preset dev
+cmake -B build/dev --preset dev
 ```
 
-### PostgreSQL ne démarre pas
+### PostgreSQL ne demarre pas
 
 ```bash
-# Vérifier les logs
-cmake --build build --target db-logs
+# Verifier les logs
+cmake --build build/dev --target db-logs
 
-# Vérifier que Docker est lancé
+# Verifier que Docker est lance
 docker ps
 
-# Réinitialiser
-cmake --build build --target db-reset
+# Reinitialiser
+cmake --build build/dev --target db-reset
 ```
 
 ### Qt non trouvé

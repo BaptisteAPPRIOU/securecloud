@@ -1,11 +1,11 @@
 # ---------- build ----------
-FROM ubuntu:24.04 AS build
-RUN apt-get update && apt-get install -y build-essential cmake git ca-certificates && rm -rf /var/lib/apt/lists/*
+FROM gcc:15 AS build
+RUN apt-get update && apt-get install -y cmake git ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY . .
 RUN ./tools/vcpkg/bootstrap-vcpkg.sh
 RUN cmake -S gateway -B build -DCMAKE_BUILD_TYPE=Release \
--DCMAKE_TOOLCHAIN_FILE=/src/tools/vcpkg/scripts/buildsystems/vcpkg.cmake
+  -DCMAKE_TOOLCHAIN_FILE=/src/tools/vcpkg/scripts/buildsystems/vcpkg.cmake
 RUN cmake --build build -j
 
 

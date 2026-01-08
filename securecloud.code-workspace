@@ -102,7 +102,19 @@
           "CHERE_INVOKING": "1"
         }
       }
-    }
+    },
+    "makefile.configurations": [
+      {
+        "makefile-tools.makePath": "${workspaceFolder}/Makefile",
+        "makefile-tools.makefilePath": "${workspaceFolder}/Makefile",
+        "makefile-tools.configurations": {
+          "default": {
+            "shell": "cmd.exe"
+          }
+        },
+        "name": "Unnamed configuration 1"
+      }
+    ]
   },
   "extensions": {
     "recommendations": [
@@ -171,7 +183,7 @@
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "Build Gateway",
+        "label": "Build All",
         "type": "shell",
         "command": "cmake --build build/dev",
         "options": {
@@ -181,6 +193,26 @@
           "kind": "build",
           "isDefault": true
         },
+        "problemMatcher": ["$gcc"]
+      },
+      {
+        "label": "Build Gateway",
+        "type": "shell",
+        "command": "cmake --build build/dev --target gateway",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "build",
+        "problemMatcher": ["$gcc"]
+      },
+      {
+        "label": "Build Auth Service",
+        "type": "shell",
+        "command": "cmake --build build/dev --target auth-service",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "build",
         "problemMatcher": ["$gcc"]
       },
       {
@@ -227,7 +259,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Run All Services",
+        "label": "Run All Services (Docker)",
         "type": "shell",
         "command": "cmake --build build/dev --target docker-up",
         "options": {
@@ -235,6 +267,97 @@
         },
         "group": "none",
         "problemMatcher": []
+      },
+      {
+        "label": "Start Database",
+        "type": "shell",
+        "command": "cmake --build build/dev --target db-up; cmake --build build/dev --target db-migrate",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}",
+          "shell": {
+            "executable": "powershell.exe",
+            "args": ["-NoProfile", "-Command"]
+          }
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Run Gateway",
+        "type": "shell",
+        "command": ".\\gateway\\run-dev.ps1",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}",
+          "shell": {
+            "executable": "powershell.exe",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"]
+          }
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always",
+          "panel": "dedicated",
+          "group": "services"
+        }
+      },
+      {
+        "label": "Run Auth Service",
+        "type": "shell",
+        "command": ".\\services\\auth-service\\run-dev.ps1",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}",
+          "shell": {
+            "executable": "powershell.exe",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"]
+          }
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always",
+          "panel": "dedicated",
+          "group": "services"
+        }
+      },
+      {
+        "label": "Run Qt Client",
+        "type": "shell",
+        "command": ".\\client\\qt-app\\run-dev.ps1",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}",
+          "shell": {
+            "executable": "powershell.exe",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"]
+          }
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always",
+          "panel": "dedicated",
+          "group": "client"
+        }
+      },
+      {
+        "label": "Start All Services",
+        "dependsOn": ["Run Gateway", "Run Auth Service"],
+        "dependsOrder": "parallel",
+        "problemMatcher": [],
+        "group": "none"
+      },
+      {
+        "label": "Start Full Stack",
+        "dependsOn": ["Run Gateway", "Run Auth Service", "Run Qt Client"],
+        "dependsOrder": "parallel",
+        "problemMatcher": [],
+        "group": "none"
+      },
+      {
+        "label": "Start Dev Environment",
+        "dependsOn": ["Start Database", "Start All Services"],
+        "dependsOrder": "sequence",
+        "problemMatcher": [],
+        "group": "none"
       }
     ]
   }

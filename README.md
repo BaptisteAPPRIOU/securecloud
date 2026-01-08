@@ -68,11 +68,12 @@ Or add permanently to your PowerShell profile (`$PROFILE`).
 
 ## Building the Project
 
-> **⚠️ IMPORTANT for VS Code Users**: When using the CMake extension, make sure to:
-> 1. Open the workspace file: `securecloud.code-workspace`
-> 2. Select **"SecureCloud (Root)"** folder in the status bar when configuring
-> 3. This ensures CMake finds the presets in the root [CMakePresets.json](CMakePresets.json)
-> 4. Individual folders (Gateway, Auth Service, etc.) have their own local presets
+** IMPORTANT for VS Code Users**: When using the CMake extension, make sure to:
+
+1. Open the workspace file: `securecloud.code-workspace`
+2. Select **"SecureCloud (Root)"** folder in the status bar when configuring
+3. This ensures CMake finds the presets in the root [CMakePresets.json](CMakePresets.json)
+4. Individual folders (Gateway, Auth Service, etc.) have their own local presets
 
 ### 1. Configure the project
 

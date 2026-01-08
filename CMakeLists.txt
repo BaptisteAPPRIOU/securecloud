@@ -2,10 +2,10 @@
 # SecureCloud - Root CMakeLists.txt
 # =============================================================================
 # Usage:
-#   cmake -B build -S . --preset dev
-#   cmake --build build
-#   cmake --build build --target db-up
-#   cmake --build build --target help-targets
+#   cmake --preset dev                        # Configure (outputs to build/dev/)
+#   cmake --build build/dev                   # Build all
+#   cmake --build build/dev --target db-up    # Start database
+#   cmake --build build/dev --target help-targets
 # =============================================================================
 cmake_minimum_required(VERSION 3.24)
 

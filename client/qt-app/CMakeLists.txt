@@ -6,8 +6,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 6.2 COMPONENTS Widgets REQUIRED)
-# Qt5 : find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(Qt6 6.2 COMPONENTS Widgets Network REQUIRED)
+
 
 add_executable(${PROJECT_NAME}
     src/main.cpp
@@ -19,7 +19,7 @@ add_executable(${PROJECT_NAME}
     src/forgotpage.h src/forgotpage.cpp src/forgotpage.ui
 )
 
-target_link_libraries(${PROJECT_NAME} Qt6::Widgets) # ou Qt5::Widgets
+target_link_libraries(${PROJECT_NAME} Qt6::Widgets Qt6::Network)
 
 # --- Tests (optional) -------------------------------------------------
 option(BUILD_TESTS "Build unit tests" ON)

@@ -73,10 +73,15 @@
     },
     "[markdown]": {
       "editor.wordWrap": "on",
-      "editor.quickSuggestions": false
+      "editor.quickSuggestions": {
+        "comments": "off",
+        "strings": "off",
+        "other": "off"
+      }
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.configureOnOpen": false,
+    "cmake.useCMakePresets": "always",
     "docker.dockerComposeBuild": true,
     "docker.dockerComposeDetached": true,
     "yaml.schemas": {
@@ -130,7 +135,7 @@
         "environment": [],
         "externalConsole": false,
         "MIMode": "gdb",
-        "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe",
+        "miDebuggerPath": "C:/msys64/ucrt64/bin/gdb.exe",
         "setupCommands": [
           {
             "description": "Enable pretty-printing for gdb",
@@ -151,7 +156,7 @@
         "environment": [],
         "externalConsole": false,
         "MIMode": "gdb",
-        "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe"
+        "miDebuggerPath": "C:/msys64/ucrt64/bin/gdb.exe"
       },
       {
         "name": "Docker: Gateway",
@@ -168,9 +173,9 @@
       {
         "label": "Build Gateway",
         "type": "shell",
-        "command": "cmake --build build",
+        "command": "cmake --build build/dev",
         "options": {
-          "cwd": "${workspaceFolder:Gateway (C++)}"
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
         },
         "group": {
           "kind": "build",

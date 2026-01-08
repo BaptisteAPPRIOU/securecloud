@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-find_package(Qt6 COMPONENTS Test Widgets REQUIRED)
+find_package(Qt6 COMPONENTS Test Widgets Network REQUIRED)
 
 # Test: LandingPage
 add_executable(test_landing
@@ -17,7 +17,7 @@ add_executable(test_login
     ../src/loginpage.cpp
     ../src/loginpage.ui
 )
-target_link_libraries(test_login PRIVATE Qt6::Test Qt6::Widgets)
+target_link_libraries(test_login PRIVATE Qt6::Test Qt6::Widgets Qt6::Network)
 add_test(NAME test_login COMMAND test_login)
 
 # Test: ThemeManager

@@ -130,12 +130,6 @@ pacman -S mingw-w64-x86_64-boost mingw-w64-x86_64-openssl
 pacman -S mingw-w64-x86_64-spdlog mingw-w64-x86_64-yaml-cpp
 ```
 
-**Or use vcpkg** (alternative):
-
-```bash
-vcpkg install boost-asio boost-beast openssl spdlog yaml-cpp jwt-cpp prometheus-cpp gtest
-```
-
 ### Build Instructions
 
 **IMPORTANT**: Always use MSYS2 MINGW64 terminal:
@@ -308,7 +302,7 @@ See `config/gateway.dev.yaml` for complete example.
 - **CMake**: 3.24+ with presets (`CMakePresets.json`)
 - **Compiler**: GCC 13+ (MSYS2 MinGW64), MSVC 19.30+ (Windows), Clang 15+ (optional)
 - **Build Generator**: Ninja (fast parallel builds)
-- **Package Manager**: vcpkg integration
+- **Package Manager**: MSYS2 pacman (UCRT64)
 
 ### Code Structure
 
@@ -349,7 +343,6 @@ gateway/
 │
 ├── CMakeLists.txt       # Root build config
 ├── CMakePresets.json    # Build presets
-├── vcpkg.json          # Dependencies
 └── README.md           # This file
 ```
 
@@ -375,8 +368,8 @@ pacman -S mingw-w64-x86_64-boost mingw-w64-x86_64-openssl
 **Issue**: Linking errors with Prometheus-cpp
 
 ```bash
-# Solution: Use vcpkg for prometheus-cpp
-vcpkg install prometheus-cpp
+# Solution: Install via MSYS2
+pacman -S mingw-w64-ucrt-x86_64-prometheus-cpp
 ```
 
 ### Runtime Issues

@@ -11,7 +11,7 @@
 
 ---
 
-## ⚠️ Configuration VS Code
+## Configuration VS Code
 
 **Pour les utilisateurs de VS Code** : Lors de l'utilisation de l'extension CMake :
 1. Ouvrez le fichier workspace : `securecloud.code-workspace`

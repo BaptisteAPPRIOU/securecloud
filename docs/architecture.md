@@ -56,7 +56,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
             │ HTTPS (8443)                 │
             │ HTTP  (8080)                 │
             │                              │
-┌────────────────────────────────────────────────────────────────┐
+┌───────────▼──────────────────────────────▼───────────────────────┐
 │                      Gateway Layer                                │
 │  ┌─────────────────────────────────────────────────────────┐    │
 │  │              SecureCloud Gateway (:8080/:8443)          │    │
@@ -71,7 +71,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
            │ HTTP       │ HTTP       │ HTTP       │ HTTP
            │ /auth/*    │ /files/*   │ /msg/*     │ /audit/*
            │            │            │            │
-┌──────────────────────────────────────────────────────────────┐
+┌──────────▼────────────▼────────────▼────────────▼────────────────┐
 │                    Microservices Layer                            │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
 │  │   Auth   │  │  Files   │  │Messaging │  │  Audit   │        │
@@ -84,7 +84,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
         │ SQL         │ SQL         │ SQL         │ SQL
         └─────────────┴─────────────┴─────────────┘
                       │
-┌──────────────────────────────────────────────────────────────────┐
+┌─────────────────────▼─────────────────────────────────────────────┐
 │                      Data Layer                                    │
 │  ┌──────────────────────────────────────────────────────────┐    │
 │  │           PostgreSQL 16 (:15432)                         │    │
@@ -134,7 +134,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
        │ 1. POST /auth/login
        │    Body: {email, password}
        │
-       
+       ▼
 ┌──────────────────────────────────────────────┐
 │           Gateway (:8080)                    │
 │  ┌────────────────────────────────────┐     │
@@ -147,7 +147,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
        │
        │ 2. Proxy to auth-service:8001
        │
-       
+       ▼
 ┌──────────────────────────────────────────────┐
 │        Auth Service (:8001)                  │
 │  ┌────────────────────────────────────┐     │
@@ -161,7 +161,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
        │
        │ 3. Return JWT tokens
        │
-       
+       ▼
 ┌──────────────────────────────────────────────┐
 │           Gateway (:8080)                    │
 │  ┌────────────────────────────────────┐     │
@@ -174,7 +174,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
        │
        │ 4. Response: {access_token, refresh_token, expires_in}
        │
-       
+       ▼
 ┌──────────────┐
 │  Qt Client   │ → Store JWT in memory
 └──────────────┘
@@ -191,7 +191,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
        │    Headers: Authorization: Bearer <JWT>
        │    Body: multipart/form-data
        │
-       
+       ▼
 ┌──────────────────────────────────────────────┐
 │           Gateway (:8080)                    │
 │  ┌────────────────────────────────────┐     │
@@ -214,7 +214,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
        │ 2. Proxy to files-service:8003
        │    Headers: X-User-ID, X-Tenant-ID, X-Request-ID
        │
-       
+       ▼
 ┌──────────────────────────────────────────────┐
 │        Files Service (:8003)                 │
 │  ┌────────────────────────────────────┐     │
@@ -232,7 +232,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
        │
        │ 3. Return file metadata
        │
-       
+       ▼
 ┌──────────────────────────────────────────────┐
 │           Gateway (:8080)                    │
 │  ┌────────────────────────────────────┐     │
@@ -243,7 +243,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
        │
        │ 4. Response: {file_id, size, upload_timestamp}
        │
-       
+       ▼
 ┌──────────────┐
 │  Qt Client   │
 └──────────────┘
@@ -261,7 +261,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
        │    Upgrade: websocket
        │    Authorization: Bearer <JWT>
        │
-       
+       ▼
 ┌──────────────────────────────────────────────┐
 │           Gateway (:8080)                    │
 │  ┌────────────────────────────────────┐     │
@@ -274,7 +274,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
        │
        │ 2. WebSocket connection established
        │
-       
+       ▼
 ┌──────────────────────────────────────────────┐
 │      Messaging Service (:8004)               │
 │  ┌────────────────────────────────────┐     │
@@ -290,7 +290,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
        │
        │ 3. Bidirectional message flow
        │
-       
+       ▼
 ┌──────────────┐
 │  Qt Client   │ → Real-time chat UI updates
 └──────────────┘

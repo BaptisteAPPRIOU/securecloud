@@ -11,6 +11,8 @@
 #include <fstream>
 #include <algorithm>
 #include <cctype>
+#include <string>
+#include <vector>
 
 using namespace gateway;
 
@@ -31,15 +33,89 @@ spdlog::level::level_enum parse_log_level(const std::string& level) {
     return spdlog::level::info; // Default
 }
 
-int main() {
+// Parse command line arguments
+struct CommandLineArgs {
+    std::string config_path;
+    std::string environment = "dev";
+    bool help = false;
+};
+
+CommandLineArgs parse_args(int argc, char* argv[]) {
+    CommandLineArgs args;
+    
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        
+        if (arg == "--help" || arg == "-h") {
+            args.help = true;
+        } else if ((arg == "--config" || arg == "-c") && i + 1 < argc) {
+            args.config_path = argv[++i];
+        } else if (arg == "--prod") {
+            args.environment = "prod";
+        } else if (arg == "--dev") {
+            args.environment = "dev";
+        }
+    }
+    
+    return args;
+}
+
+void print_usage(const char* program) {
+    spdlog::info("Usage: {} [options]", program);
+    spdlog::info("Options:");
+    spdlog::info("  -c, --config <path>    Path to gateway config YAML");
+    spdlog::info("  --dev                  Use development environment (default)");
+    spdlog::info("  --prod                 Use production environment");
+    spdlog::info("  -h, --help             Show this help message");
+    spdlog::info("");
+    spdlog::info("Environment variables must be set before running.");
+    spdlog::info("Use the run-dev.ps1 script for local development.");
+}
+
+int main(int argc, char* argv[]) {
+    // Parse command line arguments
+    CommandLineArgs args = parse_args(argc, argv);
+    
+    if (args.help) {
+        print_usage(argv[0]);
+        return 0;
+    }
+    
+    // Determine config file path
+    std::string config_path;
+    if (!args.config_path.empty()) {
+        config_path = args.config_path;
+    } else {
+        // Search for config file in standard locations
+        std::vector<std::string> search_paths = {
+            "config/gateway." + args.environment + ".yaml",
+            "config/gateway.dev.yaml",
+            "../config/gateway." + args.environment + ".yaml",
+            "gateway/config/gateway." + args.environment + ".yaml"
+        };
+        
+        for (const auto& path : search_paths) {
+            std::ifstream test(path);
+            if (test.good()) {
+                config_path = path;
+                break;
+            }
+        }
+        
+        if (config_path.empty()) {
+            config_path = "config/gateway.dev.yaml";
+        }
+    }
+    
     // Load complete gateway configuration
     GatewayConfig config;
     
     try {
-        config = load_gateway_config("config/gateway.dev.yaml", "dev");
+        config = load_gateway_config(config_path, args.environment);
     } catch (const std::exception& e) {
         spdlog::critical("Failed to load gateway configuration: {}", e.what());
         spdlog::critical("Please check your configuration file and environment variables.");
+        spdlog::critical("Tip: Use run-dev.ps1 to load environment variables automatically.");
         return EXIT_FAILURE;
     }
     

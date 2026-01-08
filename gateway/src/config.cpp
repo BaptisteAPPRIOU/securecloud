@@ -6,6 +6,7 @@
 #include <cctype>
 #include <unordered_map>
 #include <stdexcept>
+#include <cstdlib>
 
 namespace gateway {
 

@@ -239,8 +239,11 @@ void HttpServer::start() {
         worker_threads_.emplace_back([this] { worker_thread_fn(); });
     }
 
-    spdlog::info("HttpServer listening on {}:{} with {} worker threads",
-                 config_.host, config_.port, config_.thread_pool_size);
+    spdlog::info("=== SecureCloud Gateway RUNNING ===");
+    spdlog::info("Listening on http://{}:{}", config_.host, config_.port);
+    spdlog::info("Worker threads: {}", config_.thread_pool_size);
+    spdlog::info("Ready to handle requests...");
+    spdlog::info("=====================================");
 
     // Accept loop
     while (running_ && !should_exit) {

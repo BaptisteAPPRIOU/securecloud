@@ -116,9 +116,13 @@ struct GatewayConfig {
  * Parses all sections: server, tls, routing, upstreams, security, observability.
  * Falls back to defaults if file not found or sections missing.
  * 
+ * Environment variables referenced as ${VAR_NAME} in the YAML are expanded.
+ * Make sure to set required environment variables before calling this function.
+ * 
  * @param path Path to YAML config file (default: config/gateway.dev.yaml)
  * @param env Environment name (dev/test/prod) - can load env-specific files
  * @return Complete gateway configuration
+ * @throws std::runtime_error if required environment variables are not set
  */
 GatewayConfig load_gateway_config(
     const std::string& path = "config/gateway.dev.yaml",

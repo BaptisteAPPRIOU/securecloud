@@ -33,7 +33,7 @@ upstreams:
   auth:
     kind: http
     transport: tcp  # TCP for Windows/Docker development (use 'uds' for Linux production)
-    address: "localhost:8081"  # Auth-service TCP listener
+    address: "localhost:8001"  # Auth-service TCP listener
     # For Linux production with UDS, use:
     #   transport: uds
     #   socket: "/run/securecloud/auth.sock"

@@ -88,4 +88,5 @@ config/env/prod/README.md
 /client/qt-app/src/resources_rc.py
 
 .github/*.md
+.idea/*
 

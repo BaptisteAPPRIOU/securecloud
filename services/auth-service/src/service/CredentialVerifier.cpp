@@ -1,39 +1,24 @@
 #include "service/CredentialVerifier.hpp"
-#include <openssl/evp.h>
-#include <sstream>
-#include <iomanip>
-#include <stdexcept>
+#include "service/CryptoService.hpp"
 
-std::string CredentialVerifier::sha256(const std::string& data) {
-    unsigned char hash[EVP_MAX_MD_SIZE];
-    unsigned int len = 0;
-
-    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
-    if (!ctx) throw std::runtime_error("EVP_MD_CTX_new failed");
-
-    if (EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr) != 1 ||
-        EVP_DigestUpdate(ctx, data.data(), data.size()) != 1 ||
-        EVP_DigestFinal_ex(ctx, hash, &len) != 1) {
-        EVP_MD_CTX_free(ctx);
-        throw std::runtime_error("EVP sha256 failed");
-    }
-    EVP_MD_CTX_free(ctx);
-
-    std::ostringstream oss;
-    for (unsigned int i = 0; i < len; ++i)
-        oss << std::hex << std::setw(2) << std::setfill('0')
-            << static_cast<int>(hash[i]);
-    return oss.str();
-}
+#include <spdlog/spdlog.h>
 
 bool CredentialVerifier::verifyPassword(const User& user,
-                                        const std::string& password) const {
-    if (user.pass_algo == "plain") {
-        return user.pass_hash == password;
-    } else if (user.pass_algo == "sha256") {
-        return user.pass_hash == sha256(password);
+                                        const std::string& candidate) const
+{
+    // Cas 1 : mot de passe en clair (utile pour les comptes de démo / données seed)
+    if (user.password_algo == "plain" || user.password_algo.empty()) {
+        return candidate == user.pass_hash;
     }
 
-    // algorithme non supporté
+    // Cas 2 : mot de passe hashé en SHA-256
+    if (user.password_algo == "sha256") {
+        const auto hashed = CryptoService::sha256(candidate);
+        return hashed == user.pass_hash;
+    }
+
+    // Algo inconnu → on loggue et on refuse
+    spdlog::warn("[auth-service] Unknown password_algo '{}' for user '{}'",
+                 user.password_algo, user.email);
     return false;
 }

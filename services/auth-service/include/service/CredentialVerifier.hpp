@@ -1,11 +1,9 @@
 #pragma once
-#include "domain/User.hpp"
+
 #include <string>
+#include "domain/User.hpp"
 
 class CredentialVerifier {
 public:
-    bool verifyPassword(const User& user, const std::string& password) const;
-
-private:
-    static std::string sha256(const std::string& data);
+    bool verifyPassword(const User& user, const std::string& candidate) const;
 };

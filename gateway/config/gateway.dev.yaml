@@ -1,0 +1,97 @@
+# Gateway Configuration - Development Environment
+# This config defines all aspects of the SecureCloud Gateway
+
+server:
+  host: 0.0.0.0
+  port: 8443
+  tls:
+    # TLS certificates - for dev, use self-signed certs
+    # Production: use Let's Encrypt or corporate CA certificates
+    # TODO: Load from environment variables: ${GATEWAY_CERT_FILE}
+    cert_file: config/certs/dev-cert.pem
+    key_file: config/certs/dev-key.pem
+    client_mtls: false  # Set to true for mutual TLS (client cert verification)
+
+# Routing rules - evaluated in order, first match wins
+routing:
+  - match: "^/v1/auth/.*"
+    target: auth
+  - match: "^/v1/rt/connect$"
+    target: messaging
+    upgrade: websocket  # Enable WebSocket upgrade for this route
+  - match: ".*"
+    target: files
+
+# Upstream microservices definitions
+# NOTE: IPC messages currently use JSON format
+# TODO: Consider Protocol Buffers/MessagePack for better performance
+#
+# Transport modes:
+#   - tcp: Use for Windows development, Docker containers, or cross-host communication
+#   - uds: Use for Linux production deployments (better performance, local-only communication)
+upstreams:
+  auth:
+    kind: http
+    transport: tcp  # TCP for Windows/Docker development (use 'uds' for Linux production)
+    address: "localhost:8001"  # Auth-service TCP listener
+    # For Linux production with UDS, use:
+    #   transport: uds
+    #   socket: "/run/securecloud/auth.sock"
+    # TODO: Add timeout_ms, connection_pool_size
+  messaging:
+    kind: ws  # WebSocket support
+    transport: tcp
+    address: "messaging:8081"
+    # TODO: Add max_connections, reconnect_interval_ms
+  files:
+    kind: http
+    transport: uds
+    socket: "/run/securecloud/files.sock"
+    # For Windows/Docker development with TCP, use:
+    #   transport: tcp
+    #   address: "localhost:8082"
+    # TODO: Add streaming config for large file uploads/downloads
+
+# Security configuration
+# NOTE: Currently using HS256 (symmetric) JWT verification for development simplicity.
+# PRODUCTION RECOMMENDATION: Migrate to RS256 (asymmetric) with JWKS endpoint in auth-service
+# for better security and key rotation support.
+security:
+  jwt_secret: "${JWT_SECRET}"  # Shared secret for HS256 verification (must match auth-service)
+  jwks:
+    cache_ttl_s: 300  # Cache JWKS public keys for 5 minutes
+    # TODO: Implement JWKS fetching for RS256 production deployment
+    # providers:
+    #   - url: "http://auth-service:8080/.well-known/jwks.json"
+    #     cache_ttl_s: 300
+
+# Rate limiting configuration
+# Implements token bucket algorithm with multi-strategy limiting
+rate_limits:
+  enabled: true  # Set to false to disable all rate limiting
+  
+  # Global limits - applies to entire gateway (prevents resource exhaustion)
+  global_capacity: 1000  # Max burst requests
+  global_refill_rate: 100.0  # Requests per second sustained
+  
+  # Per-IP limits - prevents abuse from single IP address
+  ip_capacity: 100  # Max burst per IP
+  ip_refill_rate: 10.0  # Requests/second per IP
+  
+  # Per-user limits - applies to authenticated users (from JWT sub claim)
+  user_capacity: 500  # Higher limit for authenticated users
+  user_refill_rate: 50.0  # Requests/second per user
+  
+  # Per-endpoint limits - protects specific API endpoints
+  endpoint_capacity: 200  # Max burst per endpoint
+  endpoint_refill_rate: 20.0  # Requests/second per endpoint
+
+# Observability: metrics and logging
+observability:
+  prometheus:
+    bind: "0.0.0.0:9090"  # Expose /metrics endpoint
+    # TODO: Add metric labels, custom buckets for histograms
+  logs:
+    level: info  # debug, info, warn, error
+    # TODO: Add output_file for persistent audit logs
+    # format: json  # For structured logging

@@ -1,0 +1,94 @@
+# Gateway Configuration - Production Environment
+# Production-ready settings with security hardening
+
+server:
+  host: 0.0.0.0
+  port: 443  # Standard HTTPS port
+  tls:
+    # Production certificates - load from environment or mounted secrets
+    # Use Let's Encrypt or corporate CA
+    cert_file: ${GATEWAY_CERT_FILE:/etc/securecloud/certs/prod-cert.pem}
+    key_file: ${GATEWAY_KEY_FILE:/etc/securecloud/certs/prod-key.pem}
+    client_mtls: false  # Enable if client certificates required
+    # TODO: Add cipher_suites, min_tls_version (TLS 1.3)
+
+# Production API routes - aligned with Qt client screens
+routing:
+  # Authentication endpoints
+  - match: "^/api/login$"
+    target: auth
+  - match: "^/api/refresh$"
+    target: auth
+  - match: "^/api/logout$"
+    target: auth
+  - match: "^/api/me$"
+    target: auth
+  
+  # Messaging endpoints (conversation list, messages)
+  - match: "^/api/conversations$"
+    target: messaging
+  - match: "^/api/conversations/[^/]+$"
+    target: messaging
+  - match: "^/api/conversations/[^/]+/messages.*"
+    target: messaging
+  
+  # Real-time WebSocket connection
+  - match: "^/api/ws$"
+    target: messaging
+    upgrade: websocket
+  
+  # File upload/download endpoints
+  - match: "^/api/files.*"
+    target: files
+  
+  # Health check (public, no auth required)
+  - match: "^/healthz$"
+    target: auth
+  
+  # Default: reject with 404
+  - match: ".*"
+    target: auth
+
+# Production upstreams - using Unix Domain Sockets for security and performance
+upstreams:
+  auth:
+    kind: http
+    transport: uds
+    socket: "/run/securecloud/auth.sock"
+    # TODO: connection_pool_size: 50, timeout_ms: 5000
+  messaging:
+    kind: ws
+    transport: uds
+    socket: "/run/securecloud/messaging.sock"
+    # TODO: max_connections: 10000 (high for WebSocket sessions)
+  files:
+    kind: http
+    transport: uds
+    socket: "/run/securecloud/files.sock"
+    # TODO: streaming_buffer_size: 1048576 (1MB chunks for 500MB uploads)
+
+# Production security - strict validation
+security:
+  jwks:
+    cache_ttl_s: 300  # 5 minutes
+    # TODO: Configure JWKS providers from auth-service
+    # providers:
+    #   - url: "unix:///run/securecloud/auth.sock/.well-known/jwks.json"
+    #     cache_ttl_s: 300
+  
+  # TODO: Rate limiting for DoS protection
+  # rate_limit:
+  #   requests_per_second: 1000  # Per gateway instance
+  #   burst: 2000
+  #   by_ip: true
+  #   by_user: true
+  #   blacklist_duration_s: 300  # 5 min ban for abusers
+
+# Production observability
+observability:
+  prometheus:
+    bind: "127.0.0.1:9090"  # Only accessible internally
+  logs:
+    level: warn  # Reduce log volume in production
+    # TODO: Add output_file: "/var/log/securecloud/gateway-audit.log"
+    # format: json  # For structured logging and SIEM integration

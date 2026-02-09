@@ -1,0 +1,38 @@
+# Build directories
+out/
+build/
+cmake-build-*/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Compiled files
+*.o
+*.so
+*.dll
+*.exe
+*.a
+*.lib
+
+# Test files
+test_*.yaml
+test_*.pem
+
+# Certificates and secrets
+config/certs/*.pem
+config/certs/*.key
+config/certs/*.crt
+*.pem
+*.key
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db

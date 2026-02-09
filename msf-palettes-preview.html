@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MSF – Aperçu palettes & écrans</title>
+  <style>
+    /* ===== Thèmes (palettes) ===== */
+    .theme-a { /* Palette A — MSF Core (clair) */
+      --primary:#E2211C; --bg:#F6F7F9; --surface:#FFFFFF;
+      --text:#111111; --text-muted:#374151; --link:#0047B3;
+      --success:#1F5E3F; --warning:#8E4B00; --error:#B00020; --info:#0B5FFF;
+      --border:#D1D5DB; --focus:#111111;
+    }
+    .theme-b { /* Palette B — Field Kit (neutres chauds) */
+      --primary:#E2211C; --bg:#F3F1EC; --surface:#FFFFFF;
+      --text:#111111; --text-muted:#6B7280; --link:#0B5FFF;
+      --success:#1F5E3F; --warning:#8E4B00; --error:#B00020; --info:#0B5FFF;
+      --border:#D1D5DB; --focus:#111111;
+    }
+    .theme-c { /* Palette C — Dark Ops (sombre) */
+      --primary:#FF2B1C; --bg:#0B0B0C; --surface:#16181A;
+      --text:#FFFFFF; --text-muted:#D1D5DB; --link:#64B5F6;
+      --success:#0B5D2E; --warning:#8E4B00; --error:#B00020; --info:#64B5F6;
+      --border:#2C2F33; --focus:#FFFFFF;
+    }
+    .theme-d { /* Palette D — Clinic Cool (clair froid) */
+      --primary:#E2211C; --bg:#EDF2F7; --surface:#FFFFFF;
+      --text:#111111; --text-muted:#374151; --link:#1D4ED8;
+      --success:#1F5E3F; --warning:#8E4B00; --error:#B00020; --info:#0B5FFF;
+      --border:#CBD5E1; --focus:#111111;
+    }
+
+    :root { --radius:12px; --spacing:14px; --shadow:0 2px 10px rgba(0,0,0,.06); }
+
+    /* ===== Reset ===== */
+    *{box-sizing:border-box}
+    body{margin:0;font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial;}
+    a{color:var(--link);text-decoration:underline}
+
+    /* ===== Layout ===== */
+    body{background:var(--bg);color:var(--text)}
+    .container{max-width:1100px;margin:24px auto;padding:16px}
+    .toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+    .toolbar .group{display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);padding:10px;border-radius:10px}
+    select, input[type="text"], input[type="email"], input[type="password"]{
+      background:var(--surface); color:var(--text); border:1.8px solid var(--border);
+      padding:10px 12px; border-radius:10px; outline:none; min-height:42px;
+    }
+    select:focus, input:focus{ border-color:var(--focus); box-shadow:0 0 0 2px var(--focus) inset; }
+
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+
+    /* ===== Card ===== */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card .header{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border)}
+    .card .body{padding:18px}
+
+    /* ===== Logo (placeholder) ===== */
+    .logo{display:flex;align-items:center;gap:10px}
+    .logo-mark{width:36px;height:28px;position:relative}
+    .logo-mark::before, .logo-mark::after{content:"";position:absolute;background:var(--primary);border-radius:3px}
+    .logo-mark::before{width:28px;height:8px;left:2px;top:4px;transform:skewX(-20deg)}
+    .logo-mark::after{width:22px;height:8px;left:8px;top:16px;transform:skewX(20deg)}
+    .logo-text{font-weight:700;letter-spacing:.3px}
+
+    /* ===== Form ===== */
+    label{display:block;font-size:.95rem;margin-bottom:6px;color:var(--text)}
+    .muted{color:var(--text-muted);font-size:.92rem}
+    .field{margin-bottom:14px}
+
+    .btn{appearance:none;border:none;background:var(--primary);color:#fff;padding:12px 14px;border-radius:10px;font-weight:600;cursor:pointer}
+    .btn:focus{outline:3px solid var(--focus)}
+    .btn.secondary{background:transparent;color:var(--text);border:2px solid var(--text)}
+
+    /* ===== Bannières d’état ===== */
+    .alert{border-radius:10px;padding:10px 12px;margin-bottom:12px;border:2px solid transparent}
+    .alert.success{background:color-mix(in srgb, var(--success) 12%, transparent); border-color:var(--success); color:var(--text)}
+    .alert.error{background:color-mix(in srgb, var(--error) 12%, transparent); border-color:var(--error); color:var(--text)}
+
+    /* ===== Sunlight mode (bords plus forts, ombres supprimées) ===== */
+    .sunlight .card{box-shadow:none}
+    .sunlight .card, .sunlight input, .sunlight select{border-width:2.2px}
+    .sunlight .btn{outline:2px solid #000}
+
+    /* ===== Helpers ===== */
+    .row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .actions{display:flex;gap:10px;align-items:center}
+    .spacer{height:10px}
+  </style>
+</head>
+<body class="theme-a">
+  <div class="container">
+    <div class="toolbar">
+      <div class="group">
+        <strong>Palette :</strong>
+        <select id="theme">
+          <option value="theme-a">A — MSF Core (clair)</option>
+          <option value="theme-b">B — Field Kit (chaud)</option>
+          <option value="theme-c">C — Dark Ops (sombre)</option>
+          <option value="theme-d">D — Clinic Cool (clair)</option>
+        </select>
+      </div>
+      <div class="group">
+        <strong>Écran :</strong>
+        <select id="screen">
+          <option value="login">Connexion</option>
+          <option value="forgot">Mot de passe oublié</option>
+        </select>
+      </div>
+      <div class="group">
+        <label class="row"><input type="checkbox" id="sun" /> Mode plein soleil (bords renforcés)</label>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- ===== Carte Connexion ===== -->
+      <section class="card" id="card-login">
+        <div class="header">
+          <div class="logo">
+            <span class="logo-mark" aria-hidden="true"></span>
+            <span class="logo-text">Médecins Sans Frontières</span>
+          </div>
+        </div>
+        <div class="body">
+          <h2 style="margin:0 0 8px">Connexion</h2>
+          <p class="muted" style="margin:0 0 16px">Accédez à votre espace sécurisé.</p>
+
+          <div class="field">
+            <label for="email">Adresse e‑mail</label>
+            <input id="email" type="email" placeholder="ex: prenom.nom@exemple.org" />
+          </div>
+          <div class="field">
+            <label for="pwd">Mot de passe</label>
+            <input id="pwd" type="password" placeholder="••••••••" />
+            <p class="muted" style="margin-top:6px">• 8+ caractères • 1 majuscule • 1 chiffre</p>
+          </div>
+
+          <div class="row">
+            <a href="#" id="to-forgot">Mot de passe oublié ?</a>
+            <div class="actions"><button class="btn">Se connecter</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Carte Mot de passe oublié ===== -->
+      <section class="card" id="card-forgot" style="display:none">
+        <div class="header">
+          <div class="logo">
+            <span class="logo-mark" aria-hidden="true"></span>
+            <span class="logo-text">Médecins Sans Frontières</span>
+          </div>
+        </div>
+        <div class="body">
+          <h2 style="margin:0 0 4px">Mot de passe oublié ?</h2>
+          <p class="muted" style="margin:0 0 16px">Entrez l’adresse e‑mail utilisée lors de l’inscription.</p>
+
+          <div class="field">
+            <label for="resetEmail">Adresse e‑mail</label>
+            <input id="resetEmail" type="email" placeholder="ex: prenom.nom@exemple.org" />
+          </div>
+
+          <div class="actions">
+            <button class="btn">Recevoir l’e‑mail</button>
+            <button class="btn secondary" id="back-login">Retour</button>
+          </div>
+
+          <div class="spacer"></div>
+          <div class="alert success" aria-live="polite" style="display:none" id="demo-success">
+            Lien de réinitialisation envoyé.
+          </div>
+          <div class="alert error" aria-live="polite" style="display:none" id="demo-error">
+            Adresse introuvable. Vérifiez l’orthographe.
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <p class="muted" style="margin-top:18px">
+      Astuce accessibilité : le focus clavier dessine un halo <strong>contraste élevé</strong>. Active le « Mode plein soleil » pour simuler un écran lumineux.
+    </p>
+  </div>
+
+  <script>
+    const body = document.body;
+    const themeSel = document.getElementById('theme');
+    const screenSel = document.getElementById('screen');
+    const sun = document.getElementById('sun');
+
+    const login = document.getElementById('card-login');
+    const forgot = document.getElementById('card-forgot');
+    document.getElementById('to-forgot').addEventListener('click', (e)=>{e.preventDefault();screenSel.value='forgot';screenSel.dispatchEvent(new Event('change'));});
+    document.getElementById('back-login').addEventListener('click', ()=>{screenSel.value='login';screenSel.dispatchEvent(new Event('change'));});
+
+    themeSel.addEventListener('change', () => {
+      body.classList.remove('theme-a','theme-b','theme-c','theme-d');
+      body.classList.add(themeSel.value);
+    });
+
+    screenSel.addEventListener('change', () => {
+      const v = screenSel.value;
+      login.style.display = v==='login' ? '' : 'none';
+      forgot.style.display = v==='forgot' ? '' : 'none';
+    });
+
+    sun.addEventListener('change', () => {
+      body.classList.toggle('sunlight', sun.checked);
+    });
+  </script>
+</body>
+</html>

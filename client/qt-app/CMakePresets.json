@@ -1,0 +1,20 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 24,
+        "patch": 0
+    },
+    "include": [
+        "../../CMakePresets.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "client-dev",
+            "displayName": "Qt Client Development",
+            "description": "Development build for Qt Client using root presets",
+            "inherits": "dev-client-only",
+            "binaryDir": "${sourceDir}/build/${presetName}"
+        }
+    ]
+}

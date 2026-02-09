@@ -1,0 +1,364 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "SecureCloud (Root)"
+    },
+    {
+      "path": "gateway",
+      "name": "Gateway (C++)"
+    },
+    {
+      "path": "services/auth-service",
+      "name": "Auth Service"
+    },
+    {
+      "path": "services/files-service",
+      "name": "Files Service"
+    },
+    {
+      "path": "services/messaging-service",
+      "name": "Messaging Service"
+    },
+    {
+      "path": "services/audit-service",
+      "name": "Audit Service"
+    },
+    {
+      "path": "client/qt-app",
+      "name": "Qt Client"
+    },
+    {
+      "path": "docs",
+      "name": "Documentation"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/.git": true,
+      "**/.DS_Store": true,
+      "**/node_modules": true,
+      "**/build": true,
+      "**/dist": true,
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/vcpkg_installed": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/build": true,
+      "**/dist": true,
+      "**/.venv": true,
+      "**/vcpkg_installed": true
+    },
+    "files.associations": {
+      "*.yaml": "yaml",
+      "*.yml": "yaml",
+      "Dockerfile*": "dockerfile",
+      "*.Dockerfile": "dockerfile",
+      "makefile": "makefile",
+      "Makefile": "makefile",
+      "*.md": "markdown"
+    },
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "[cpp]": {
+      "editor.tabSize": 4,
+      "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "[python]": {
+      "editor.tabSize": 4,
+      "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "[markdown]": {
+      "editor.wordWrap": "on",
+      "editor.quickSuggestions": {
+        "comments": "off",
+        "strings": "off",
+        "other": "off"
+      }
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "cmake.configureOnOpen": false,
+    "cmake.useCMakePresets": "always",
+    "docker.dockerComposeBuild": true,
+    "docker.dockerComposeDetached": true,
+    "yaml.schemas": {
+      "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json": [
+        "docker-compose*.yml",
+        "docker-compose*.yaml",
+        "**/compose/*.yml",
+        "**/compose/*.yaml"
+      ]
+    },
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
+    "terminal.integrated.profiles.windows": {
+      "MSYS2 UCRT64": {
+        "path": "C:\\msys64\\usr\\bin\\bash.exe",
+        "args": ["--login", "-i"],
+        "env": {
+          "MSYSTEM": "UCRT64",
+          "CHERE_INVOKING": "1"
+        }
+      }
+    },
+    "makefile.configurations": [
+      {
+        "makefile-tools.makePath": "${workspaceFolder}/Makefile",
+        "makefile-tools.makefilePath": "${workspaceFolder}/Makefile",
+        "makefile-tools.configurations": {
+          "default": {
+            "shell": "cmd.exe"
+          }
+        },
+        "name": "Unnamed configuration 1"
+      }
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-vscode.cpptools",
+      "ms-vscode.cmake-tools",
+      "ms-azuretools.vscode-docker",
+      "redhat.vscode-yaml",
+      "ms-python.python",
+      "ms-python.black-formatter",
+      "ms-vscode.makefile-tools",
+      "github.copilot",
+      "eamodio.gitlens",
+      "davidanson.vscode-markdownlint",
+      "yzhang.markdown-all-in-one",
+      "hediet.vscode-drawio",
+      "bierner.markdown-mermaid"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Gateway (GDB)",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder:Gateway (C++)}/build/gateway",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder:Gateway (C++)}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "C:/msys64/ucrt64/bin/gdb.exe",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for gdb",
+            "text": "-enable-pretty-printing",
+            "ignoreFailures": true
+          }
+        ],
+        "preLaunchTask": "Build Gateway"
+      },
+      {
+        "name": "Qt Client (GDB)",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder:Qt Client}/build/securecloud-client",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder:Qt Client}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "C:/msys64/ucrt64/bin/gdb.exe"
+      },
+      {
+        "name": "Docker: Gateway",
+        "type": "docker",
+        "request": "launch",
+        "preLaunchTask": "docker-compose: up",
+        "platform": "node"
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Build All",
+        "type": "shell",
+        "command": "cmake --build build/dev",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "problemMatcher": ["$gcc"]
+      },
+      {
+        "label": "Build Gateway",
+        "type": "shell",
+        "command": "cmake --build build/dev --target gateway",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "build",
+        "problemMatcher": ["$gcc"]
+      },
+      {
+        "label": "Build Auth Service",
+        "type": "shell",
+        "command": "cmake --build build/dev --target auth-service",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "build",
+        "problemMatcher": ["$gcc"]
+      },
+      {
+        "label": "Build Qt Client",
+        "type": "shell",
+        "command": "cmake --build build/dev --target MSF_Login",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "build",
+        "problemMatcher": ["$gcc"]
+      },
+      {
+        "label": "Docker Compose: Up",
+        "type": "shell",
+        "command": "docker-compose",
+        "args": ["up", "-d"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "none",
+        "problemMatcher": []
+      },
+      {
+        "label": "Docker Compose: Down",
+        "type": "shell",
+        "command": "docker-compose",
+        "args": ["down"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "none",
+        "problemMatcher": []
+      },
+      {
+        "label": "Docker Compose: Logs Gateway",
+        "type": "shell",
+        "command": "docker-compose",
+        "args": ["logs", "-f", "gateway"],
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "isBackground": true,
+        "problemMatcher": []
+      },
+      {
+        "label": "Run All Services (Docker)",
+        "type": "shell",
+        "command": "cmake --build build/dev --target docker-up",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}"
+        },
+        "group": "none",
+        "problemMatcher": []
+      },
+      {
+        "label": "Start Database",
+        "type": "shell",
+        "command": "cmake --build build/dev --target db-up; cmake --build build/dev --target db-migrate",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}",
+          "shell": {
+            "executable": "powershell.exe",
+            "args": ["-NoProfile", "-Command"]
+          }
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Run Gateway",
+        "type": "shell",
+        "command": ".\\gateway\\run-dev.ps1",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}",
+          "shell": {
+            "executable": "powershell.exe",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"]
+          }
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always",
+          "panel": "dedicated",
+          "group": "services"
+        }
+      },
+      {
+        "label": "Run Auth Service",
+        "type": "shell",
+        "command": ".\\services\\auth-service\\run-dev.ps1",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}",
+          "shell": {
+            "executable": "powershell.exe",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"]
+          }
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always",
+          "panel": "dedicated",
+          "group": "services"
+        }
+      },
+      {
+        "label": "Run Qt Client",
+        "type": "shell",
+        "command": ".\\client\\qt-app\\run-dev.ps1",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}",
+          "shell": {
+            "executable": "powershell.exe",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"]
+          }
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always",
+          "panel": "dedicated",
+          "group": "client"
+        }
+      },
+      {
+        "label": "Start All Services",
+        "dependsOn": ["Run Gateway", "Run Auth Service"],
+        "dependsOrder": "parallel",
+        "problemMatcher": [],
+        "group": "none"
+      },
+      {
+        "label": "Start Full Stack",
+        "dependsOn": ["Run Gateway", "Run Auth Service", "Run Qt Client"],
+        "dependsOrder": "parallel",
+        "problemMatcher": [],
+        "group": "none"
+      },
+      {
+        "label": "Start Dev Environment",
+        "dependsOn": ["Start Database", "Start All Services"],
+        "dependsOrder": "sequence",
+        "problemMatcher": [],
+        "group": "none"
+      }
+    ]
+  }
+}

@@ -1,0 +1,53 @@
+# Gateway Configuration - Test Environment
+# Mirrors production setup but with test-specific settings
+
+server:
+  host: 0.0.0.0
+  port: 8443
+  tls:
+    cert_file: config/certs/test-cert.pem
+    key_file: config/certs/test-key.pem
+    client_mtls: false
+
+routing:
+  - match: "^/api/login$"
+    target: auth
+  - match: "^/api/refresh$"
+    target: auth
+  - match: "^/api/me$"
+    target: auth
+  - match: "^/api/conversations.*"
+    target: messaging
+  - match: "^/api/ws$"
+    target: messaging
+    upgrade: websocket
+  - match: "^/api/files.*"
+    target: files
+  - match: ".*"
+    target: auth  # Default to auth for undefined routes
+
+upstreams:
+  auth:
+    kind: http
+    transport: tcp
+    address: "auth-service-test:8080"
+  messaging:
+    kind: ws
+    transport: tcp
+    address: "messaging-service-test:8081"
+  files:
+    kind: http
+    transport: tcp
+    address: "files-service-test:8082"
+
+security:
+  jwks:
+    cache_ttl_s: 60  # Shorter cache for testing
+    # providers:
+    #   - url: "http://auth-service-test:8080/.well-known/jwks.json"
+
+observability:
+  prometheus:
+    bind: "0.0.0.0:9090"
+  logs:
+    level: debug  # More verbose logging for test debugging

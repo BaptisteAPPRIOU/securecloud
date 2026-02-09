@@ -1,0 +1,374 @@
+# SecureCloud Docker Compose - Full Stack
+# Usage: docker-compose up -d
+# Profiles: dev, prod
+
+x-common-env: &common-env
+  DB_HOST: postgres
+  DB_PORT: 15432
+  DB_NAME: ${DB_NAME:-securecloud}
+  DB_USER: ${DB_USER:-scuser}
+  DB_PASSWORD: ${DB_PASS:-scpassword}
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+
+x-service-healthcheck: &service-healthcheck
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 30s
+
+networks:
+  securecloud-net:
+    driver: bridge
+
+volumes:
+  sc_pgdata:
+  sc_redis:
+  sc_files:
+  sc_logs:
+
+services:
+  # ========================================
+  # Infrastructure Services
+  # ========================================
+  
+  postgres:
+    image: postgres:16-alpine
+    container_name: sc_postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-scuser}
+      POSTGRES_PASSWORD: ${DB_PASS:-scpassword}
+      POSTGRES_DB: ${DB_NAME:-securecloud}
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    ports:
+      - "${POSTGRES_PORT:-15432}:5432"
+    volumes:
+      - sc_pgdata:/var/lib/postgresql/data
+    networks:
+      - securecloud-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-scuser} -d ${DB_NAME:-securecloud}"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: sc_redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispass}
+    ports:
+      - "${REDIS_PORT:-16379}:6379"
+    volumes:
+      - sc_redis:/data
+    networks:
+      - securecloud-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      <<: *service-healthcheck
+    restart: unless-stopped
+
+  # ========================================
+  # Database Migrations (Flyway)
+  # ========================================
+  
+  flyway-auth:
+    image: flyway/flyway:10
+    container_name: sc_flyway_auth
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./db/migrations/auth:/flyway/sql:ro
+    command: >
+      -url=jdbc:postgresql://postgres:5432/${DB_NAME:-securecloud}
+      -user=${DB_USER:-scuser}
+      -password=${DB_PASS:-scpassword}
+      -schemas=auth
+      -connectRetries=60
+      migrate
+    networks:
+      - securecloud-net
+
+  flyway-audit:
+    image: flyway/flyway:10
+    container_name: sc_flyway_audit
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./db/migrations/audit:/flyway/sql:ro
+    command: >
+      -url=jdbc:postgresql://postgres:5432/${DB_NAME:-securecloud}
+      -user=${DB_USER:-scuser}
+      -password=${DB_PASS:-scpassword}
+      -schemas=audit
+      -connectRetries=60
+      migrate
+    networks:
+      - securecloud-net
+
+  flyway-files:
+    image: flyway/flyway:10
+    container_name: sc_flyway_files
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./db/migrations/files:/flyway/sql:ro
+    command: >
+      -url=jdbc:postgresql://postgres:5432/${DB_NAME:-securecloud}
+      -user=${DB_USER:-scuser}
+      -password=${DB_PASS:-scpassword}
+      -schemas=files
+      -connectRetries=60
+      migrate
+    networks:
+      - securecloud-net
+
+  flyway-messaging:
+    image: flyway/flyway:10
+    container_name: sc_flyway_messaging
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./db/migrations/messaging:/flyway/sql:ro
+    command: >
+      -url=jdbc:postgresql://postgres:5432/${DB_NAME:-securecloud}
+      -user=${DB_USER:-scuser}
+      -password=${DB_PASS:-scpassword}
+      -schemas=messaging
+      -connectRetries=60
+      migrate
+    networks:
+      - securecloud-net
+
+  # ========================================
+  # Backend Services
+  # ========================================
+  
+  auth-service:
+    build:
+      context: .
+      dockerfile: ops/docker/auth-service.Dockerfile
+    container_name: sc_auth_service
+    environment:
+      <<: *common-env
+      SERVICE_PORT: 8001
+      JWT_ISSUER: securecloud-auth
+      JWT_EXPIRY_MINUTES: 60
+      REFRESH_TOKEN_DAYS: 30
+    ports:
+      - "${AUTH_PORT:-8001}:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      flyway-auth:
+        condition: service_completed_successfully
+    volumes:
+      - sc_logs:/app/logs
+    networks:
+      - securecloud-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      <<: *service-healthcheck
+    restart: unless-stopped
+
+  audit-service:
+    build:
+      context: .
+      dockerfile: ops/docker/audit-service.Dockerfile
+    container_name: sc_audit_service
+    environment:
+      <<: *common-env
+      SERVICE_PORT: 8002
+    ports:
+      - "${AUDIT_PORT:-8002}:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      flyway-audit:
+        condition: service_completed_successfully
+    volumes:
+      - sc_logs:/app/logs
+    networks:
+      - securecloud-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      <<: *service-healthcheck
+    restart: unless-stopped
+
+  files-service:
+    build:
+      context: .
+      dockerfile: ops/docker/files-service.Dockerfile
+    container_name: sc_files_service
+    environment:
+      <<: *common-env
+      SERVICE_PORT: 8003
+      STORAGE_PATH: /data/files
+      MAX_FILE_SIZE_MB: 100
+    ports:
+      - "${FILES_PORT:-8003}:8003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      flyway-files:
+        condition: service_completed_successfully
+    volumes:
+      - sc_files:/data/files
+      - sc_logs:/app/logs
+    networks:
+      - securecloud-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      <<: *service-healthcheck
+    restart: unless-stopped
+
+  messaging-service:
+    build:
+      context: .
+      dockerfile: ops/docker/messaging-service.Dockerfile
+    container_name: sc_messaging_service
+    environment:
+      <<: *common-env
+      SERVICE_PORT: 8004
+      WEBSOCKET_PORT: 8005
+    ports:
+      - "${MESSAGING_PORT:-8004}:8004"
+      - "${WEBSOCKET_PORT:-8005}:8005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      flyway-messaging:
+        condition: service_completed_successfully
+    volumes:
+      - sc_logs:/app/logs
+    networks:
+      - securecloud-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      <<: *service-healthcheck
+    restart: unless-stopped
+
+  deploy-service:
+    build:
+      context: .
+      dockerfile: ops/docker/deploy-service.Dockerfile
+    container_name: sc_deploy_service
+    environment:
+      <<: *common-env
+      SERVICE_PORT: 8006
+    ports:
+      - "${DEPLOY_PORT:-8006}:8006"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # For Docker operations
+      - sc_logs:/app/logs
+    networks:
+      - securecloud-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      <<: *service-healthcheck
+    restart: unless-stopped
+    privileged: true  # Required for Docker operations
+
+  # ========================================
+  # API Gateway
+  # ========================================
+  
+  gateway:
+    build:
+      context: .
+      dockerfile: ops/docker/gateway.Dockerfile
+    container_name: sc_gateway
+    environment:
+      <<: *common-env
+      GATEWAY_PORT: 8080
+      GATEWAY_TLS_PORT: 8443
+      AUTH_SERVICE_URL: http://auth-service:8001
+      AUDIT_SERVICE_URL: http://audit-service:8002
+      FILES_SERVICE_URL: http://files-service:8003
+      MESSAGING_SERVICE_URL: http://messaging-service:8004
+      DEPLOY_SERVICE_URL: http://deploy-service:8006
+      ENABLE_TLS: ${ENABLE_TLS:-false}
+    ports:
+      - "${GATEWAY_HTTP_PORT:-8080}:8080"
+      - "${GATEWAY_HTTPS_PORT:-8443}:8443"
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      audit-service:
+        condition: service_healthy
+      files-service:
+        condition: service_healthy
+      messaging-service:
+        condition: service_healthy
+    volumes:
+      - ./gateway/config:/app/config:ro
+      - sc_logs:/app/logs
+    networks:
+      - securecloud-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      <<: *service-healthcheck
+    restart: unless-stopped
+
+  # ========================================
+  # Monitoring & Admin Tools
+  # ========================================
+  
+  adminer:
+    image: adminer:latest
+    container_name: sc_adminer
+    depends_on:
+      - postgres
+    ports:
+      - "${ADMINER_PORT:-9090}:8080"
+    networks:
+      - securecloud-net
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sc_prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "${PROMETHEUS_PORT:-9091}:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - securecloud-net
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sc_grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - ./grafana:/etc/grafana/provisioning:ro
+    networks:
+      - securecloud-net
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    profiles:
+      - monitoring

@@ -1,0 +1,20 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 24,
+        "patch": 0
+    },
+    "include": [
+        "../CMakePresets.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "gateway-dev",
+            "displayName": "Gateway Development",
+            "description": "Development build for Gateway using root presets",
+            "inherits": "dev-gateway-only",
+            "binaryDir": "${sourceDir}/build/${presetName}"
+        }
+    ]
+}

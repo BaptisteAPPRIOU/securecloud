@@ -89,4 +89,4 @@ config/env/prod/README.md
 
 .github/*.md
 .idea/*
-
+.cache/*

@@ -52,6 +52,16 @@ cmake --build build/dev --target docker-up-desktop
 cmake --build build/dev --target docker-up-monitoring
 ```
 
+Direct Compose equivalent (recommended when debugging startup):
+
+```powershell
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d --build
+```
+
+Important:
+- Use `--env-file config/env/dev/.env` to avoid silent fallback to defaults from an empty/missing root `.env`.
+- Do not run `db-up`/`db-adminer` stack and `docker-compose.core.yml` stack at the same time unless ports are changed.
+
 ### Auth session smoke test (E2E)
 
 ```powershell
@@ -117,8 +127,10 @@ Open workspace `securecloud.code-workspace`, then use `Ctrl+Shift+B` or `Ctrl+Sh
 | Service | Host | Port | User | Password |
 |---------|------|------|------|----------|
 | PostgreSQL | localhost | 15432 | securecloud | securecloud |
-| Adminer (DB UI) | localhost | 8080 | - | - |
-| Gateway | localhost | 8443 | - | - |
+| Adminer (core stack) | localhost | 9090 | - | - |
+| Adminer (db-adminer target) | localhost | 9090 | - | - |
+| Gateway HTTP | localhost | 8080 | - | - |
+| Gateway HTTPS | localhost | 8443 | - | - |
 | Auth Service | localhost | 8001 | - | - |
 
 > Change all credentials in production (`config/env/prod/.env`).

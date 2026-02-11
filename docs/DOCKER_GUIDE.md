@@ -40,7 +40,7 @@ Complete guide covering the build-to-deploy process for all SecureCloud services
 +----------------------------------------------------------+
 |                    DEPLOYMENT PHASE                       |
 +----------------------------------------------------------+
-|  docker compose.yml                                       |
+|  docker-compose.core.yml (+ optional overlays)            |
 |  - Infrastructure: PostgreSQL, Redis                      |
 |  - Migrations: Flyway (per schema)                        |
 |  - Services: Gateway, Auth, Files, Messaging, Audit       |
@@ -219,46 +219,49 @@ ENTRYPOINT ["/app/auth-service"]
 cmake --build build/dev --target docker-up-core
 
 # Option 2: Direct Docker Compose
-docker compose -f docker-compose.core.yml up -d
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d
 
 # Option 3: Include planned services (full profile)
-docker compose -f docker-compose.core.yml -f docker-compose.full.yml --profile full up -d
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml -f docker-compose.full.yml --profile full up -d
 
 # Option 4: With Qt desktop client container
-docker compose -f docker-compose.core.yml --profile desktop up -d
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml --profile desktop up -d
 
 # Option 5: With monitoring stack
-docker compose -f docker-compose.core.yml --profile monitoring up -d
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml --profile monitoring up -d
 ```
 
 ### Quick Start
 
 ```bash
-# 1. Copy environment template
-cp .env.example .env
+# 1. Optional: copy dev env to root .env for tools expecting it
+# PowerShell:
+Copy-Item config/env/dev/.env .env
+# Bash:
+cp config/env/dev/.env .env
 
-# 2. Edit .env with your values (especially passwords and secrets)
-nano .env
+# 2. Edit config/env/dev/.env with your values
+nano config/env/dev/.env
 
 # 3. Start the core stack
-docker compose -f docker-compose.core.yml up -d
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d
 
 # Optional: include planned services
-docker compose -f docker-compose.core.yml -f docker-compose.full.yml --profile full up -d
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml -f docker-compose.full.yml --profile full up -d
 
 # Optional: include Qt desktop client container
-docker compose -f docker-compose.core.yml --profile desktop up -d
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml --profile desktop up -d
 
 # 4. Check status
-docker compose ps
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml ps
 
 # 5. View logs
-docker compose logs -f gateway
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml logs -f gateway
 ```
 
 ## Service Architecture
 
-By default, `docker compose -f docker-compose.core.yml up -d` starts the core stack (`gateway`, `auth-service`, infra).  
+By default, `docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d` starts the core stack (`gateway`, `auth-service`, infra).  
 Planned services (`audit-service`, `files-service`, `messaging-service`, `deploy-service`) are behind the `full` profile.
 The Qt desktop client container (`qt-client`) is behind the `desktop` profile.
 
@@ -318,55 +321,61 @@ cmake --build build/dev --target docker-logs
 
 ### Direct Docker Compose Commands
 
+Use this command prefix in all examples below:
+
+```bash
+DC="docker compose --env-file config/env/dev/.env -f docker-compose.core.yml"
+```
+
 #### Start Services
 ```bash
 # Core stack
-docker compose -f docker-compose.core.yml up -d
+$DC up -d
 
 # Full stack (includes planned services)
-docker compose -f docker-compose.core.yml -f docker-compose.full.yml --profile full up -d
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml -f docker-compose.full.yml --profile full up -d
 
 # Core stack + Qt desktop client container
-docker compose -f docker-compose.core.yml --profile desktop up -d
+$DC --profile desktop up -d
 
 # Specific service
-docker compose -f docker-compose.core.yml up -d gateway auth-service
+$DC up -d gateway auth-service
 
 # With monitoring (Prometheus + Grafana)
-docker compose -f docker-compose.core.yml --profile monitoring up -d
+$DC --profile monitoring up -d
 ```
 
 ### Stop Services
 ```bash
 # Stop all
-docker compose down
+$DC down --remove-orphans
 
 # Stop and remove volumes ( data loss)
-docker compose down -v
+$DC down -v --remove-orphans
 ```
 
 ### View Logs
 ```bash
 # All services
-docker compose logs -f
+$DC logs -f
 
 # Specific service
-docker compose logs -f gateway
+$DC logs -f gateway
 
 # Last 100 lines
-docker compose logs --tail=100 auth-service
+$DC logs --tail=100 auth-service
 ```
 
 ### Rebuild Services
 ```bash
 # Rebuild all
-docker compose build
+$DC build
 
 # Rebuild specific service
-docker compose build gateway
+$DC build gateway
 
 # Rebuild and restart
-docker compose up -d --build gateway
+$DC up -d --build gateway
 ```
 
 ### Database Management
@@ -375,22 +384,22 @@ docker compose up -d --build gateway
 cmake --build build/dev --target db-migrate
 
 # Or run migrations directly
-docker compose up flyway-auth flyway-audit flyway-files flyway-messaging
+$DC up flyway-auth
 
 # Access PostgreSQL
-docker compose exec postgres psql -U scuser -d securecloud
+$DC exec postgres psql -U securecloud -d securecloud_dev
 
 # Backup database
-docker compose exec postgres pg_dump -U scuser securecloud > backup.sql
+$DC exec postgres pg_dump -U securecloud securecloud_dev > backup.sql
 
 # Restore database
-docker compose exec -T postgres psql -U scuser securecloud < backup.sql
+$DC exec -T postgres psql -U securecloud securecloud_dev < backup.sql
 ```
 
 ### Service Health Check
 ```bash
 # Check all services
-docker compose ps
+$DC ps
 
 # Check specific service health
 curl http://localhost:8080/health  # Gateway
@@ -466,10 +475,10 @@ volumes:
 
 **Data survives:**
 - Container restarts
-- `docker compose down`
+- `docker compose --env-file config/env/dev/.env -f docker-compose.core.yml down --remove-orphans`
 
 **Data LOST with:**
-- `docker compose down -v` (removes volumes)
+- `docker compose --env-file config/env/dev/.env -f docker-compose.core.yml down -v --remove-orphans` (removes volumes)
 
 ### 4. Network Isolation
 
@@ -509,13 +518,13 @@ RUN cmake --build build
 ### Optional
 - `LOG_LEVEL` - Logging level (debug, info, warn, error)
 - `ENABLE_TLS` - Enable HTTPS on gateway
-- All port overrides (see .env.example)
+- All port overrides (see `config/env/dev/.env`)
 
 ## Monitoring
 
 Start with monitoring profile:
 ```bash
-docker compose --profile monitoring up -d
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml --profile monitoring up -d
 ```
 
 Access:
@@ -554,19 +563,19 @@ cmake --build build/dev --target docker-down
 
 ```bash
 # 1. Build optimized images
-docker compose build --no-cache
+docker compose -f docker-compose.core.yml -f docker-compose.deploy.yml build --no-cache
 
 # 2. Push to registry (if using remote registry)
-docker compose push
+docker compose -f docker-compose.core.yml -f docker-compose.deploy.yml push
 
 # 3. Deploy (on production server)
-docker compose -f docker compose.yml up -d
+docker compose --env-file config/env/prod/.env -f docker-compose.core.yml -f docker-compose.deploy.yml up -d
 
 # 4. Verify migrations ran
-docker compose logs flyway-auth
+docker compose --env-file config/env/prod/.env -f docker-compose.core.yml -f docker-compose.deploy.yml logs flyway-auth
 
 # 5. Verify all services healthy
-docker compose ps
+docker compose --env-file config/env/prod/.env -f docker-compose.core.yml -f docker-compose.deploy.yml ps
 curl http://localhost:8080/health
 ```
 
@@ -586,40 +595,53 @@ curl http://localhost:8080/health
 ### Service won't start
 ```bash
 # Check logs
-docker compose logs service-name
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml logs service-name
 
 # Check dependencies
-docker compose ps
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml ps
 
 # Restart service
-docker compose restart service-name
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml restart service-name
 ```
 
-### Database connection issues
+### Port already allocated (common on 15432 or 8080)
 ```bash
-# Check postgres is running
-docker compose ps postgres
+# Find who owns a host port
+docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 15432
+docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 8080
 
-# Test connection
-docker compose exec postgres pg_isready -U scuser
+# Remove the conflicting container (examples)
+docker rm -f sc_pg
+docker rm -f compose-adminer-1
 
-# Check migrations
-docker compose logs flyway-auth
+# Retry core stack
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d --build
 ```
 
-### Network issues
+### `sc_flyway_auth` stuck in `Waiting`
 ```bash
-# Recreate network
-docker compose down
-docker network prune
-docker compose up -d
+# Flyway and Postgres logs
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml logs --tail=200 flyway-auth
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml logs --tail=200 postgres
+
+# Render effective config (verify env substitution)
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml config
 ```
 
-### Reset everything
+### `db-up` stack conflicts with `core` stack
 ```bash
-#  This will delete all data
-docker compose down -v
-docker compose up -d
+# db-* CMake targets use ops/compose/compose.dev.yml (container name sc_pg)
+# core stack uses docker-compose.core.yml (container name sc_postgres)
+# Run one stack at a time, or change host ports in config/env/dev/.env.
+cmake --build build/dev --target db-down
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml down --remove-orphans
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d --build
+```
+
+### Reset everything (data loss)
+```bash
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml down -v --remove-orphans
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d --build
 ```
 
 ## CI/CD Integration
@@ -628,10 +650,10 @@ docker compose up -d
 ```yaml
 - name: Build and test
   run: |
-    docker compose build
-    docker compose up -d
-    docker compose exec -T gateway ./tests/integration
-    docker compose down
+    docker compose --env-file config/env/dev/.env -f docker-compose.core.yml build
+    docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d
+    docker compose --env-file config/env/dev/.env -f docker-compose.core.yml exec -T gateway ./tests/integration
+    docker compose --env-file config/env/dev/.env -f docker-compose.core.yml down --remove-orphans
 ```
 
 ## Security Notes
@@ -658,8 +680,8 @@ services:
 
 ### Scaling
 ```bash
-# Scale messaging service
-docker compose up -d --scale messaging-service=3
+# Scale messaging service (full profile)
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml -f docker-compose.full.yml --profile full up -d --scale messaging-service=3
 ```
 
 ## Backup Strategy
@@ -668,8 +690,9 @@ docker compose up -d --scale messaging-service=3
 # Automated backup script
 #!/bin/bash
 DATE=$(date +%Y%m%d_%H%M%S)
-docker compose exec postgres pg_dump -U scuser securecloud | gzip > backup_$DATE.sql.gz
-docker compose exec redis redis-cli --rdb /data/dump.rdb
+DC="docker compose --env-file config/env/dev/.env -f docker-compose.core.yml"
+$DC exec postgres pg_dump -U securecloud securecloud_dev | gzip > backup_$DATE.sql.gz
+$DC exec redis redis-cli --rdb /data/dump.rdb
 docker cp sc_redis:/data/dump.rdb redis_backup_$DATE.rdb
 ```
 

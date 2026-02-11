@@ -103,7 +103,7 @@ cmake --build build/dev --target db-adminer
 
 ### Accéder à l'interface
 
-Ouvrez votre navigateur : **<http://localhost:8080>**
+Ouvrez votre navigateur : **<http://localhost:9090>**
 
 ### Identifiants de connexion
 
@@ -185,20 +185,20 @@ ctest --test-dir build/dev -V
 ### Lancer tous les services
 
 ```bash
-docker compose up -d
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d --build
 ```
 
 ### Voir les logs
 
 ```bash
-docker compose logs -f gateway
-docker compose logs -f auth-service
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml logs -f gateway
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml logs -f auth-service
 ```
 
 ### Arrêter les services
 
 ```bash
-docker compose down
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml down --remove-orphans
 ```
 
 ## Commandes CMake Utiles
@@ -227,7 +227,8 @@ Le fichier `config/env/dev/.env` contient :
 DB_NAME=securecloud_dev
 DB_USER=securecloud
 DB_PASS=securecloud
-DB_PORT=5432
+DB_PORT=15432
+POSTGRES_PORT=15432
 DB_HOST=127.0.0.1
 
 # JWT
@@ -296,6 +297,25 @@ docker ps
 
 # Reinitialiser
 cmake --build build/dev --target db-reset
+```
+
+### Erreur "port is already allocated" (15432, 8080, etc.)
+
+Deux stacks Compose peuvent entrer en conflit:
+- `ops/compose/compose.dev.yml` (cibles CMake `db-*`, conteneur `sc_pg`)
+- `docker-compose.core.yml` (stack principale, conteneur `sc_postgres`)
+
+```powershell
+# Identifier le conteneur qui occupe un port
+docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 15432
+docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 8080
+
+# Supprimer le conteneur en conflit (exemples)
+docker rm -f sc_pg
+docker rm -f compose-adminer-1
+
+# Relancer la stack principale
+docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d --build
 ```
 
 ### Qt non trouvé

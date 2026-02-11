@@ -6,6 +6,7 @@
 #include "upstreamProxy.hpp"
 #include "metrics.hpp"
 #include "auditSink.hpp"
+#include "restApiEndpoints.hpp"
 #include <spdlog/spdlog.h>
 #include <boost/asio/io_context.hpp>
 #include <fstream>
@@ -72,6 +73,90 @@ void print_usage(const char* program) {
     spdlog::info("Use the run-dev.ps1 script for local development.");
 }
 
+std::string bool_str(bool value) {
+    return value ? "true" : "false";
+}
+
+std::string upstream_kind_str(UpstreamKind kind) {
+    return kind == UpstreamKind::WS ? "ws" : "http";
+}
+
+std::string upstream_transport_str(UpstreamTransport transport) {
+    return transport == UpstreamTransport::UDS ? "uds" : "tcp";
+}
+
+std::string mask_secret(const std::string& value) {
+    return value.empty() ? "<empty>" : "<set>";
+}
+
+void log_gateway_config(const GatewayConfig& config, const std::string& config_path) {
+    spdlog::info("=== Gateway configuration ===");
+    spdlog::info("Config path: {}", config_path);
+    spdlog::info("Environment: {}", config.environment);
+    spdlog::info("Server: {}:{} threads={} timeout_ms={} max_request_size={}",
+                 config.server.host,
+                 config.server.port,
+                 config.server.thread_pool_size,
+                 config.server.request_timeout_ms,
+                 config.server.max_request_size);
+
+    if (config.tls.has_value()) {
+        const auto& tls = *config.tls;
+        spdlog::info("TLS: enabled cert_file={} key_file={} client_mtls={}",
+                     tls.cert_file,
+                     tls.key_file,
+                     bool_str(tls.client_mtls));
+    } else {
+        spdlog::info("TLS: disabled");
+    }
+
+    spdlog::info("Security: jwt_secret={} jwt_issuer={} jwt_audience={} jwks_cache_ttl_s={}",
+                 mask_secret(config.security.jwt_secret),
+                 config.security.jwt_issuer.empty() ? "<empty>" : config.security.jwt_issuer,
+                 config.security.jwt_audience.empty() ? "<empty>" : config.security.jwt_audience,
+                 config.security.jwks_cache_ttl_s);
+    spdlog::info("JWKS providers: {}", config.security.jwks_providers.size());
+
+    spdlog::info("Rate limits: enabled={}", bool_str(config.rate_limits.enabled));
+    spdlog::info("Rate limits: global capacity={} refill_rate={}",
+                 config.rate_limits.global_capacity,
+                 config.rate_limits.global_refill_rate);
+    spdlog::info("Rate limits: ip capacity={} refill_rate={}",
+                 config.rate_limits.ip_capacity,
+                 config.rate_limits.ip_refill_rate);
+    spdlog::info("Rate limits: user capacity={} refill_rate={}",
+                 config.rate_limits.user_capacity,
+                 config.rate_limits.user_refill_rate);
+    spdlog::info("Rate limits: endpoint capacity={} refill_rate={}",
+                 config.rate_limits.endpoint_capacity,
+                 config.rate_limits.endpoint_refill_rate);
+
+    spdlog::info("Observability: prometheus_enabled={} bind={}",
+                 bool_str(config.observability.prometheus.enabled),
+                 config.observability.prometheus.bind_address);
+    spdlog::info("Observability: logs level={} format={}",
+                 config.observability.logs.level,
+                 config.observability.logs.format);
+
+    spdlog::info("Upstreams: {}", config.upstreams.size());
+    for (const auto& upstream : config.upstreams) {
+        spdlog::info("  Upstream: name={} kind={} transport={} address={}",
+                     upstream.name,
+                     upstream_kind_str(upstream.kind),
+                     upstream_transport_str(upstream.transport),
+                     upstream.address);
+    }
+
+    spdlog::info("Routes: {}", config.routes.size());
+    for (const auto& route : config.routes) {
+        spdlog::info("  Route: match={} target={} websocket={}",
+                     route.match_pattern,
+                     route.target,
+                     bool_str(route.upgrade_websocket));
+    }
+    spdlog::info("=== End gateway configuration ===");
+}
+
 int main(int argc, char* argv[]) {
     // Parse command line arguments
     CommandLineArgs args = parse_args(argc, argv);
@@ -122,9 +207,11 @@ int main(int argc, char* argv[]) {
     // Configure logging from config
     spdlog::level::level_enum log_level = parse_log_level(config.observability.logs.level);
     spdlog::set_level(log_level);
+    spdlog::flush_on(spdlog::level::info);
     
     spdlog::info("SecureCloud Gateway Starting - Environment: {}", config.environment);
     spdlog::info("Log Level: {}", config.observability.logs.level);
+    log_gateway_config(config, config_path);
     
     // ===== CONFIGURATION VALIDATION =====
     spdlog::info("Validating gateway configuration...");
@@ -136,7 +223,19 @@ int main(int argc, char* argv[]) {
         spdlog::critical("Example: export JWT_SECRET=your-secret-key");
         return EXIT_FAILURE;
     }
-    spdlog::info("✓ JWT secret configured (HS256 symmetric verification enabled)");
+    spdlog::info("JWT secret configured (HS256 symmetric verification enabled)");
+
+    if (config.security.jwt_issuer.empty()) {
+        spdlog::critical("JWT issuer is not configured!");
+        spdlog::critical("Please set JWT_ISSUER in gateway config/security.");
+        return EXIT_FAILURE;
+    }
+
+    if (config.security.jwt_audience.empty()) {
+        spdlog::critical("JWT audience is not configured!");
+        spdlog::critical("Please set JWT_AUDIENCE in gateway config/security.");
+        return EXIT_FAILURE;
+    }
     
     // Validate upstream configurations
     for (const auto& upstream : config.upstreams) {
@@ -148,7 +247,7 @@ int main(int argc, char* argv[]) {
                 spdlog::critical("Expected format: host:port (e.g., localhost:8081)");
                 return EXIT_FAILURE;
             }
-            spdlog::info("✓ Upstream '{}': TCP transport -> {}", upstream.name, upstream.address);
+            spdlog::info("Upstream '{}': TCP transport -> {}", upstream.name, upstream.address);
         } else if (upstream.transport == UpstreamTransport::UDS) {
             // Validate UDS socket path is absolute
             if (upstream.address.empty() || upstream.address[0] != '/') {
@@ -157,7 +256,7 @@ int main(int argc, char* argv[]) {
                 spdlog::critical("Expected absolute path (e.g., /run/securecloud/auth.sock)");
                 return EXIT_FAILURE;
             }
-            spdlog::info("✓ Upstream '{}': UDS transport -> {}", upstream.name, upstream.address);
+            spdlog::info("Upstream '{}': UDS transport -> {}", upstream.name, upstream.address);
         }
     }
     
@@ -171,7 +270,7 @@ int main(int argc, char* argv[]) {
     spdlog::info("Server config: {}:{} with {} workers",
                  config.server.host, config.server.port, config.server.thread_pool_size);
     
-    spdlog::info("✓ Configuration validation complete");
+    spdlog::info("Configuration validation complete");
     // ===== END VALIDATION =====
 
     // Create io_context for async operations
@@ -180,20 +279,50 @@ int main(int argc, char* argv[]) {
     // Initialize components with configuration
     Metrics metrics;
     AuditSink audit;
-    
-    // Initialize JWT verification with configured secret
-    auto introspector = std::make_shared<TokenIntrospector>(config.security.jwt_secret);
+
+    // Determine auth-service TCP address for remote token validation.
+    std::string auth_service_addr;
+    for (const auto& upstream : config.upstreams) {
+        if (upstream.name == "auth" && upstream.transport == UpstreamTransport::TCP) {
+            auth_service_addr = upstream.address;
+            break;
+        }
+    }
+    if (auth_service_addr.empty()) {
+        spdlog::warn("Auth upstream TCP address not found; remote token revocation checks disabled");
+    }
+
+    // Initialize JWT verification with configured constraints.
+    auto introspector = std::make_shared<TokenIntrospector>(
+        config.security.jwt_secret,
+        config.security.jwt_issuer,
+        config.security.jwt_audience,
+        auth_service_addr
+    );
     auto auth_cache = std::make_shared<AuthCache>();
     JwtFilter jwt(introspector, auth_cache);
     
     Router router(config.routes, config.upstreams);
     UpstreamProxy proxy(io_ctx, config.upstreams);
+    RestApiEndpoints rest_api(proxy);
     AuthzFilter authz;
     HttpServer server(config.server);
 
     server.onRequest([&](const Request& r) -> Response {
-        if (r.path == "/v1/healthz") {
+        if (r.path == "/v1/healthz" || r.path == "/health") {
             return {200, R"({"status":"ok"})", {}};
+        }
+
+        if (r.path == "/api/login" && r.method == "POST") {
+            return rest_api.handle_login(r);
+        }
+
+        if (r.path == "/api/refresh" && r.method == "POST") {
+            return rest_api.handle_refresh(r);
+        }
+
+        if (r.path == "/api/logout" && r.method == "POST") {
+            return rest_api.handle_logout(r);
         }
 
         auto claims = jwt.verify(r);

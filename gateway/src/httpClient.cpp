@@ -117,6 +117,12 @@ HttpResult HttpClient::execute_request(http::verb method,
         
         spdlog::debug("Received response: status={}, body_size={}", 
                       result.status_code, result.body.size());
+
+        // If upstream asks to close the TCP connection, don't keep stale pooled sockets.
+        if (!res.keep_alive()) {
+            spdlog::debug("Upstream requested connection close for {}:{}", host_, port_);
+            close();
+        }
         
     } catch (const beast::system_error& e) {
         result.success = false;

@@ -52,6 +52,8 @@ struct JWKSProviderConfig {
 // Security configuration
 struct SecurityConfig {
     std::string jwt_secret;  // JWT secret for HS256 symmetric verification (from ${JWT_SECRET})
+    std::string jwt_issuer;  // Expected issuer claim (${JWT_ISSUER})
+    std::string jwt_audience; // Expected audience claim (${JWT_AUDIENCE})
     std::vector<JWKSProviderConfig> jwks_providers;
     int jwks_cache_ttl_s{300};
     // TODO: Migrate to RS256 + JWKS for production (asymmetric verification)

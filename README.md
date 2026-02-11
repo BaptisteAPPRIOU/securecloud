@@ -28,6 +28,51 @@ cmake --build build/dev --target gateway
 cmake --build build/dev --target run-gateway
 ```
 
+### Docker-first workflow
+
+```powershell
+# Compose files:
+#   core: docker-compose.core.yml
+#   full overlay (planned/experimental services): docker-compose.full.yml
+#   desktop profile: qt-client container
+
+# Build Docker images for the stack
+cmake --build build/dev --target docker-build
+
+# Start core stack (gateway + auth + postgres + redis)
+cmake --build build/dev --target docker-up-core
+
+# Start full stack (planned services behind "full" profile)
+cmake --build build/dev --target docker-up-full
+
+# Start core stack + Qt desktop client container ("desktop" profile)
+cmake --build build/dev --target docker-up-desktop
+
+# Start monitoring profile (Prometheus + Grafana)
+cmake --build build/dev --target docker-up-monitoring
+```
+
+### Auth session smoke test (E2E)
+
+```powershell
+# Optional overrides:
+#   $env:SMOKE_EMAIL="your-user@example.com"
+#   $env:SMOKE_PASSWORD="your-password"
+cmake --build build/dev --target smoke-auth-session
+```
+
+### Auth session E2E with GoogleTest (C++)
+
+```powershell
+# Optional overrides:
+#   $env:SC_E2E_EMAIL="your-user@example.com"
+#   $env:SC_E2E_PASSWORD="your-password"
+#   $env:SC_E2E_GATEWAY_HOST="127.0.0.1"
+#   $env:SC_E2E_GATEWAY_PORT="8443"
+cmake --build build/dev --target auth_session_e2e_tests
+ctest --test-dir build/dev -R auth_session_e2e_tests --output-on-failure
+```
+
 ---
 
 ## Project Structure

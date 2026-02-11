@@ -4,7 +4,7 @@ FROM gcc:15 AS build
 RUN apt-get update && apt-get install -y \
     cmake \
     git \
-    libboost-all-dev \
+    libboost-system-dev \
     libssl-dev \
     nlohmann-json3-dev \
     libfmt-dev \
@@ -13,10 +13,10 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /src
 
-COPY services/deploy-serrvice ./services/deploy-serrvice
+COPY services/deploy-service ./services/deploy-service
 COPY libs ./libs
 
-WORKDIR /src/services/deploy-serrvice
+WORKDIR /src/services/deploy-service
 RUN cmake -B build -DCMAKE_BUILD_TYPE=Release
 RUN cmake --build build -j$(nproc)
 
@@ -33,8 +33,8 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY --from=build /src/services/deploy-serrvice/build/deploy-service /app/
-COPY services/deploy-serrvice/config /app/config
+COPY --from=build /src/services/deploy-service/build/deploy-service /app/
+COPY services/deploy-service/config /app/config
 
 RUN mkdir -p /app/logs
 

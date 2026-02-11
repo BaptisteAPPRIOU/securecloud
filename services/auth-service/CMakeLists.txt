@@ -73,6 +73,9 @@ target_link_libraries(auth-service PRIVATE
     nlohmann_json::nlohmann_json
     ${PostgreSQL_LIBRARIES}
     pqxx
-    ws2_32
     jwt-cpp::jwt-cpp
 )
+
+if (WIN32)
+    target_link_libraries(auth-service PRIVATE ws2_32)
+endif()

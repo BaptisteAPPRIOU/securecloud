@@ -31,7 +31,7 @@ public:
      * 
      * Request body:
      * {
-     *   "username": "user@example.com",
+     *   "email": "user@example.com",
      *   "password": "secretpass123"
      * }
      * 
@@ -49,7 +49,7 @@ public:
      * }
      * 
      * Response (401 Unauthorized):
-     * {"error": "invalid_credentials", "message": "Invalid username or password"}
+     * {"error": "invalid_credentials", "message": "Invalid email or password"}
      */
     Response handle_login(const Request& r);
     

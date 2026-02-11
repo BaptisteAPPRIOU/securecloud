@@ -1,6 +1,8 @@
 #include "jwtFilter.hpp"
+#include <jwt-cpp/jwt.h>
 #include <spdlog/spdlog.h>
 #include <algorithm>
+#include <chrono>
 
 namespace gateway {
 
@@ -14,11 +16,7 @@ JwtFilter::JwtFilter(
 JwtFilter::JwtFilter() 
     : introspector_(std::make_shared<TokenIntrospector>()), 
       cache_(std::make_shared<AuthCache>()) {
-    spdlog::warn("JwtFilter created in DEV mode (no JWKS configuration)");
-    
-    // For development: accept hardcoded "dev" token
-    // In production, this should be removed and real JWKS used
-    // TODO: Remove this dev bypass in production
+    spdlog::warn("JwtFilter created without explicit configuration");
 }
 
 std::string JwtFilter::extract_token(const Request& r) const {
@@ -52,17 +50,17 @@ std::optional<Claims> JwtFilter::verify(const Request& r) const {
         return std::nullopt;
     }
 
-    // DEV MODE BYPASS: Accept "dev" token for development
-    // TODO: Remove this in production
-    if (token == "dev") {
-        spdlog::debug("DEV token accepted (bypass JWT verification)");
-        return Claims{.sub = "dev", .values = {{"role", "admin"}}};
-    }
-
     // Step 2: Check cache for previously verified token
     if (cache_) {
         auto cached_claims = cache_->get(token);
         if (cached_claims) {
+            if (introspector_ && introspector_->remote_validation_enabled()) {
+                auto remote_claims = introspector_->remoteValidate(token);
+                if (!remote_claims) {
+                    spdlog::debug("JWT rejected by remote validation");
+                    return std::nullopt;
+                }
+            }
             spdlog::debug("JWT claims retrieved from cache for subject: {}", cached_claims->sub);
             return cached_claims;
         }
@@ -80,11 +78,42 @@ std::optional<Claims> JwtFilter::verify(const Request& r) const {
         return std::nullopt;
     }
 
-    // Step 4: Cache verified claims for future requests
-    // TODO: Extract expiration from JWT and set cache TTL accordingly
+    if (introspector_->remote_validation_enabled()) {
+        auto remote_claims = introspector_->remoteValidate(token);
+        if (!remote_claims) {
+            spdlog::debug("JWT rejected by remote validation");
+            return std::nullopt;
+        }
+        if (!remote_claims->sub.empty() && !claims->sub.empty() && remote_claims->sub != claims->sub) {
+            spdlog::warn("JWT local/remote subject mismatch: local={} remote={}", claims->sub, remote_claims->sub);
+            return std::nullopt;
+        }
+    }
+
+    // Step 4: Cache verified claims using JWT exp-derived TTL.
     if (cache_) {
-        cache_->put(token, *claims);
-        spdlog::debug("JWT claims cached for subject: {}", claims->sub);
+        int cache_ttl_s = 0;
+        try {
+            auto decoded = jwt::decode(token);
+            if (decoded.has_expires_at()) {
+                const auto now = std::chrono::system_clock::now();
+                const auto exp = decoded.get_expires_at();
+                if (exp > now) {
+                    cache_ttl_s = static_cast<int>(
+                        std::chrono::duration_cast<std::chrono::seconds>(exp - now).count()
+                    );
+                }
+            }
+        } catch (const std::exception& e) {
+            spdlog::debug("Unable to derive JWT expiration for cache TTL: {}", e.what());
+        }
+
+        if (cache_ttl_s > 0) {
+            cache_->put(token, *claims, cache_ttl_s);
+            spdlog::debug("JWT claims cached for subject: {} (ttl={}s)", claims->sub, cache_ttl_s);
+        } else {
+            spdlog::debug("JWT claims not cached for subject: {} (missing/expired exp)", claims->sub);
+        }
     }
 
     spdlog::debug("JWT verified successfully for subject: {}", claims->sub);

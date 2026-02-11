@@ -1,0 +1,29 @@
+.git
+.github
+.gitignore
+.vscode
+*.code-workspace
+
+# Local build outputs
+build/
+install/
+logs/
+**/build/
+**/CMakeFiles/
+**/Testing/
+**/.ninja_deps
+**/.ninja_log
+
+# Local runtime/test artifacts
+**/logs/
+*.log
+*.tmp
+
+# Secrets
+.env
+config/env/**/.env
+
+# OS/editor artifacts
+Thumbs.db
+Desktop.ini
+*.swp

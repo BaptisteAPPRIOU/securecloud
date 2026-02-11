@@ -1,0 +1,174 @@
+2026-02-06T16:48:00Z SecureCloud client starting
+2026-02-06T16:48:00Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-06T16:48:00Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-06T16:48:00Z Config: window_size=720x480
+2026-02-06T16:48:00Z Config: theme=light
+2026-02-06T16:56:23Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-06T16:56:23Z Login response: status= 200 bytes= 760
+2026-02-06T16:56:23Z Login success for "admin@demo.local" status= 200
+2026-02-09T09:54:41Z SecureCloud client starting
+2026-02-09T09:54:41Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-09T09:54:41Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-09T09:54:41Z Config: window_size=720x480
+2026-02-09T09:54:41Z Config: theme=light
+2026-02-09T09:57:41Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T09:57:41Z Login response: status= 200 bytes= 760
+2026-02-09T09:57:41Z Login success for "admin@demo.local" status= 200
+2026-02-09T09:58:25Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T09:58:25Z Login network error: "Error transferring http://localhost:8443/api/login - server replied: OK" status= 502 bytes= 39
+2026-02-09T09:58:25Z Login failed: "upstream_connection_failed"
+2026-02-09T09:58:27Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T09:58:27Z Login response: status= 200 bytes= 760
+2026-02-09T09:58:27Z Login success for "admin@demo.local" status= 200
+2026-02-09T09:58:34Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T09:58:34Z Login network error: "Error transferring http://localhost:8443/api/login - server replied: OK" status= 502 bytes= 39
+2026-02-09T09:58:34Z Login failed: "upstream_connection_failed"
+2026-02-09T09:58:36Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T09:58:36Z Login response: status= 200 bytes= 760
+2026-02-09T09:58:36Z Login success for "admin@demo.local" status= 200
+2026-02-09T10:31:34Z SecureCloud client starting
+2026-02-09T10:31:34Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-09T10:31:34Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-09T10:31:34Z Config: window_size=720x480
+2026-02-09T10:31:34Z Config: theme=light
+2026-02-09T10:32:05Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T10:32:06Z Login response: status= 200 bytes= 760
+2026-02-09T10:32:06Z Login success for "admin@demo.local" status= 200
+2026-02-09T10:40:22Z SecureCloud client starting
+2026-02-09T10:40:22Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-09T10:40:22Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-09T10:40:22Z Config: window_size=720x480
+2026-02-09T10:40:22Z Config: theme=light
+2026-02-09T10:40:35Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T10:40:35Z Login network error: "Error transferring http://localhost:8443/api/login - server replied: OK" status= 502 bytes= 39
+2026-02-09T10:40:35Z Login failed: "upstream_connection_failed"
+2026-02-09T10:40:39Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T10:40:40Z Login response: status= 200 bytes= 760
+2026-02-09T10:40:40Z Login success for "admin@demo.local" status= 200
+2026-02-09T10:42:11Z SecureCloud client starting
+2026-02-09T10:42:11Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-09T10:42:11Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-09T10:42:11Z Config: window_size=720x480
+2026-02-09T10:42:11Z Config: theme=light
+2026-02-09T10:42:27Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T10:42:27Z Login network error: "Error transferring http://localhost:8443/api/login - server replied: OK" status= 502 bytes= 39
+2026-02-09T10:42:27Z Login failed: "upstream_connection_failed"
+2026-02-09T10:42:35Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T10:42:35Z Login response: status= 200 bytes= 760
+2026-02-09T10:42:35Z Login success for "admin@demo.local" status= 200
+2026-02-09T10:42:50Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T10:42:50Z Login network error: "Error transferring http://localhost:8443/api/login - server replied: OK" status= 502 bytes= 39
+2026-02-09T10:42:50Z Login failed: "upstream_connection_failed"
+2026-02-09T10:42:54Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T10:42:54Z Login response: status= 200 bytes= 760
+2026-02-09T10:42:54Z Login success for "admin@demo.local" status= 200
+2026-02-09T10:48:19Z SecureCloud client starting
+2026-02-09T10:48:19Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-09T10:48:19Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-09T10:48:19Z Config: window_size=720x480
+2026-02-09T10:48:19Z Config: theme=light
+2026-02-09T10:48:30Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T10:48:31Z Login network error: "Error transferring http://localhost:8443/api/login - server replied: OK" status= 502 bytes= 39
+2026-02-09T10:48:31Z Login failed: "upstream_connection_failed"
+2026-02-09T10:48:33Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T10:48:33Z Login response: status= 200 bytes= 760
+2026-02-09T10:48:33Z Login success for "admin@demo.local" status= 200
+2026-02-09T10:48:39Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T10:48:39Z Login network error: "Error transferring http://localhost:8443/api/login - server replied: OK" status= 502 bytes= 39
+2026-02-09T10:48:39Z Login failed: "upstream_connection_failed"
+2026-02-09T10:48:41Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T10:48:41Z Login response: status= 200 bytes= 760
+2026-02-09T10:48:41Z Login success for "admin@demo.local" status= 200
+2026-02-09T11:12:30Z SecureCloud client starting
+2026-02-09T11:12:30Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-09T11:12:30Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-09T11:12:30Z Config: window_size=720x480
+2026-02-09T11:12:30Z Config: theme=light
+2026-02-09T11:12:46Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T11:12:47Z Login response: status= 200 bytes= 760
+2026-02-09T11:12:47Z Login success for "admin@demo.local" status= 200
+2026-02-09T11:12:53Z Logout API call failed: "Error transferring http://localhost:8443/api/logout - server replied: OK" status= 502
+2026-02-09T11:19:36Z SecureCloud client starting
+2026-02-09T11:19:36Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-09T11:19:36Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-09T11:19:36Z Config: window_size=720x480
+2026-02-09T11:19:36Z Config: theme=light
+2026-02-09T11:20:02Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T11:20:02Z Login response: status= 200 bytes= 760
+2026-02-09T11:20:02Z Login success for "admin@demo.local" status= 200
+2026-02-09T11:20:06Z Logout API call completed with status 200
+2026-02-09T11:20:09Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T11:20:09Z Login response: status= 200 bytes= 760
+2026-02-09T11:20:09Z Login success for "admin@demo.local" status= 200
+2026-02-09T11:20:35Z SecureCloud client starting
+2026-02-09T11:20:35Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-09T11:20:35Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-09T11:20:35Z Config: window_size=720x480
+2026-02-09T11:20:35Z Config: theme=light
+2026-02-09T11:20:48Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T11:20:48Z Login response: status= 200 bytes= 760
+2026-02-09T11:20:48Z Login success for "admin@demo.local" status= 200
+2026-02-09T11:21:09Z Logout API call completed with status 200
+2026-02-09T11:21:11Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T11:21:12Z Login response: status= 200 bytes= 760
+2026-02-09T11:21:12Z Login success for "admin@demo.local" status= 200
+2026-02-09T11:23:10Z SecureCloud client starting
+2026-02-09T11:23:10Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-09T11:23:10Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-09T11:23:10Z Config: window_size=720x480
+2026-02-09T11:23:10Z Config: theme=light
+2026-02-09T11:23:31Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T11:23:32Z Login response: status= 200 bytes= 760
+2026-02-09T11:23:32Z Login success for "admin@demo.local" status= 200
+2026-02-09T12:04:16Z SecureCloud client starting
+2026-02-09T12:04:16Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-09T12:04:16Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-09T12:04:16Z Config: window_size=720x480
+2026-02-09T12:04:16Z Config: theme=light
+2026-02-09T12:04:38Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T12:04:39Z Login response: status= 200 bytes= 911
+2026-02-09T12:04:39Z Login success for "admin@demo.local" status= 200
+2026-02-09T12:05:35Z Logout API call completed with status 200
+2026-02-09T12:05:38Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T12:05:38Z Login response: status= 200 bytes= 911
+2026-02-09T12:05:38Z Login success for "admin@demo.local" status= 200
+2026-02-09T12:06:06Z Logout API call completed with status 200
+2026-02-09T12:30:44Z SecureCloud client starting
+2026-02-09T12:30:44Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-09T12:30:44Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-09T12:30:44Z Config: window_size=720x480
+2026-02-09T12:30:44Z Config: theme=light
+2026-02-09T12:31:30Z Login request: "http://localhost:8443/api/login" bytes= 52
+2026-02-09T12:31:30Z Login network error: "Host requires authentication" status= 401 bytes= 31
+2026-02-09T12:31:30Z Login failed: "invalid_credentials"
+2026-02-09T12:31:43Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T12:31:43Z Login response: status= 200 bytes= 911
+2026-02-09T12:31:43Z Login success for "admin@demo.local" status= 200
+2026-02-09T12:31:50Z Logout API call completed with status 200
+2026-02-09T12:35:28Z SecureCloud client starting
+2026-02-09T12:35:28Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-09T12:35:28Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-09T12:35:28Z Config: window_size=720x480
+2026-02-09T12:35:28Z Config: theme=light
+2026-02-09T12:35:58Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T12:35:58Z Login response: status= 200 bytes= 911
+2026-02-09T12:35:58Z Login success for "admin@demo.local" status= 200
+2026-02-09T12:36:13Z Logout API call completed with status 200
+2026-02-09T13:16:16Z SecureCloud client starting
+2026-02-09T13:16:16Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-09T13:16:16Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-09T13:16:16Z Config: window_size=720x480
+2026-02-09T13:16:16Z Config: theme=light
+2026-02-09T13:16:40Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-09T13:16:40Z Login response: status= 200 bytes= 911
+2026-02-09T13:16:40Z Login success for "admin@demo.local" status= 200
+2026-02-09T13:16:58Z Logout API call completed with status 200
+2026-02-10T13:02:23Z SecureCloud client starting
+2026-02-10T13:02:23Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-10T13:02:23Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-10T13:02:23Z Config: window_size=720x480
+2026-02-10T13:02:23Z Config: theme=light
+2026-02-10T13:02:39Z Login request: "http://localhost:8443/api/login" bytes= 51
+2026-02-10T13:02:39Z Login response: status= 200 bytes= 911
+2026-02-10T13:02:39Z Login success for "admin@demo.local" status= 200
+2026-02-10T13:03:05Z Logout API call completed with status 200

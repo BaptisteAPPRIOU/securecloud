@@ -38,6 +38,10 @@ option(BUILD_AUDIT_SERVICE "Build the Audit service" OFF)
 option(BUILD_QT_CLIENT "Build the Qt Client application" ON)
 option(BUILD_TESTING "Build unit tests" ON)
 
+if(BUILD_TESTING)
+    enable_testing()
+endif()
+
 # =============================================================================
 # C++ Standard
 # =============================================================================
@@ -77,8 +81,34 @@ set(QT_PATH "C:/msys64/ucrt64" CACHE PATH "Path to Qt installation")
 # =============================================================================
 # Environment Configuration
 # =============================================================================
-set(ENV_FILE "${CMAKE_SOURCE_DIR}/config/env/dev/.env")
-set(COMPOSE_FILE "${CMAKE_SOURCE_DIR}/ops/compose/compose.dev.yml")
+set(_default_env_file "${CMAKE_SOURCE_DIR}/config/env/dev/.env")
+if (NOT EXISTS "${_default_env_file}")
+    set(_default_env_file "${CMAKE_SOURCE_DIR}/.env")
+endif()
+
+set(SECURECLOUD_ENV_FILE
+    "${_default_env_file}"
+    CACHE FILEPATH "Environment file used by Docker Compose targets"
+)
+set(SECURECLOUD_DB_COMPOSE_FILE
+    "${CMAKE_SOURCE_DIR}/ops/compose/compose.dev.yml"
+    CACHE FILEPATH "Compose file used by db-* targets"
+)
+set(SECURECLOUD_CORE_COMPOSE_FILE
+    "${CMAKE_SOURCE_DIR}/docker-compose.core.yml"
+    CACHE FILEPATH "Compose file used by docker-up-core and docker-build targets"
+)
+set(SECURECLOUD_FULL_COMPOSE_FILE
+    "${CMAKE_SOURCE_DIR}/docker-compose.full.yml"
+    CACHE FILEPATH "Overlay compose file used by docker-up-full (planned/experimental services)"
+)
+set(SECURECLOUD_LEGACY_STACK_COMPOSE_FILE
+    "${CMAKE_SOURCE_DIR}/docker-compose.yml"
+    CACHE FILEPATH "Legacy monolithic compose file kept for CI compatibility"
+)
+set(SECURECLOUD_FULL_PROFILE "full" CACHE STRING "Compose profile used by docker-up-full target")
+set(SECURECLOUD_DESKTOP_PROFILE "desktop" CACHE STRING "Compose profile used by docker-up-desktop target")
+set(SECURECLOUD_MONITORING_PROFILE "monitoring" CACHE STRING "Compose profile used by docker-up-monitoring target")
 
 # Database configuration defaults
 set(DB_HOST "127.0.0.1" CACHE STRING "Database host")
@@ -96,7 +126,9 @@ find_program(DOCKER_EXECUTABLE
 )
 
 # Use 'docker compose' (V2) - handles paths with spaces correctly
-set(DOCKER_COMPOSE_ARGS compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}")
+set(DOCKER_DB_COMPOSE_ARGS compose --env-file "${SECURECLOUD_ENV_FILE}" -f "${SECURECLOUD_DB_COMPOSE_FILE}")
+set(DOCKER_STACK_CORE_COMPOSE_ARGS compose --env-file "${SECURECLOUD_ENV_FILE}" -f "${SECURECLOUD_CORE_COMPOSE_FILE}")
+set(DOCKER_STACK_FULL_COMPOSE_ARGS compose --env-file "${SECURECLOUD_ENV_FILE}" -f "${SECURECLOUD_CORE_COMPOSE_FILE}" -f "${SECURECLOUD_FULL_COMPOSE_FILE}")
 
 # =============================================================================
 # Subprojects
@@ -169,7 +201,13 @@ add_custom_target(help-targets
     COMMAND ${CMAKE_COMMAND} -E echo "  db-psql          - Interactive psql session"
     COMMAND ${CMAKE_COMMAND} -E echo ""
     COMMAND ${CMAKE_COMMAND} -E echo "=== Docker Targets ==="
-    COMMAND ${CMAKE_COMMAND} -E echo "  docker-up        - Start all Docker services"
+    COMMAND ${CMAKE_COMMAND} -E echo "  docker-build     - Build Docker images from docker-compose.core.yml"
+    COMMAND ${CMAKE_COMMAND} -E echo "  docker-build-full - Build Docker images from core + full overlay"
+    COMMAND ${CMAKE_COMMAND} -E echo "  docker-up-core   - Start core stack (gateway + auth + infra)"
+    COMMAND ${CMAKE_COMMAND} -E echo "  docker-up-full   - Start planned/experimental stack (--profile ${SECURECLOUD_FULL_PROFILE})"
+    COMMAND ${CMAKE_COMMAND} -E echo "  docker-up-desktop - Start core stack + Qt desktop client (--profile ${SECURECLOUD_DESKTOP_PROFILE})"
+    COMMAND ${CMAKE_COMMAND} -E echo "  docker-up-monitoring - Start monitoring profile (--profile ${SECURECLOUD_MONITORING_PROFILE})"
+    COMMAND ${CMAKE_COMMAND} -E echo "  docker-up        - Alias to docker-up-core"
     COMMAND ${CMAKE_COMMAND} -E echo "  docker-down      - Stop all Docker services"
     COMMAND ${CMAKE_COMMAND} -E echo "  docker-status    - Show Docker services status"
     COMMAND ${CMAKE_COMMAND} -E echo "  docker-logs      - Show Docker logs"
@@ -181,6 +219,7 @@ add_custom_target(help-targets
     COMMAND ${CMAKE_COMMAND} -E echo ""
     COMMAND ${CMAKE_COMMAND} -E echo "=== Utility Targets ==="
     COMMAND ${CMAKE_COMMAND} -E echo "  setup            - Initial setup (copy .env)"
+    COMMAND ${CMAKE_COMMAND} -E echo "  smoke-auth-session - E2E auth flow smoke test"
     COMMAND ${CMAKE_COMMAND} -E echo "  clean-all        - Clean builds and Docker volumes"
     COMMAND ${CMAKE_COMMAND} -E echo ""
     COMMENT "Displaying available targets"
@@ -200,163 +239,259 @@ add_custom_target(setup
     VERBATIM
 )
 
+find_program(POWERSHELL_EXECUTABLE
+    NAMES pwsh powershell
+    DOC "PowerShell executable"
+)
+
+if(POWERSHELL_EXECUTABLE)
+    add_custom_target(smoke-auth-session
+        COMMAND "${POWERSHELL_EXECUTABLE}" -NoProfile -ExecutionPolicy Bypass -File "${CMAKE_SOURCE_DIR}/tools/scripts/smoke-auth-session.ps1"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running auth session smoke test (login -> refresh -> logout -> old token denied)"
+        VERBATIM
+    )
+endif()
+
 # =============================================================================
 # Custom Targets - Database
 # =============================================================================
-add_custom_target(db-up
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} up -d postgres
-    COMMAND ${CMAKE_COMMAND} -E echo "[OK] PostgreSQL started on localhost:${DB_PORT}"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Starting PostgreSQL container"
-    VERBATIM
-)
+if(DOCKER_EXECUTABLE)
+    add_custom_target(db-up
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} up -d postgres
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] PostgreSQL started on localhost:${DB_PORT}"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Starting PostgreSQL container"
+        VERBATIM
+    )
 
-add_custom_target(db-down
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} stop postgres
-    COMMAND ${CMAKE_COMMAND} -E echo "[OK] PostgreSQL stopped"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Stopping PostgreSQL container"
-    VERBATIM
-)
+    add_custom_target(db-down
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} stop postgres
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] PostgreSQL stopped"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Stopping PostgreSQL container"
+        VERBATIM
+    )
 
-add_custom_target(db-migrate
-    COMMAND ${CMAKE_COMMAND} -E echo "Running all migrations..."
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} run --rm flyway-auth
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} run --rm flyway-messaging
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} run --rm flyway-files
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} run --rm flyway-audit
-    COMMAND ${CMAKE_COMMAND} -E echo "[OK] All migrations completed"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Running Flyway migrations"
-    VERBATIM
-)
+    add_custom_target(db-migrate
+        COMMAND ${CMAKE_COMMAND} -E echo "Running all migrations..."
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} run --rm flyway-auth
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} run --rm flyway-messaging
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} run --rm flyway-files
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} run --rm flyway-audit
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] All migrations completed"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running Flyway migrations"
+        VERBATIM
+    )
 
-add_custom_target(db-migrate-auth
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} run --rm flyway-auth
-    COMMAND ${CMAKE_COMMAND} -E echo "[OK] Auth migration completed"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Running auth schema migration"
-    VERBATIM
-)
+    add_custom_target(db-migrate-auth
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} run --rm flyway-auth
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] Auth migration completed"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running auth schema migration"
+        VERBATIM
+    )
 
-add_custom_target(db-migrate-messaging
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} run --rm flyway-messaging
-    COMMAND ${CMAKE_COMMAND} -E echo "[OK] Messaging migration completed"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Running messaging schema migration"
-    VERBATIM
-)
+    add_custom_target(db-migrate-messaging
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} run --rm flyway-messaging
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] Messaging migration completed"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running messaging schema migration"
+        VERBATIM
+    )
 
-add_custom_target(db-migrate-files
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} run --rm flyway-files
-    COMMAND ${CMAKE_COMMAND} -E echo "[OK] Files migration completed"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Running files schema migration"
-    VERBATIM
-)
+    add_custom_target(db-migrate-files
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} run --rm flyway-files
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] Files migration completed"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running files schema migration"
+        VERBATIM
+    )
 
-add_custom_target(db-migrate-audit
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} run --rm flyway-audit
-    COMMAND ${CMAKE_COMMAND} -E echo "[OK] Audit migration completed"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Running audit schema migration"
-    VERBATIM
-)
+    add_custom_target(db-migrate-audit
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} run --rm flyway-audit
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] Audit migration completed"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running audit schema migration"
+        VERBATIM
+    )
 
-add_custom_target(db-reset
-    COMMAND ${CMAKE_COMMAND} -E echo "[WARNING] Resetting database - all data will be lost!"
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} down -v postgres
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} up -d postgres
-    COMMAND ${CMAKE_COMMAND} -E sleep 5
-    COMMAND ${CMAKE_COMMAND} -E echo "Running migrations..."
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Resetting database"
-    VERBATIM
-)
+    add_custom_target(db-reset
+        COMMAND ${CMAKE_COMMAND} -E echo "[WARNING] Resetting database - all data will be lost!"
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} down -v postgres
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} up -d postgres
+        COMMAND ${CMAKE_COMMAND} -E sleep 5
+        COMMAND ${CMAKE_COMMAND} -E echo "Running migrations..."
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} run --rm flyway-auth
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} run --rm flyway-messaging
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} run --rm flyway-files
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} run --rm flyway-audit
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Resetting database"
+        VERBATIM
+    )
 
-add_custom_target(db-adminer
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} up -d adminer
-    COMMAND ${CMAKE_COMMAND} -E echo "[OK] Adminer available at: http://localhost:8080"
-    COMMAND ${CMAKE_COMMAND} -E echo ""
-    COMMAND ${CMAKE_COMMAND} -E echo "Connection details:"
-    COMMAND ${CMAKE_COMMAND} -E echo "  System:   PostgreSQL"
-    COMMAND ${CMAKE_COMMAND} -E echo "  Server:   postgres"
-    COMMAND ${CMAKE_COMMAND} -E echo "  Username: ${DB_USER}"
-    COMMAND ${CMAKE_COMMAND} -E echo "  Password: ${DB_PASS}"
-    COMMAND ${CMAKE_COMMAND} -E echo "  Database: ${DB_NAME}"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Starting Adminer"
-    VERBATIM
-)
+    add_custom_target(db-adminer
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} up -d adminer
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] Adminer available at: http://localhost:8080"
+        COMMAND ${CMAKE_COMMAND} -E echo ""
+        COMMAND ${CMAKE_COMMAND} -E echo "Connection details:"
+        COMMAND ${CMAKE_COMMAND} -E echo "  System:   PostgreSQL"
+        COMMAND ${CMAKE_COMMAND} -E echo "  Server:   postgres"
+        COMMAND ${CMAKE_COMMAND} -E echo "  Username: ${DB_USER}"
+        COMMAND ${CMAKE_COMMAND} -E echo "  Password: ${DB_PASS}"
+        COMMAND ${CMAKE_COMMAND} -E echo "  Database: ${DB_NAME}"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Starting Adminer"
+        VERBATIM
+    )
 
-add_custom_target(db-logs
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} logs -f postgres
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Showing PostgreSQL logs"
-    VERBATIM
-)
+    add_custom_target(db-logs
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} logs -f postgres
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Showing PostgreSQL logs"
+        VERBATIM
+    )
 
-add_custom_target(db-psql
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} exec postgres psql -U ${DB_USER} -d ${DB_NAME}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Starting interactive psql session"
-    VERBATIM
-)
+    add_custom_target(db-psql
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} exec postgres psql -U ${DB_USER} -d ${DB_NAME}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Starting interactive psql session"
+        VERBATIM
+    )
 
-# =============================================================================
-# Custom Targets - Docker
-# =============================================================================
-add_custom_target(docker-up
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} up -d
-    COMMAND ${CMAKE_COMMAND} -E echo "[OK] All Docker services started"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Starting all Docker services"
-    VERBATIM
-)
+    # =============================================================================
+    # Custom Targets - Docker
+    # =============================================================================
+    add_custom_target(docker-build
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_STACK_CORE_COMPOSE_ARGS} build
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Building Docker images for core application stack"
+        VERBATIM
+    )
 
-add_custom_target(docker-down
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} down
-    COMMAND ${CMAKE_COMMAND} -E echo "[OK] All Docker services stopped"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Stopping all Docker services"
-    VERBATIM
-)
+    add_custom_target(docker-build-full
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_STACK_FULL_COMPOSE_ARGS} --profile "${SECURECLOUD_FULL_PROFILE}" build
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Building Docker images for core + planned/experimental stack"
+        VERBATIM
+    )
 
-add_custom_target(docker-status
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} ps
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Showing Docker services status"
-    VERBATIM
-)
+    add_custom_target(docker-up-core
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_STACK_CORE_COMPOSE_ARGS} up -d
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] Core Docker stack started"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Starting core Docker services"
+        VERBATIM
+    )
 
-add_custom_target(docker-logs
-    COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_COMPOSE_ARGS} logs -f
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Showing Docker logs"
-    VERBATIM
-)
+    add_custom_target(docker-up-full
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_STACK_FULL_COMPOSE_ARGS} --profile "${SECURECLOUD_FULL_PROFILE}" up -d
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] Full Docker stack started"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Starting Docker services with core + planned/experimental overlay"
+        VERBATIM
+    )
+
+    add_custom_target(docker-up-desktop
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_STACK_CORE_COMPOSE_ARGS} --profile "${SECURECLOUD_DESKTOP_PROFILE}" up -d
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] Core Docker stack with Qt desktop client started"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Starting Docker services with desktop profile"
+        VERBATIM
+    )
+
+    add_custom_target(docker-up-monitoring
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_STACK_CORE_COMPOSE_ARGS} --profile "${SECURECLOUD_MONITORING_PROFILE}" up -d
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] Docker stack with monitoring started"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Starting Docker services with monitoring profile"
+        VERBATIM
+    )
+
+    add_custom_target(docker-up
+        DEPENDS docker-up-core
+    )
+
+    add_custom_target(docker-down
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_STACK_FULL_COMPOSE_ARGS} --profile "${SECURECLOUD_FULL_PROFILE}" down --remove-orphans
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] All Docker services stopped"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Stopping all Docker services"
+        VERBATIM
+    )
+
+    add_custom_target(docker-status
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_STACK_FULL_COMPOSE_ARGS} --profile "${SECURECLOUD_FULL_PROFILE}" ps
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Showing Docker services status"
+        VERBATIM
+    )
+
+    add_custom_target(docker-logs
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_STACK_FULL_COMPOSE_ARGS} --profile "${SECURECLOUD_FULL_PROFILE}" logs -f
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Showing Docker logs"
+        VERBATIM
+    )
+else()
+    message(WARNING "Docker executable not found. Docker/db targets will report an error when invoked.")
+
+    foreach(_docker_target IN ITEMS
+        db-up db-down db-migrate db-migrate-auth db-migrate-messaging db-migrate-files db-migrate-audit
+        db-reset db-adminer db-logs db-psql
+        docker-build docker-build-full docker-up-core docker-up-full docker-up-desktop docker-up-monitoring docker-up docker-down docker-status docker-logs
+    )
+        add_custom_target(${_docker_target}
+            COMMAND ${CMAKE_COMMAND} -E echo "[ERROR] Docker executable not found in PATH."
+            COMMAND ${CMAKE_COMMAND} -E echo "Install Docker Desktop, then re-run CMake configure."
+            VERBATIM
+        )
+    endforeach()
+endif()
 
 # =============================================================================
 # Custom Targets - Run
 # =============================================================================
 if(BUILD_GATEWAY)
-    add_custom_target(run-gateway
-        COMMAND $<TARGET_FILE:gateway>
-        DEPENDS gateway
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/gateway
-        COMMENT "Running Gateway"
-        VERBATIM
-    )
+    if(WIN32 AND POWERSHELL_EXECUTABLE)
+        add_custom_target(run-gateway
+            COMMAND "${POWERSHELL_EXECUTABLE}" -NoProfile -ExecutionPolicy Bypass -File "${CMAKE_SOURCE_DIR}/gateway/run-dev.ps1"
+            DEPENDS gateway
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Running Gateway via gateway/run-dev.ps1"
+            VERBATIM
+        )
+    else()
+        add_custom_target(run-gateway
+            COMMAND $<TARGET_FILE:gateway>
+            DEPENDS gateway
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/gateway
+            COMMENT "Running Gateway"
+            VERBATIM
+        )
+    endif()
 endif()
 
 if(BUILD_AUTH_SERVICE)
-    add_custom_target(run-auth
-        COMMAND $<TARGET_FILE:auth-service>
-        DEPENDS auth-service
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/services/auth-service
-        COMMENT "Running Auth Service"
-        VERBATIM
-    )
+    if(WIN32 AND POWERSHELL_EXECUTABLE)
+        add_custom_target(run-auth
+            COMMAND "${POWERSHELL_EXECUTABLE}" -NoProfile -ExecutionPolicy Bypass -File "${CMAKE_SOURCE_DIR}/services/auth-service/run-dev.ps1"
+            DEPENDS auth-service
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Running Auth Service via services/auth-service/run-dev.ps1"
+            VERBATIM
+        )
+    else()
+        add_custom_target(run-auth
+            COMMAND $<TARGET_FILE:auth-service>
+            DEPENDS auth-service
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/services/auth-service
+            COMMENT "Running Auth Service"
+            VERBATIM
+        )
+    endif()
 endif()
 
 if(BUILD_QT_CLIENT)
@@ -372,16 +507,28 @@ endif()
 # =============================================================================
 # Custom Targets - Clean
 # =============================================================================
-add_custom_target(clean-all
-    COMMAND ${CMAKE_COMMAND} -E echo "Cleaning build directories..."
-    COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_BINARY_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E echo "Stopping Docker services..."
-    COMMAND ${SHELL_CMD} ${SHELL_ARGS} "${DOCKER_COMPOSE_FULL} down -v" || ${CMAKE_COMMAND} -E true
-    COMMAND ${CMAKE_COMMAND} -E echo "[OK] Full cleanup completed"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Full cleanup (build + Docker volumes)"
-    VERBATIM
-)
+if(DOCKER_EXECUTABLE)
+    add_custom_target(clean-all
+        COMMAND ${CMAKE_COMMAND} -E echo "Cleaning build directories..."
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_BINARY_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E echo "Stopping Docker services and removing volumes..."
+        COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_STACK_FULL_COMPOSE_ARGS} --profile "${SECURECLOUD_FULL_PROFILE}" down -v --remove-orphans
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] Full cleanup completed"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Full cleanup (build + Docker volumes)"
+        VERBATIM
+    )
+else()
+    add_custom_target(clean-all
+        COMMAND ${CMAKE_COMMAND} -E echo "Cleaning build directories..."
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_BINARY_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E echo "[SKIP] Docker not found; skipping container cleanup"
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] Build cleanup completed"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Build cleanup (Docker unavailable)"
+        VERBATIM
+    )
+endif()
 
 # =============================================================================
 # Installation (optional)
@@ -417,6 +564,12 @@ message(STATUS "CMake version:     ${CMAKE_VERSION}")
 message(STATUS "Compiler:          ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS "Build type:        ${CMAKE_BUILD_TYPE}")
 message(STATUS "Install prefix:    ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "Docker executable: ${DOCKER_EXECUTABLE}")
+message(STATUS "Docker env file:   ${SECURECLOUD_ENV_FILE}")
+message(STATUS "DB compose file:   ${SECURECLOUD_DB_COMPOSE_FILE}")
+message(STATUS "Core compose file: ${SECURECLOUD_CORE_COMPOSE_FILE}")
+message(STATUS "Full overlay file: ${SECURECLOUD_FULL_COMPOSE_FILE}")
+message(STATUS "Legacy compose:    ${SECURECLOUD_LEGACY_STACK_COMPOSE_FILE}")
 message(STATUS "")
 message(STATUS "Components:")
 message(STATUS "  Gateway:         ${BUILD_GATEWAY}")

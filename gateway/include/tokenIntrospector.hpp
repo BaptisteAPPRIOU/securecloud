@@ -35,14 +35,19 @@ struct JWKSCacheEntry {
 class TokenIntrospector {
 public:
     /**
-     * Construct introspector with JWT secret and optional JWKS config.
-     * 
+     * Construct introspector with JWT secret and verification constraints.
+     *
      * @param jwt_secret Shared secret for HS256 symmetric JWT verification (from config)
+     * @param issuer Expected JWT issuer (`iss`) claim
+     * @param audience Expected JWT audience (`aud`) claim
      * @param jwks_url URL to fetch JWKS (e.g., http://auth-service/.well-known/jwks.json)
      * @param cache_ttl_s JWKS cache TTL in seconds (default: 300 = 5 minutes)
      */
     explicit TokenIntrospector(
         const std::string& jwt_secret = "",
+        const std::string& issuer = "",
+        const std::string& audience = "",
+        const std::string& auth_service_addr = "",
         const std::string& jwks_url = "",
         int cache_ttl_s = 300
     );
@@ -75,6 +80,11 @@ public:
     std::optional<Claims> remoteValidate(const std::string& jwt) const;
 
     /**
+     * @return true if remote token validation endpoint is configured.
+     */
+    bool remote_validation_enabled() const;
+
+    /**
      * Set hardcoded public key for development/testing.
      * For production, use JWKS endpoint instead.
      * 
@@ -84,6 +94,9 @@ public:
 
 private:
     std::string jwt_secret_;  // Shared secret for HS256 symmetric verification
+    std::string issuer_;      // Required issuer claim
+    std::string audience_;    // Required audience claim
+    std::string auth_service_addr_; // host:port for auth-service validation API
     std::string jwks_url_;
     int cache_ttl_s_;
     

@@ -190,35 +190,45 @@ ENTRYPOINT ["/app/auth-service"]
 
 2. Database Migrations (run once, then exit)
    +-> flyway-auth (depends: postgres healthy)
-   +-> flyway-files
-   +-> flyway-messaging  
-   +-> flyway-audit
+   +-> flyway-files      (full profile)
+   +-> flyway-messaging  (full profile)
+   +-> flyway-audit      (full profile)
 
 3. Backend Services (wait for migrations)
    +-> auth-service (depends: postgres, redis, flyway-auth)
-   +-> audit-service (depends: postgres, flyway-audit)
-   +-> files-service (depends: postgres, flyway-files)
-   +-> messaging-service (depends: postgres, redis, flyway-messaging)
+   +-> audit-service (full profile)
+   +-> files-service (full profile)
+   +-> messaging-service (full profile)
+   +-> deploy-service (full profile)
 
-4. Gateway (wait for all services)
-   +-> gateway (depends: auth, audit, files, messaging healthy)
+4. Gateway
+   +-> gateway (depends on auth-service health)
 
 5. Monitoring (optional profile)
    +-> prometheus
    +-> grafana
+
+6. Qt Desktop Client (optional profile)
+   +-> qt-client (depends on gateway health)
 ```
 
 ### Deploy Commands
 
 ```bash
 # Option 1: Via CMake targets (recommended)
-cmake --build build/dev --target docker-up
+cmake --build build/dev --target docker-up-core
 
 # Option 2: Direct Docker Compose
-docker compose up -d
+docker compose -f docker-compose.core.yml up -d
 
-# Option 3: With monitoring stack
-docker compose --profile monitoring up -d
+# Option 3: Include planned services (full profile)
+docker compose -f docker-compose.core.yml -f docker-compose.full.yml --profile full up -d
+
+# Option 4: With Qt desktop client container
+docker compose -f docker-compose.core.yml --profile desktop up -d
+
+# Option 5: With monitoring stack
+docker compose -f docker-compose.core.yml --profile monitoring up -d
 ```
 
 ### Quick Start
@@ -230,8 +240,14 @@ cp .env.example .env
 # 2. Edit .env with your values (especially passwords and secrets)
 nano .env
 
-# 3. Start all services
-docker compose up -d
+# 3. Start the core stack
+docker compose -f docker-compose.core.yml up -d
+
+# Optional: include planned services
+docker compose -f docker-compose.core.yml -f docker-compose.full.yml --profile full up -d
+
+# Optional: include Qt desktop client container
+docker compose -f docker-compose.core.yml --profile desktop up -d
 
 # 4. Check status
 docker compose ps
@@ -241,6 +257,10 @@ docker compose logs -f gateway
 ```
 
 ## Service Architecture
+
+By default, `docker compose -f docker-compose.core.yml up -d` starts the core stack (`gateway`, `auth-service`, infra).  
+Planned services (`audit-service`, `files-service`, `messaging-service`, `deploy-service`) are behind the `full` profile.
+The Qt desktop client container (`qt-client`) is behind the `desktop` profile.
 
 ```
 ┌─────────────────────────────────────────┐
@@ -274,8 +294,17 @@ cmake --build build/dev --target db-up
 # Run all migrations
 cmake --build build/dev --target db-migrate
 
-# Start all Docker services
-cmake --build build/dev --target docker-up
+# Build images
+cmake --build build/dev --target docker-build
+
+# Start core stack
+cmake --build build/dev --target docker-up-core
+
+# Start full stack
+cmake --build build/dev --target docker-up-full
+
+# Start core stack + Qt desktop client container
+cmake --build build/dev --target docker-up-desktop
 
 # Stop all services
 cmake --build build/dev --target docker-down
@@ -291,14 +320,20 @@ cmake --build build/dev --target docker-logs
 
 #### Start Services
 ```bash
-# All services
-docker compose up -d
+# Core stack
+docker compose -f docker-compose.core.yml up -d
+
+# Full stack (includes planned services)
+docker compose -f docker-compose.core.yml -f docker-compose.full.yml --profile full up -d
+
+# Core stack + Qt desktop client container
+docker compose -f docker-compose.core.yml --profile desktop up -d
 
 # Specific service
-docker compose up -d gateway auth-service
+docker compose -f docker-compose.core.yml up -d gateway auth-service
 
 # With monitoring (Prometheus + Grafana)
-docker compose --profile monitoring up -d
+docker compose -f docker-compose.core.yml --profile monitoring up -d
 ```
 
 ### Stop Services
@@ -375,6 +410,7 @@ curl http://localhost:8002/health  # Audit Service
 | Messaging (HTTP) | 8004 | Messaging API |
 | Messaging (WebSocket) | 8005 | Real-time Chat |
 | Deploy Service | 8006 | Deployment |
+| Qt Client (desktop profile) | - | Qt GUI container (uses gateway internally) |
 | PostgreSQL | 15432 | Database |
 | Redis | 16379 | Cache/Sessions |
 | Adminer | 9090 | DB Admin UI |
@@ -505,7 +541,7 @@ cmake --build build/dev -j 16
 cmake --build build/dev --target run-gateway
 
 # 5. Test with Docker
-cmake --build build/dev --target docker-up
+cmake --build build/dev --target docker-up-core
 
 # 6. View logs
 cmake --build build/dev --target docker-logs
@@ -609,7 +645,7 @@ docker compose up -d
 ## Performance Tuning
 
 ### Resource Limits
-Edit docker-compose.yml to add:
+Edit `docker-compose.core.yml` to add:
 ```yaml
 services:
   gateway:
@@ -645,7 +681,9 @@ docker cp sc_redis:/data/dump.rdb redis_backup_$DATE.rdb
 |---------|------|
 | Build configuration | `CMakeLists.txt` |
 | Build presets | `CMakePresets.json` |
-| Full stack deployment | `docker-compose.yml` |
+| Core stack deployment | `docker-compose.core.yml` |
+| Full/experimental overlay | `docker-compose.full.yml` |
+| Legacy monolithic stack (CI compatibility) | `docker-compose.yml` |
 | Dev database only | `ops/compose/compose.dev.yml` |
 | Service Dockerfiles | `ops/docker/*.Dockerfile` |
 | Environment config | `config/env/dev/.env` |

@@ -1,0 +1,5 @@
+2026-02-06T17:36:07Z SecureCloud client starting
+2026-02-06T17:36:07Z Client log file: "logs/dev-run/qt-client.log"
+2026-02-06T17:36:07Z Config: SECURECLOUD_API_BASE= "<default>" resolved= "http://localhost:8443"
+2026-02-06T17:36:07Z Config: window_size=720x480
+2026-02-06T17:36:07Z Config: theme=light

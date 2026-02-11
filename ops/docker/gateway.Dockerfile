@@ -1,18 +1,32 @@
 # ---------- build ----------
-FROM gcc:15 AS build
-RUN apt-get update && apt-get install -y cmake git ca-certificates && rm -rf /var/lib/apt/lists/*
+FROM ubuntu:24.04 AS build
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    libboost-system-dev \
+    libssl-dev \
+    nlohmann-json3-dev \
+    libfmt-dev \
+    libspdlog-dev \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
-COPY . .
-RUN ./tools/vcpkg/bootstrap-vcpkg.sh
-RUN cmake -S gateway -B build -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_TOOLCHAIN_FILE=/src/tools/vcpkg/scripts/buildsystems/vcpkg.cmake
-RUN cmake --build build -j
-
+COPY gateway ./gateway
+COPY libs ./libs
+WORKDIR /src/gateway
+RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+RUN cmake --build build -j$(nproc)
 
 # ---------- runtime ----------
 FROM ubuntu:24.04
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    libssl3 \
+    libboost-system1.83.0 \
+    libfmt-dev \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY --from=build /src/build/gateway /app/gateway
+COPY --from=build /src/gateway/build/gateway /app/gateway
 COPY gateway/config /app/config
 ENTRYPOINT ["/app/gateway"]

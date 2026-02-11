@@ -20,6 +20,15 @@ add_executable(test_login
 target_link_libraries(test_login PRIVATE Qt6::Test Qt6::Widgets Qt6::Network)
 add_test(NAME test_login COMMAND test_login)
 
+# Test: HomePage
+add_executable(test_homepage
+    test_homepage.cpp
+    ../src/homepage.cpp
+    ../src/homepage.ui
+)
+target_link_libraries(test_homepage PRIVATE Qt6::Test Qt6::Widgets)
+add_test(NAME test_homepage COMMAND test_homepage)
+
 # Test: ThemeManager
 add_executable(test_thememanager
     test_thememanager.cpp

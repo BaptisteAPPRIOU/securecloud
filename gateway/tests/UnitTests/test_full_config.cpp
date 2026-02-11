@@ -49,6 +49,8 @@ upstreams:
     socket: "/run/securecloud/files.sock"
 
 security:
+  jwt_issuer: "securecloud-auth"
+  jwt_audience: "securecloud-client"
   jwks:
     cache_ttl_s: 600
 
@@ -121,6 +123,8 @@ TEST_F(FullConfigTest, ParsesSecurity) {
     
     GatewayConfig cfg = load_gateway_config(test_config_path);
     
+    EXPECT_EQ(cfg.security.jwt_issuer, "securecloud-auth");
+    EXPECT_EQ(cfg.security.jwt_audience, "securecloud-client");
     EXPECT_EQ(cfg.security.jwks_cache_ttl_s, 600);
 }
 

@@ -17,9 +17,14 @@ add_executable(${PROJECT_NAME}
     src/landingpage.h src/landingpage.cpp src/landingpage.ui
     src/loginpage.h src/loginpage.cpp src/loginpage.ui
     src/forgotpage.h src/forgotpage.cpp src/forgotpage.ui
+    src/homepage.h src/homepage.cpp src/homepage.ui
 )
 
 target_link_libraries(${PROJECT_NAME} Qt6::Widgets Qt6::Network)
+
+if(APPLE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE TRUE)
+endif()
 
 # --- Tests (optional) -------------------------------------------------
 option(BUILD_TESTS "Build unit tests" ON)

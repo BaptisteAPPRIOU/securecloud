@@ -17,6 +17,24 @@ static inline std::string trim_str(const std::string &s) {
     return s.substr(strBegin, strEnd - strBegin + 1);
 }
 
+static inline std::string strip_inline_comment(const std::string& line) {
+    bool in_single = false;
+    bool in_double = false;
+
+    for (size_t i = 0; i < line.size(); ++i) {
+        char c = line[i];
+        if (c == '"' && !in_single) {
+            in_double = !in_double;
+        } else if (c == '\'' && !in_double) {
+            in_single = !in_single;
+        } else if (c == '#' && !in_single && !in_double) {
+            return line.substr(0, i);
+        }
+    }
+
+    return line;
+}
+
 static inline std::string unquote(const std::string& s) {
     std::string v = trim_str(s);
     if (v.size() >= 2 && (v.front() == '"' || v.front() == '\'')) {
@@ -92,7 +110,7 @@ public:
         std::string line;
         
         while (std::getline(file_, line)) {
-            std::string trimmed = trim_str(line);
+            std::string trimmed = trim_str(strip_inline_comment(line));
             if (trimmed.empty() || trimmed[0] == '#') continue;
 
             int indent = get_indent(line);
@@ -127,7 +145,7 @@ private:
         TLSConfig tls_cfg;
         
         while (std::getline(file_, line)) {
-            std::string trimmed = trim_str(line);
+            std::string trimmed = trim_str(strip_inline_comment(line));
             if (trimmed.empty()) continue;
             
             int indent = get_indent(line);
@@ -147,7 +165,7 @@ private:
                     // Parse TLS subsection (indented at level 4)
                     long tls_pos = file_.tellg();
                     while (std::getline(file_, line)) {
-                        trimmed = trim_str(line);
+                        trimmed = trim_str(strip_inline_comment(line));
                         if (trimmed.empty()) continue;
                         
                         int tls_indent = get_indent(line);
@@ -180,7 +198,7 @@ private:
         bool in_route = false;
         
         while (std::getline(file_, line)) {
-            std::string trimmed = trim_str(line);
+            std::string trimmed = trim_str(strip_inline_comment(line));
             if (trimmed.empty()) continue;
             
             int indent = get_indent(line);
@@ -192,7 +210,7 @@ private:
                 return;
             }
             
-            if (indent == 2 && trimmed[0] == '-') {
+            if (trimmed.rfind("-", 0) == 0) {
                 // New route entry
                 if (in_route && !current_route.match_pattern.empty()) {
                     routes.push_back(current_route);
@@ -205,7 +223,7 @@ private:
                 if (rest.rfind("match:", 0) == 0) {
                     current_route.match_pattern = unquote(rest.substr(6));
                 }
-            } else if (indent == 4 && in_route) {
+            } else if (in_route && indent >= 2) {
                 if (trimmed.rfind("match:", 0) == 0) {
                     current_route.match_pattern = unquote(trimmed.substr(6));
                 } else if (trimmed.rfind("target:", 0) == 0) {
@@ -231,7 +249,7 @@ private:
         bool in_upstream = false;
         
         while (std::getline(file_, line)) {
-            std::string trimmed = trim_str(line);
+            std::string trimmed = trim_str(strip_inline_comment(line));
             if (trimmed.empty()) continue;
             
             int indent = get_indent(line);
@@ -283,7 +301,7 @@ private:
         long pos = file_.tellg();
         
         while (std::getline(file_, line)) {
-            std::string trimmed = trim_str(line);
+            std::string trimmed = trim_str(strip_inline_comment(line));
             if (trimmed.empty()) continue;
             
             int indent = get_indent(line);
@@ -294,11 +312,15 @@ private:
             
             if (indent == 2 && trimmed.rfind("jwt_secret:", 0) == 0) {
                 security.jwt_secret = expand_env_vars(unquote(trimmed.substr(11)));
+            } else if (indent == 2 && trimmed.rfind("jwt_issuer:", 0) == 0) {
+                security.jwt_issuer = expand_env_vars(unquote(trimmed.substr(11)));
+            } else if (indent == 2 && trimmed.rfind("jwt_audience:", 0) == 0) {
+                security.jwt_audience = expand_env_vars(unquote(trimmed.substr(13)));
             } else if (indent == 2 && trimmed.rfind("jwks:", 0) == 0) {
                 // Parse JWKS subsection
                 long jwks_pos = file_.tellg();
                 while (std::getline(file_, line)) {
-                    trimmed = trim_str(line);
+                    trimmed = trim_str(strip_inline_comment(line));
                     if (trimmed.empty()) continue;
                     
                     int jwks_indent = get_indent(line);
@@ -327,7 +349,7 @@ private:
         long pos = file_.tellg();
         
         while (std::getline(file_, line)) {
-            std::string trimmed = trim_str(line);
+            std::string trimmed = trim_str(strip_inline_comment(line));
             if (trimmed.empty()) continue;
             
             int indent = get_indent(line);
@@ -382,7 +404,7 @@ private:
         long pos = file_.tellg();
         
         while (std::getline(file_, line)) {
-            std::string trimmed = trim_str(line);
+            std::string trimmed = trim_str(strip_inline_comment(line));
             if (trimmed.empty()) continue;
             
             int indent = get_indent(line);
@@ -395,9 +417,9 @@ private:
                 if (trimmed.rfind("prometheus:", 0) == 0) {
                     // Parse Prometheus subsection
                     long prom_pos = file_.tellg();
-                    while (std::getline(file_, line)) {
-                        trimmed = trim_str(line);
-                        if (trimmed.empty()) continue;
+                while (std::getline(file_, line)) {
+                    trimmed = trim_str(strip_inline_comment(line));
+                    if (trimmed.empty()) continue;
                         
                         int prom_indent = get_indent(line);
                         if (prom_indent <= 2) {
@@ -413,9 +435,9 @@ private:
                 } else if (trimmed.rfind("logs:", 0) == 0) {
                     // Parse Logs subsection
                     long log_pos = file_.tellg();
-                    while (std::getline(file_, line)) {
-                        trimmed = trim_str(line);
-                        if (trimmed.empty()) continue;
+                while (std::getline(file_, line)) {
+                    trimmed = trim_str(strip_inline_comment(line));
+                    if (trimmed.empty()) continue;
                         
                         int log_indent = get_indent(line);
                         if (log_indent <= 2) {
@@ -434,6 +456,70 @@ private:
         }
     }
 };
+
+static std::vector<RouteConfig> parse_routes_fallback(const std::string& path) {
+    std::vector<RouteConfig> routes;
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        return routes;
+    }
+
+    bool in_routing = false;
+    RouteConfig current_route;
+    std::string line;
+
+    while (std::getline(file, line)) {
+        std::string trimmed = trim_str(strip_inline_comment(line));
+        if (trimmed.empty()) {
+            continue;
+        }
+
+        int indent = get_indent(line);
+        if (indent == 0) {
+            if (trimmed.rfind("routing:", 0) == 0) {
+                in_routing = true;
+                continue;
+            }
+
+            if (in_routing) {
+                break;
+            }
+
+            continue;
+        }
+
+        if (!in_routing) {
+            continue;
+        }
+
+        if (trimmed.rfind("-", 0) == 0) {
+            if (!current_route.match_pattern.empty()) {
+                routes.push_back(current_route);
+            }
+            current_route = RouteConfig{};
+            std::string rest = trim_str(trimmed.substr(1));
+            if (rest.rfind("match:", 0) == 0) {
+                current_route.match_pattern = unquote(rest.substr(6));
+            }
+            continue;
+        }
+
+        if (trimmed.rfind("match:", 0) == 0) {
+            current_route.match_pattern = unquote(trimmed.substr(6));
+        } else if (trimmed.rfind("target:", 0) == 0) {
+            current_route.target = unquote(trimmed.substr(7));
+        } else if (trimmed.rfind("upgrade:", 0) == 0) {
+            std::string upgrade_val = unquote(trimmed.substr(8));
+            current_route.upgrade_websocket = (upgrade_val == "websocket");
+        }
+    }
+
+    if (in_routing && !current_route.match_pattern.empty()) {
+        routes.push_back(current_route);
+    }
+
+    return routes;
+}
 
 GatewayConfig load_gateway_config(const std::string& path, const std::string& env) {
     GatewayConfig config;
@@ -471,6 +557,11 @@ GatewayConfig load_gateway_config(const std::string& path, const std::string& en
     // Set defaults for server if not parsed
     if (config.server.host.empty()) config.server.host = "127.0.0.1";
     if (config.server.port == 0) config.server.port = 8080;
+
+    if (config.routes.empty()) {
+        const std::string fallback_path = env_path != path ? env_path : path;
+        config.routes = parse_routes_fallback(fallback_path);
+    }
     
     // Log loaded configuration
     spdlog::info("Gateway config loaded - Server: {}:{}, Routes: {}, Upstreams: {}",

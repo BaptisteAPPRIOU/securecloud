@@ -34,10 +34,15 @@ Push-Location $ProjectRoot
 try {
     # Check if .env file exists
     if (!(Test-Path $EnvFile)) {
-        Write-Host "ERROR: Environment file not found: $EnvFile" -ForegroundColor Red
-        Write-Host "The central .env file should exist at config/env/dev/.env" -ForegroundColor Yellow
-        Write-Host "Check that you're in the project root directory." -ForegroundColor Yellow
-        exit 1
+        $fallbackEnv = ".env"
+        if (Test-Path $fallbackEnv) {
+            Write-Host "Env file not found at $EnvFile, using $fallbackEnv" -ForegroundColor Yellow
+            $EnvFile = $fallbackEnv
+        } else {
+            Write-Host "ERROR: Environment file not found: $EnvFile" -ForegroundColor Red
+            Write-Host "Expected config/env/dev/.env or .env at repo root." -ForegroundColor Yellow
+            exit 1
+        }
     }
 
     # Check if binary exists

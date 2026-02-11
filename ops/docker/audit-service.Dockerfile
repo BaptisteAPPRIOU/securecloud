@@ -5,7 +5,7 @@ FROM gcc:15 AS build
 RUN apt-get update && apt-get install -y \
     cmake \
     git \
-    libboost-all-dev \
+    libboost-system-dev \
     libssl-dev \
     nlohmann-json3-dev \
     libfmt-dev \

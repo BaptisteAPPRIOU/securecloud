@@ -1,5 +1,5 @@
 #include "landingpage.h"
-#include "ui_LandingPage.h"
+#include "ui_landingpage.h"
 #include <QPushButton>
 
 LandingPage::LandingPage(QWidget* parent)

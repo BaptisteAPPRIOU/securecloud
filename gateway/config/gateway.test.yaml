@@ -30,15 +30,15 @@ upstreams:
   auth:
     kind: http
     transport: tcp
-    address: "auth-service-test:8080"
+    address: "${AUTH_SERVICE_ADDR}"
   messaging:
     kind: ws
     transport: tcp
-    address: "messaging-service-test:8081"
+    address: "${MESSAGING_SERVICE_ADDR}"
   files:
     kind: http
     transport: tcp
-    address: "files-service-test:8082"
+    address: "${FILES_SERVICE_ADDR}"
 
 security:
   jwks:

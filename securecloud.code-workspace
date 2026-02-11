@@ -31,6 +31,12 @@
     {
       "path": "docs",
       "name": "Documentation"
+    },
+    {
+      "path": "../../secureCloud/.github"
+    },
+    {
+      "path": "../../secureCloud/.idea"
     }
   ],
   "settings": {
@@ -114,7 +120,10 @@
         },
         "name": "Unnamed configuration 1"
       }
-    ]
+    ],
+    "containers.composeBuild": true,
+    "containers.composeDetached": true,
+    "powershell.cwd": "SecureCloud (Root)"
   },
   "extensions": {
     "recommendations": [
@@ -140,7 +149,7 @@
         "name": "Gateway (GDB)",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceFolder:Gateway (C++)}/build/gateway",
+        "program": "${workspaceFolder:Gateway (C++)}/build/dev/gateway",
         "args": [],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder:Gateway (C++)}",
@@ -183,12 +192,27 @@
     "version": "2.0.0",
     "tasks": [
       {
+        "label": "Configure Dev",
+        "type": "shell",
+        "command": ".\\tools\\scripts\\configure-dev.ps1",
+        "options": {
+          "cwd": "${workspaceFolder:SecureCloud (Root)}",
+          "shell": {
+            "executable": "powershell.exe",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"]
+          }
+        },
+        "problemMatcher": ["$gcc"]
+      },
+      {
         "label": "Build All",
         "type": "shell",
         "command": "cmake --build build/dev",
         "options": {
           "cwd": "${workspaceFolder:SecureCloud (Root)}"
         },
+        "dependsOn": ["Configure Dev"],
+        "dependsOrder": "sequence",
         "group": {
           "kind": "build",
           "isDefault": true
@@ -202,6 +226,8 @@
         "options": {
           "cwd": "${workspaceFolder:SecureCloud (Root)}"
         },
+        "dependsOn": ["Configure Dev"],
+        "dependsOrder": "sequence",
         "group": "build",
         "problemMatcher": ["$gcc"]
       },
@@ -212,6 +238,8 @@
         "options": {
           "cwd": "${workspaceFolder:SecureCloud (Root)}"
         },
+        "dependsOn": ["Configure Dev"],
+        "dependsOrder": "sequence",
         "group": "build",
         "problemMatcher": ["$gcc"]
       },
@@ -222,6 +250,8 @@
         "options": {
           "cwd": "${workspaceFolder:SecureCloud (Root)}"
         },
+        "dependsOn": ["Configure Dev"],
+        "dependsOrder": "sequence",
         "group": "build",
         "problemMatcher": ["$gcc"]
       },
@@ -265,6 +295,8 @@
         "options": {
           "cwd": "${workspaceFolder:SecureCloud (Root)}"
         },
+        "dependsOn": ["Configure Dev"],
+        "dependsOrder": "sequence",
         "group": "none",
         "problemMatcher": []
       },
@@ -279,6 +311,8 @@
             "args": ["-NoProfile", "-Command"]
           }
         },
+        "dependsOn": ["Configure Dev"],
+        "dependsOrder": "sequence",
         "problemMatcher": []
       },
       {

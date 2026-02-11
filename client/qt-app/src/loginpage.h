@@ -10,6 +10,7 @@ class LoginPage : public QWidget {
 public:
     explicit LoginPage(QWidget* parent = nullptr);
     ~LoginPage();
+    void setBusy(bool busy);
 
 signals:
     void requestForgot();

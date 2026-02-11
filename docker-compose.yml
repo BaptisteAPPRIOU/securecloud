@@ -1,16 +1,25 @@
-# SecureCloud Docker Compose - Full Stack
-# Usage: docker-compose up -d
-# Profiles: dev, prod
+# SecureCloud Docker Compose (legacy monolithic file kept for CI compatibility)
+# Usage:
+#   docker compose up -d                      # Core stack (gateway + auth + infra)
+#   docker compose --profile full up -d       # Include planned services
+#   docker compose --profile monitoring up -d # Add Prometheus + Grafana
+#
+# Preferred local split files:
+#   docker-compose.core.yml
+#   docker-compose.full.yml
 
 x-common-env: &common-env
   DB_HOST: postgres
-  DB_PORT: 15432
+  DB_PORT: 5432
   DB_NAME: ${DB_NAME:-securecloud}
   DB_USER: ${DB_USER:-scuser}
   DB_PASSWORD: ${DB_PASS:-scpassword}
   REDIS_HOST: redis
   REDIS_PORT: 6379
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-redispass}
   JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+  JWT_ISSUER: ${JWT_ISSUER:-securecloud-auth}
+  JWT_AUDIENCE: ${JWT_AUDIENCE:-securecloud-client}
   LOG_LEVEL: ${LOG_LEVEL:-info}
 
 x-service-healthcheck: &service-healthcheck
@@ -66,7 +75,7 @@ services:
     networks:
       - securecloud-net
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD:-redispass} ping | grep -q PONG"]
       <<: *service-healthcheck
     restart: unless-stopped
 
@@ -109,6 +118,8 @@ services:
       migrate
     networks:
       - securecloud-net
+    profiles:
+      - full
 
   flyway-files:
     image: flyway/flyway:10
@@ -127,6 +138,8 @@ services:
       migrate
     networks:
       - securecloud-net
+    profiles:
+      - full
 
   flyway-messaging:
     image: flyway/flyway:10
@@ -145,9 +158,13 @@ services:
       migrate
     networks:
       - securecloud-net
+    profiles:
+      - full
 
   # ========================================
   # Backend Services
+  # Core services are enabled by default.
+  # Planned services are behind the "full" profile until their C++ implementations are complete.
   # ========================================
   
   auth-service:
@@ -202,6 +219,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       <<: *service-healthcheck
     restart: unless-stopped
+    profiles:
+      - full
 
   files-service:
     build:
@@ -229,6 +248,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
       <<: *service-healthcheck
     restart: unless-stopped
+    profiles:
+      - full
 
   messaging-service:
     build:
@@ -257,6 +278,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
       <<: *service-healthcheck
     restart: unless-stopped
+    profiles:
+      - full
 
   deploy-service:
     build:
@@ -281,6 +304,8 @@ services:
       <<: *service-healthcheck
     restart: unless-stopped
     privileged: true  # Required for Docker operations
+    profiles:
+      - full
 
   # ========================================
   # API Gateway
@@ -295,23 +320,17 @@ services:
       <<: *common-env
       GATEWAY_PORT: 8080
       GATEWAY_TLS_PORT: 8443
-      AUTH_SERVICE_URL: http://auth-service:8001
-      AUDIT_SERVICE_URL: http://audit-service:8002
-      FILES_SERVICE_URL: http://files-service:8003
-      MESSAGING_SERVICE_URL: http://messaging-service:8004
-      DEPLOY_SERVICE_URL: http://deploy-service:8006
+      AUTH_SERVICE_ADDR: auth-service:8001
+      AUDIT_SERVICE_ADDR: audit-service:8002
+      FILES_SERVICE_ADDR: files-service:8003
+      MESSAGING_SERVICE_ADDR: messaging-service:8004
+      DEPLOY_SERVICE_ADDR: deploy-service:8006
       ENABLE_TLS: ${ENABLE_TLS:-false}
     ports:
       - "${GATEWAY_HTTP_PORT:-8080}:8080"
       - "${GATEWAY_HTTPS_PORT:-8443}:8443"
     depends_on:
       auth-service:
-        condition: service_healthy
-      audit-service:
-        condition: service_healthy
-      files-service:
-        condition: service_healthy
-      messaging-service:
         condition: service_healthy
     volumes:
       - ./gateway/config:/app/config:ro

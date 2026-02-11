@@ -1,12 +1,14 @@
 # Build stage
-FROM gcc:15 AS build
+FROM ubuntu:24.04 AS build
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
+    build-essential \
     cmake \
     git \
-    libboost-all-dev \
+    libboost-system-dev \
     libssl-dev \
+    libpqxx-dev \
     nlohmann-json3-dev \
     libfmt-dev \
     libspdlog-dev \
@@ -29,6 +31,7 @@ FROM ubuntu:24.04
 RUN apt-get update && apt-get install -y \
     libssl3 \
     libboost-system1.83.0 \
+    libpqxx-dev \
     ca-certificates \
     curl \
     && rm -rf /var/lib/apt/lists/*

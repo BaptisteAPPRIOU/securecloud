@@ -33,7 +33,7 @@ upstreams:
   auth:
     kind: http
     transport: tcp  # TCP for Windows/Docker development (use 'uds' for Linux production)
-    address: "localhost:8001"  # Auth-service TCP listener
+    address: "${AUTH_SERVICE_ADDR}"  # host:port (set in .env or Compose)
     # For Linux production with UDS, use:
     #   transport: uds
     #   socket: "/run/securecloud/auth.sock"
@@ -41,15 +41,12 @@ upstreams:
   messaging:
     kind: ws  # WebSocket support
     transport: tcp
-    address: "messaging:8081"
+    address: "${MESSAGING_SERVICE_ADDR}"
     # TODO: Add max_connections, reconnect_interval_ms
   files:
     kind: http
-    transport: uds
-    socket: "/run/securecloud/files.sock"
-    # For Windows/Docker development with TCP, use:
-    #   transport: tcp
-    #   address: "localhost:8082"
+    transport: tcp
+    address: "${FILES_SERVICE_ADDR}"
     # TODO: Add streaming config for large file uploads/downloads
 
 # Security configuration
@@ -58,6 +55,8 @@ upstreams:
 # for better security and key rotation support.
 security:
   jwt_secret: "${JWT_SECRET}"  # Shared secret for HS256 verification (must match auth-service)
+  jwt_issuer: "${JWT_ISSUER}"  # Required JWT issuer claim (iss)
+  jwt_audience: "${JWT_AUDIENCE}"  # Required JWT audience claim (aud)
   jwks:
     cache_ttl_s: 300  # Cache JWKS public keys for 5 minutes
     # TODO: Implement JWKS fetching for RS256 production deployment
@@ -92,6 +91,6 @@ observability:
     bind: "0.0.0.0:9090"  # Expose /metrics endpoint
     # TODO: Add metric labels, custom buckets for histograms
   logs:
-    level: info  # debug, info, warn, error
+    level: debug  # debug, info, warn, error
     # TODO: Add output_file for persistent audit logs
     # format: json  # For structured logging

@@ -36,8 +36,8 @@ public:
     );
 
     /**
-     * Default constructor for backward compatibility (dev mode).
-     * Creates minimal introspector without JWKS.
+     * Default constructor for backward compatibility.
+     * Creates filter components with default initialization.
      */
     JwtFilter();
 

@@ -1,0 +1,155 @@
+name: images
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ "v*" ]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: auth-service
+            dockerfile: ops/docker/auth-service.Dockerfile
+          - name: gateway
+            dockerfile: ops/docker/gateway.Dockerfile
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.OWNER }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OWNER }}/securecloud-${{ matrix.name }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=semver,pattern={{version}}
+
+      - name: Build & Push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+  deploy-staging:
+    name: deploy (staging) + verify
+    runs-on: ubuntu-latest
+    needs: [build-push]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.OWNER }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image tag
+        id: tag
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "IMAGE_TAG=sha-${SHORT_SHA}" >> $GITHUB_ENV
+          echo "REGISTRY_OWNER=${{ github.repository_owner }}" >> $GITHUB_ENV
+
+      - name: Validate deploy inputs
+        run: |
+          set -euo pipefail
+          : "${REGISTRY_OWNER:?REGISTRY_OWNER is not set}"
+          : "${IMAGE_TAG:?IMAGE_TAG is not set}"
+          test -f docker-compose.deploy.yml
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci config -q
+
+      - name: Deploy (compose up)
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci pull
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci up -d
+
+      - name: Verify (test-runner)
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci run --rm test-runner
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml logs --no-color
+
+      - name: Compose down
+        if: always()
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml down -v --remove-orphans
+
+  deploy-prod:
+    name: deploy (prod) + verify
+    runs-on: ubuntu-latest
+    needs: [build-push]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.OWNER }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image tag
+        run: |
+          echo "IMAGE_TAG=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          echo "REGISTRY_OWNER=${{ github.repository_owner }}" >> $GITHUB_ENV
+
+      - name: Validate deploy inputs
+        run: |
+          set -euo pipefail
+          : "${REGISTRY_OWNER:?REGISTRY_OWNER is not set}"
+          : "${IMAGE_TAG:?IMAGE_TAG is not set}"
+          test -f docker-compose.deploy.yml
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci config -q
+
+      - name: Deploy (compose up)
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci pull
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci up -d
+
+      - name: Verify (test-runner)
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci run --rm test-runner
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml logs --no-color
+
+      - name: Compose down
+        if: always()
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml down -v --remove-orphans

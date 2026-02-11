@@ -1,5 +1,5 @@
 #include "forgotpage.h"
-#include "ui_ForgotPage.h"
+#include "ui_forgotpage.h"
 #include <QPushButton>
 #include <QLineEdit>
 

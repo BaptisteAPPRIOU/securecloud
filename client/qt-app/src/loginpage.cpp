@@ -1,5 +1,5 @@
 #include "loginpage.h"
-#include "ui_LoginPage.h"
+#include "ui_loginpage.h"
 #include <QPushButton>
 #include <QLineEdit>
 
@@ -19,3 +19,11 @@ LoginPage::LoginPage(QWidget* parent)
 }
 
 LoginPage::~LoginPage() { delete ui; }
+
+void LoginPage::setBusy(bool busy) {
+    ui->btnLogin->setEnabled(!busy);
+    ui->linkForgot->setEnabled(!busy);
+    ui->editEmail->setEnabled(!busy);
+    ui->editPwd->setEnabled(!busy);
+    ui->btnLogin->setText(busy ? "Connexion..." : "Connexion");
+}

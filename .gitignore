@@ -93,3 +93,4 @@ client/qt-app/assets/*_rc.py
 
 .github/*.md
 .idea/*
+.cache/*

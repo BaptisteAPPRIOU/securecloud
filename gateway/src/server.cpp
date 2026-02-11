@@ -1,15 +1,83 @@
 #include "httpServer.hpp"
 #include "requestContext.hpp"
 #include <spdlog/spdlog.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
 #include <thread>
 #include <csignal>
 #include <sstream>
 #include <algorithm>
 #include <cstdint>
 
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <arpa/inet.h>
+#include <cerrno>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <unistd.h>
+#endif
+
 namespace gateway {
+
+namespace {
+
+#ifdef _WIN32
+using socket_handle = SOCKET;
+constexpr socket_handle kInvalidSocket = INVALID_SOCKET;
+constexpr int kSocketError = SOCKET_ERROR;
+
+bool initialize_socket_runtime() {
+    WSADATA wsa_data;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != 0) {
+        spdlog::error("WSAStartup failed");
+        return false;
+    }
+    return true;
+}
+
+void cleanup_socket_runtime() {
+    WSACleanup();
+}
+
+int last_socket_error() {
+    return WSAGetLastError();
+}
+
+bool is_timeout_error(int err) {
+    return err == WSAETIMEDOUT || err == WSAEWOULDBLOCK;
+}
+#else
+using socket_handle = int;
+constexpr socket_handle kInvalidSocket = -1;
+constexpr int kSocketError = -1;
+
+bool initialize_socket_runtime() {
+    return true;
+}
+
+void cleanup_socket_runtime() {
+}
+
+int last_socket_error() {
+    return errno;
+}
+
+bool is_timeout_error(int err) {
+    return err == EAGAIN || err == EWOULDBLOCK;
+}
+#endif
+
+void close_socket(socket_handle socket_fd) {
+#ifdef _WIN32
+    closesocket(socket_fd);
+#else
+    close(socket_fd);
+#endif
+}
+
+} // namespace
 
 static std::atomic<bool> should_exit(false);
 static HttpServer* g_server_instance = nullptr;
@@ -140,12 +208,13 @@ std::string HttpServer::format_http_response(const Response& resp) {
 }
 
 void HttpServer::handle_client(const ClientConnection& conn) {
-    SOCKET client_socket = static_cast<SOCKET>(reinterpret_cast<uintptr_t>(conn.socket));
-    char buffer[4096];
-    int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
+    socket_handle client_socket = static_cast<socket_handle>(reinterpret_cast<uintptr_t>(conn.socket));
+    constexpr int kBufferSize = 4096;
+    char buffer[kBufferSize];
+    auto bytes_received = recv(client_socket, buffer, kBufferSize - 1, 0);
 
     if (bytes_received > 0) {
-        buffer[bytes_received] = '\0';
+        buffer[static_cast<size_t>(bytes_received)] = '\0';
         std::string raw_request(buffer);
 
         try {
@@ -167,7 +236,7 @@ void HttpServer::handle_client(const ClientConnection& conn) {
         }
     }
 
-    closesocket(client_socket);
+    close_socket(client_socket);
 }
 
 void HttpServer::worker_thread_fn() {
@@ -189,26 +258,28 @@ void HttpServer::worker_thread_fn() {
 
 void HttpServer::start() {
     g_server_instance = this;
-    // Register minimal signal handler for Windows (SIGINT only).
+    // Register minimal signal handler (SIGINT only).
     // Handler only sets `should_exit` to keep it safe.
     std::signal(SIGINT, signal_handler);
 
-    WSADATA wsa_data;
-    if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != 0) {
-        spdlog::error("WSAStartup failed");
+    if (!initialize_socket_runtime()) {
         return;
     }
 
-    SOCKET listen_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (listen_socket == INVALID_SOCKET) {
+    socket_handle listen_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (listen_socket == kInvalidSocket) {
         spdlog::error("Socket creation failed");
-        WSACleanup();
+        cleanup_socket_runtime();
         return;
     }
 
     // Enable SO_REUSEADDR to allow reuse of the port
     int reuse = 1;
-    if (setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuse, sizeof(reuse)) < 0) {
+#ifdef _WIN32
+    if (setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&reuse), static_cast<int>(sizeof(reuse))) < 0) {
+#else
+    if (setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+#endif
         spdlog::warn("setsockopt(SO_REUSEADDR) failed");
     }
 
@@ -217,18 +288,18 @@ void HttpServer::start() {
     server_addr.sin_addr.s_addr = inet_addr(config_.host.c_str());
     server_addr.sin_port = htons(config_.port);
 
-    if (bind(listen_socket, (sockaddr*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
+    if (bind(listen_socket, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) == kSocketError) {
         spdlog::error("Bind failed on {}:{}", config_.host, config_.port);
-        closesocket(listen_socket);
-        WSACleanup();
+        close_socket(listen_socket);
+        cleanup_socket_runtime();
         return;
     }
     spdlog::info("Socket bound successfully on {}:{}", config_.host, config_.port);
 
-    if (listen(listen_socket, SOMAXCONN) == SOCKET_ERROR) {
+    if (listen(listen_socket, SOMAXCONN) == kSocketError) {
         spdlog::error("Listen failed");
-        closesocket(listen_socket);
-        WSACleanup();
+        close_socket(listen_socket);
+        cleanup_socket_runtime();
         return;
     }
 
@@ -248,19 +319,33 @@ void HttpServer::start() {
     // Accept loop
     while (running_ && !should_exit) {
         sockaddr_in client_addr = {};
+#ifdef _WIN32
         int client_addr_len = sizeof(client_addr);
+#else
+        socklen_t client_addr_len = sizeof(client_addr);
+#endif
 
         // Set accept timeout
-        timeval timeout;
+        // Poll accept with a short timeout so SIGINT can stop the server quickly.
+#ifdef _WIN32
+        const int timeout_ms = 1000;
+        setsockopt(listen_socket, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&timeout_ms), static_cast<int>(sizeof(timeout_ms)));
+#else
+        timeval timeout{};
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
-        setsockopt(listen_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+        setsockopt(listen_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+#endif
 
-        SOCKET client_socket = accept(listen_socket, (sockaddr*)&client_addr, &client_addr_len);
+        socket_handle client_socket = accept(listen_socket, reinterpret_cast<sockaddr*>(&client_addr), &client_addr_len);
 
-        if (client_socket == INVALID_SOCKET) {
-            int err = WSAGetLastError();
-            if (err != WSAETIMEDOUT && err != WSAEWOULDBLOCK) {
+        if (client_socket == kInvalidSocket) {
+            int err = last_socket_error();
+#ifdef _WIN32
+            if (!is_timeout_error(err)) {
+#else
+            if (!is_timeout_error(err) && err != EINTR) {
+#endif
                 spdlog::debug("Accept error: {}", err);
             }
             continue;
@@ -280,9 +365,9 @@ void HttpServer::start() {
         queue_cv_.notify_one();
     }
 
-    closesocket(listen_socket);
+    close_socket(listen_socket);
     stop();
-    WSACleanup();
+    cleanup_socket_runtime();
     spdlog::info("HttpServer stopped");
 }
 

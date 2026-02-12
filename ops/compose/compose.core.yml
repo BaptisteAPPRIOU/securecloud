@@ -1,8 +1,8 @@
 # SecureCloud Docker Compose - Core Stack
 # Usage:
-#   docker compose -f docker-compose.core.yml up -d
-#   docker compose -f docker-compose.core.yml --profile desktop up -d
-#   docker compose -f docker-compose.core.yml --profile monitoring up -d
+#   docker compose --project-directory . -f ops/compose/compose.core.yml up -d
+#   docker compose --project-directory . -f ops/compose/compose.core.yml --profile desktop up -d
+#   docker compose --project-directory . -f ops/compose/compose.core.yml --profile monitoring up -d
 
 x-common-env: &common-env
   DB_HOST: postgres

@@ -1,6 +1,6 @@
 # SecureCloud Docker Compose - Full/Experimental Overlay
 # Usage:
-#   docker compose -f docker-compose.core.yml -f docker-compose.full.yml --profile full up -d
+#   docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.full.yml --profile full up -d
 #
 # NOTE:
 #   Services in this file are planned/experimental until they have real binaries.
@@ -197,13 +197,3 @@ services:
     profiles:
       - full
 
-  gateway:
-    depends_on:
-      auth-service:
-        condition: service_healthy
-      audit-service:
-        condition: service_healthy
-      files-service:
-        condition: service_healthy
-      messaging-service:
-        condition: service_healthy

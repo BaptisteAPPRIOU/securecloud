@@ -134,7 +134,6 @@
       "ms-python.python",
       "ms-python.black-formatter",
       "ms-vscode.makefile-tools",
-      "github.copilot",
       "eamodio.gitlens",
       "davidanson.vscode-markdownlint",
       "yzhang.markdown-all-in-one",

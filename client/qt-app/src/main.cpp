@@ -67,9 +67,17 @@ int main(int argc, char *argv[]) {
   qInfo() << "SecureCloud client starting";
   qInfo() << "Client log file:" << (log_path.isEmpty() ? QStringLiteral("<stderr>") : log_path);
   const QByteArray api_raw = qgetenv("SECURECLOUD_API_BASE");
+  const QByteArray allow_self_signed_raw = qgetenv("SECURECLOUD_DEV_ALLOW_SELF_SIGNED");
+  const QByteArray tls_ca_file_raw = qgetenv("SECURECLOUD_TLS_CA_FILE");
   const QString api_display = api_raw.isEmpty() ? QStringLiteral("<default>") : QString::fromUtf8(api_raw);
+  const QString allow_self_signed_display =
+      allow_self_signed_raw.isEmpty() ? QStringLiteral("<default:false>") : QString::fromUtf8(allow_self_signed_raw);
+  const QString tls_ca_file_display =
+      tls_ca_file_raw.isEmpty() ? QStringLiteral("<auto>") : QString::fromUtf8(tls_ca_file_raw);
   const QUrl api_base = resolve_api_base();
   qInfo() << "Config: SECURECLOUD_API_BASE=" << api_display << "resolved=" << api_base.toString();
+  qInfo() << "Config: SECURECLOUD_DEV_ALLOW_SELF_SIGNED=" << allow_self_signed_display;
+  qInfo() << "Config: SECURECLOUD_TLS_CA_FILE=" << tls_ca_file_display;
   qInfo() << "Config: window_size=720x480";
   qInfo() << "Config: theme=light";
 

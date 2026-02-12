@@ -23,10 +23,16 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
+#include <QSsl>
+#include <QSslCertificate>
+#include <QSslConfiguration>
 #include <QSslError>
+#include <QSslSocket>
 #include <QStatusBar>
 #include <QVBoxLayout>
 #include <QStringList>
+#include <QFile>
+#include <QFileInfo>
 
 namespace {
 bool parseEnvBool(const QByteArray& value, bool default_value) {
@@ -42,7 +48,58 @@ bool parseEnvBool(const QByteArray& value, bool default_value) {
 }
 
 bool allowSelfSignedDevCerts() {
-    return parseEnvBool(qgetenv("SECURECLOUD_DEV_ALLOW_SELF_SIGNED"), true);
+    return parseEnvBool(qgetenv("SECURECLOUD_DEV_ALLOW_SELF_SIGNED"), false);
+}
+
+QString resolveTlsCaFile() {
+    const QByteArray env = qgetenv("SECURECLOUD_TLS_CA_FILE");
+    if (!env.isEmpty()) {
+        return QString::fromUtf8(env);
+    }
+
+    const QStringList candidates{
+        QStringLiteral("gateway/config/certs/dev-cert.pem"),
+        QStringLiteral("config/certs/dev-cert.pem"),
+        QStringLiteral("/app/certs/dev-cert.pem")
+    };
+
+    for (const auto& candidate : candidates) {
+        if (QFileInfo::exists(candidate)) {
+            return candidate;
+        }
+    }
+    return QString();
+}
+
+void configureRequestTls(QNetworkRequest& req, const QUrl& url) {
+    if (url.scheme().compare(QStringLiteral("https"), Qt::CaseInsensitive) != 0) {
+        return;
+    }
+
+    QSslConfiguration ssl_config = req.sslConfiguration();
+    if (ssl_config.isNull()) {
+        ssl_config = QSslConfiguration::defaultConfiguration();
+    }
+    ssl_config.setPeerVerifyMode(QSslSocket::VerifyPeer);
+
+    const QString ca_file = resolveTlsCaFile();
+    if (!ca_file.isEmpty()) {
+        QFile pem_file(ca_file);
+        if (pem_file.open(QIODevice::ReadOnly)) {
+            const auto certs = QSslCertificate::fromData(pem_file.readAll(), QSsl::Pem);
+            if (!certs.isEmpty()) {
+                auto ca_certs = ssl_config.caCertificates();
+                ca_certs.append(certs);
+                ssl_config.setCaCertificates(ca_certs);
+            } else {
+                qWarning() << "Configured TLS CA file contains no valid certificates:" << ca_file;
+            }
+        } else {
+            qWarning() << "Unable to read TLS CA file:" << ca_file;
+        }
+    }
+
+    req.setSslConfiguration(ssl_config);
 }
 
 void maybeIgnoreDevSslErrors(QNetworkReply* reply, const QUrl& url) {
@@ -242,6 +299,7 @@ void MainWindow::submitLogin(const QString& email, const QString& password) {
     QUrl url = base.resolved(QUrl("/api/login"));
     QNetworkRequest req(url);
     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    configureRequestTls(req, url);
 
     QJsonObject payload;
     payload.insert("email", email);
@@ -378,6 +436,7 @@ void MainWindow::performLogout() {
     QNetworkRequest req(url);
     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     req.setRawHeader("Authorization", QByteArray("Bearer ") + access_token.toUtf8());
+    configureRequestTls(req, url);
 
     QJsonObject payload;
     if (!refresh_token.isEmpty()) {

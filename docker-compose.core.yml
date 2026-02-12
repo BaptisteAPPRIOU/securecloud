@@ -173,12 +173,15 @@ services:
     environment:
       SECURECLOUD_API_BASE: ${SECURECLOUD_API_BASE:-https://gateway:8443}
       SECURECLOUD_CLIENT_LOG: /app/logs/qt-client.log
+      SECURECLOUD_DEV_ALLOW_SELF_SIGNED: ${SECURECLOUD_DEV_ALLOW_SELF_SIGNED:-false}
+      SECURECLOUD_TLS_CA_FILE: ${SECURECLOUD_TLS_CA_FILE:-/app/certs/dev-cert.pem}
       QT_QPA_PLATFORM: ${QT_QPA_PLATFORM:-offscreen}
     depends_on:
       gateway:
         condition: service_healthy
     volumes:
       - sc_logs:/app/logs
+      - ./gateway/config/certs:/app/certs:ro
     networks:
       - securecloud-net
     restart: unless-stopped

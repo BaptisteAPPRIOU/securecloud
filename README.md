@@ -4,7 +4,7 @@ A secure cloud platform built with C++20, featuring a Gateway, Authentication, F
 
 ## Quick Start
 
-This README is the canonical overview; for quick developer steps see `QUICK_START_FR.md`.
+This README is the canonical overview; for quick developer steps see `docs/QUICK_START_FR.md`.
 
 ### Prerequisites (short)
 
@@ -141,9 +141,9 @@ Open workspace `securecloud.code-workspace`, then use `Ctrl+Shift+B` or `Ctrl+Sh
 
 | Document | Description |
 |----------|-------------|
-| [QUICK_START_FR.md](QUICK_START_FR.md) | 3-minute quick start (French) |
-| [INSTALL_FR.md](INSTALL_FR.md) | Full installation guide (French) |
-| [DOCKER_GUIDE.md](DOCKER_GUIDE.md) | Docker Compose reference |
+| [docs/QUICK_START_FR.md](docs/QUICK_START_FR.md) | 3-minute quick start (French) |
+| [docs/INSTALL_FR.md](docs/INSTALL_FR.md) | Full installation guide (French) |
+| [docs/DOCKER_GUIDE.md](docs/DOCKER_GUIDE.md) | Docker Compose reference |
 | [docs/architecture.md](docs/architecture.md) | System architecture |
 | [docs/security.md](docs/security.md) | Security model |
 
@@ -151,4 +151,4 @@ Open workspace `securecloud.code-workspace`, then use `Ctrl+Shift+B` or `Ctrl+Sh
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) for details.
+MIT License.

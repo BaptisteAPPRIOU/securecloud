@@ -13,20 +13,20 @@ Important: utilisez le terminal MSYS2 UCRT64 (icone violette).
 
 ## En 3 minutes (essentiel)
 
-1) Configurer le projet:
+1. Configurer le projet:
 
 ```bash
 cmake -B build/dev --preset dev
 ```
 
-2) Lancer la base de donnees (une seule fois):
+2. Lancer la base de donnees (une seule fois):
 
 ```bash
 cmake --build build/dev --target db-up
 cmake --build build/dev --target db-migrate
 ```
 
-3) Compiler et lancer un service (exemple Gateway):
+3. Compiler et lancer un service (exemple Gateway):
 
 ```bash
 cmake --build build/dev --target gateway

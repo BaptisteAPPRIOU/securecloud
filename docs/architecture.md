@@ -337,11 +337,11 @@ security:
     secret: "change-me-in-production"
     issuer: "securecloud"
     audience: "securecloud-api"
-    jwks_cache_ttl_sec: 1800  # 30 minutes
-  
+    jwks_cache_ttl_sec: 1800 # 30 minutes
+
   auth_cache:
     max_entries: 10000
-    ttl_seconds: 300  # 5 minutes
+    ttl_seconds: 300 # 5 minutes
 
 rate_limits:
   global:
@@ -355,12 +355,12 @@ routes:
   - path: "^/auth/.*"
     upstream: "auth-service"
     methods: ["POST", "GET"]
-    
+
   - path: "^/files/.*"
     upstream: "files-service"
     methods: ["POST", "GET", "DELETE"]
     auth_required: true
-    
+
   - path: "^/ws/.*"
     upstream: "messaging-service"
     websocket: true
@@ -370,11 +370,11 @@ upstreams:
   auth-service:
     type: "http"
     url: "http://auth-service:8001"
-    
+
   files-service:
     type: "http"
     url: "http://files-service:8003"
-    
+
   messaging-service:
     type: "http"
     url: "http://messaging-service:8004"
@@ -382,14 +382,14 @@ upstreams:
 
 #### Key Metrics
 
-| Metric | Type | Description |
-|--------|------|-------------|
-| `gateway_requests_total` | Counter | Total HTTP requests (by method, route, status) |
-| `gateway_request_duration_seconds` | Histogram | Request latency distribution |
-| `gateway_routing_matches_total` | Counter | Route matching success/failure |
-| `gateway_upstream_requests_total` | Counter | Per-upstream request count |
-| `gateway_jwt_validations_total` | Counter | JWT validation results |
-| `gateway_rate_limit_hits_total` | Counter | Rate limiter triggered events |
+| Metric                             | Type      | Description                                    |
+| ---------------------------------- | --------- | ---------------------------------------------- |
+| `gateway_requests_total`           | Counter   | Total HTTP requests (by method, route, status) |
+| `gateway_request_duration_seconds` | Histogram | Request latency distribution                   |
+| `gateway_routing_matches_total`    | Counter   | Route matching success/failure                 |
+| `gateway_upstream_requests_total`  | Counter   | Per-upstream request count                     |
+| `gateway_jwt_validations_total`    | Counter   | JWT validation results                         |
+| `gateway_rate_limit_hits_total`    | Counter   | Rate limiter triggered events                  |
 
 ---
 
@@ -412,19 +412,19 @@ upstreams:
 
 #### API Endpoints
 
-| Endpoint | Method | Status | Description |
-|----------|--------|--------|-------------|
-| `/auth/login` | POST |  Implemented | Login with credentials |
-| `/auth/logout` | POST |  Not implemented | Revoke tokens |
-| `/auth/refresh` | POST |  Not implemented | Refresh access token |
-| `/auth/register` | POST |  Not implemented | Create new user |
-| `/auth/verify-email` | POST |  Not implemented | Confirm email |
-| `/auth/reset-password` | POST |  Not implemented | Password reset |
-| `/auth/me` | GET |  Not implemented | Get current user |
-| `/auth/mfa/setup` | POST |  Not implemented | Setup TOTP MFA |
-| `/auth/mfa/verify` | POST |  Not implemented | Verify MFA code |
+| Endpoint               | Method | Status          | Description            |
+| ---------------------- | ------ | --------------- | ---------------------- |
+| `/auth/login`          | POST   | Implemented     | Login with credentials |
+| `/auth/logout`         | POST   | Not implemented | Revoke tokens          |
+| `/auth/refresh`        | POST   | Not implemented | Refresh access token   |
+| `/auth/register`       | POST   | Not implemented | Create new user        |
+| `/auth/verify-email`   | POST   | Not implemented | Confirm email          |
+| `/auth/reset-password` | POST   | Not implemented | Password reset         |
+| `/auth/me`             | GET    | Not implemented | Get current user       |
+| `/auth/mfa/setup`      | POST   | Not implemented | Setup TOTP MFA         |
+| `/auth/mfa/verify`     | POST   | Not implemented | Verify MFA code        |
 
-#### Database Schema (auth.*)
+#### Database Schema (auth.\*)
 
 ```sql
 -- auth.tenants
@@ -484,16 +484,16 @@ CREATE TABLE auth.sessions (
 
 #### API Endpoints (Planned)
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/files/upload` | POST | Upload file (chunked) |
-| `/files/{id}` | GET | Download file |
-| `/files/{id}` | DELETE | Delete file |
-| `/files` | GET | List user's files |
-| `/files/{id}/share` | POST | Share file with users |
-| `/files/{id}/versions` | GET | List file versions |
+| Endpoint               | Method | Description           |
+| ---------------------- | ------ | --------------------- |
+| `/files/upload`        | POST   | Upload file (chunked) |
+| `/files/{id}`          | GET    | Download file         |
+| `/files/{id}`          | DELETE | Delete file           |
+| `/files`               | GET    | List user's files     |
+| `/files/{id}/share`    | POST   | Share file with users |
+| `/files/{id}/versions` | GET    | List file versions    |
 
-#### Database Schema (files.*)
+#### Database Schema (files.\*)
 
 ```sql
 -- files.documents
@@ -541,16 +541,16 @@ CREATE TABLE files.permissions (
 
 #### API Endpoints (Planned)
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/ws/messages` | WebSocket | Real-time message stream |
-| `/conversations` | GET | List user's conversations |
-| `/conversations` | POST | Create conversation |
-| `/conversations/{id}/messages` | GET | Get message history |
-| `/conversations/{id}/messages` | POST | Send message |
-| `/messages/{id}/read` | POST | Mark as read |
+| Endpoint                       | Method    | Description               |
+| ------------------------------ | --------- | ------------------------- |
+| `/ws/messages`                 | WebSocket | Real-time message stream  |
+| `/conversations`               | GET       | List user's conversations |
+| `/conversations`               | POST      | Create conversation       |
+| `/conversations/{id}/messages` | GET       | Get message history       |
+| `/conversations/{id}/messages` | POST      | Send message              |
+| `/messages/{id}/read`          | POST      | Mark as read              |
 
-#### Database Schema (messaging.*)
+#### Database Schema (messaging.\*)
 
 ```sql
 -- messaging.conversations
@@ -599,7 +599,7 @@ CREATE TABLE messaging.delivery_status (
 - **Retention**: Configurable log retention policies
 - **Alerting**: Real-time alerts on suspicious activity
 
-#### Database Schema (audit.*)
+#### Database Schema (audit.\*)
 
 ```sql
 -- audit.events
@@ -756,32 +756,32 @@ Service Error Responses:
 
 ### Backend Services
 
-| Component | Technology | Version | Purpose |
-|-----------|-----------|---------|---------|
-| Gateway | C++20, Boost.Beast | - | High-performance HTTP/WebSocket gateway |
-| Microservices | C++20, Crow | - | RESTful API services |
-| Database | PostgreSQL | 16 | Persistent storage (4 schemas) |
-| Cache | Redis | 7 | Session cache, rate limiting |
-| Encryption | OpenSSL | 3.x | TLS, AES-256-GCM, JWT |
-| Logging | spdlog | - | Structured logging |
-| Metrics | Prometheus | - | Observability |
+| Component     | Technology         | Version | Purpose                                 |
+| ------------- | ------------------ | ------- | --------------------------------------- |
+| Gateway       | C++20, Boost.Beast | -       | High-performance HTTP/WebSocket gateway |
+| Microservices | C++20, Crow        | -       | RESTful API services                    |
+| Database      | PostgreSQL         | 16      | Persistent storage (4 schemas)          |
+| Cache         | Redis              | 7       | Session cache, rate limiting            |
+| Encryption    | OpenSSL            | 3.x     | TLS, AES-256-GCM, JWT                   |
+| Logging       | spdlog             | -       | Structured logging                      |
+| Metrics       | Prometheus         | -       | Observability                           |
 
 ### Client
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Desktop UI | Qt 6 | Native cross-platform UI |
-| HTTP Client | Qt Network | REST API consumption |
-| WebSocket | Qt WebSockets | Real-time messaging |
+| Component   | Technology    | Purpose                  |
+| ----------- | ------------- | ------------------------ |
+| Desktop UI  | Qt 6          | Native cross-platform UI |
+| HTTP Client | Qt Network    | REST API consumption     |
+| WebSocket   | Qt WebSockets | Real-time messaging      |
 
 ### Infrastructure
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Containerization | Docker, Docker Compose | Service orchestration |
-| Orchestration (Future) | Kubernetes | Production deployment |
-| CI/CD (Future) | GitHub Actions | Automated builds/tests |
-| Monitoring (Future) | Grafana | Metrics dashboards |
+| Component              | Technology             | Purpose                |
+| ---------------------- | ---------------------- | ---------------------- |
+| Containerization       | Docker, Docker Compose | Service orchestration  |
+| Orchestration (Future) | Kubernetes             | Production deployment  |
+| CI/CD (Future)         | GitHub Actions         | Automated builds/tests |
+| Monitoring (Future)    | Grafana                | Metrics dashboards     |
 
 ### Development Tools
 
@@ -800,23 +800,23 @@ Service Error Responses:
 ```yaml
 # Simplified structure
 services:
-  gateway:       # C++ gateway
-  auth-service:  # C++ microservice
+  gateway: # C++ gateway
+  auth-service: # C++ microservice
   files-service: # C++ microservice
   messaging-service: # C++ microservice
   audit-service: # C++ microservice
-  postgres:      # PostgreSQL 16
-  redis:         # Redis 7
-  prometheus:    # Metrics collection
+  postgres: # PostgreSQL 16
+  redis: # Redis 7
+  prometheus: # Metrics collection
 
 volumes:
-  sc_pgdata:     # PostgreSQL data
-  sc_redis:      # Redis persistence
-  sc_files:      # Uploaded files
-  sc_logs:       # Application logs
+  sc_pgdata: # PostgreSQL data
+  sc_redis: # Redis persistence
+  sc_files: # Uploaded files
+  sc_logs: # Application logs
 
 networks:
-  securecloud-net:  # Internal bridge network
+  securecloud-net: # Internal bridge network
 ```
 
 ### Network Topology
@@ -886,13 +886,13 @@ ConfigMaps/Secrets:
 
 ### Performance Targets
 
-| Metric | Target | Current Status |
-|--------|--------|----------------|
-| Gateway RPS | 10,000 req/s | TBD (load testing pending) |
-| Gateway p99 Latency | < 100ms | TBD |
-| Database Connections | 100 per service | TBD |
-| WebSocket Connections | 10,000 concurrent | TBD |
-| File Upload Speed | 50 MB/s | TBD |
+| Metric                | Target            | Current Status             |
+| --------------------- | ----------------- | -------------------------- |
+| Gateway RPS           | 10,000 req/s      | TBD (load testing pending) |
+| Gateway p99 Latency   | < 100ms           | TBD                        |
+| Database Connections  | 100 per service   | TBD                        |
+| WebSocket Connections | 10,000 concurrent | TBD                        |
+| File Upload Speed     | 50 MB/s           | TBD                        |
 
 ### Scalability Strategy
 
@@ -917,12 +917,12 @@ ConfigMaps/Secrets:
 
 ### Bottlenecks & Mitigations
 
-| Bottleneck | Impact | Mitigation |
-|------------|--------|------------|
-| Database connections | Service startup delays | Connection pooling, prepared statements |
-| File I/O | Upload/download slowness | Chunked transfers, streaming |
-| JWT validation | High CPU on gateway | JWKS caching, async validation |
-| WebSocket connections | Memory exhaustion | Connection limits, heartbeat timeouts |
+| Bottleneck            | Impact                   | Mitigation                              |
+| --------------------- | ------------------------ | --------------------------------------- |
+| Database connections  | Service startup delays   | Connection pooling, prepared statements |
+| File I/O              | Upload/download slowness | Chunked transfers, streaming            |
+| JWT validation        | High CPU on gateway      | JWKS caching, async validation          |
+| WebSocket connections | Memory exhaustion        | Connection limits, heartbeat timeouts   |
 
 ---
 
@@ -948,8 +948,8 @@ ConfigMaps/Secrets:
 
 ## References
 
-- [Gateway README](../gateway/README.md) - Detailed gateway implementation
-- [Data Flow & Persistence](data-flow-persistence.md) - Data architecture details
+- [Gateway Source Tree](../gateway/) - Detailed gateway implementation
+- [Data Flow & Communication](#data-flow--communication) - Data architecture details
 - [Security Documentation](security.md) - Security architecture
 - [Docker Compose](../docker-compose.yml) - Complete service definitions
 - [Database Migrations](../db/migrations/) - Schema definitions

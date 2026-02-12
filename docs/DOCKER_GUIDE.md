@@ -90,6 +90,7 @@ cmake -B build/dev --preset dev
 ```
 
 **What happens:**
+
 1. CMake reads `CMakePresets.json` with preset `dev`
 2. Creates build directory at `build/dev/` (pattern: `build/${presetName}`)
 3. Configures Ninja as generator, sets Debug mode
@@ -103,11 +104,11 @@ cmake --build build/dev -j 16
 
 **Build targets created:**
 
-| Target | Output | Location |
-|--------|--------|----------|
-| `gateway` | `gateway.exe` | `build/dev/gateway/` |
+| Target         | Output             | Location                           |
+| -------------- | ------------------ | ---------------------------------- |
+| `gateway`      | `gateway.exe`      | `build/dev/gateway/`               |
 | `auth-service` | `auth-service.exe` | `build/dev/services/auth-service/` |
-| `MSF_Login` | `MSF_Login.exe` | `build/dev/client/qt-app/` |
+| `MSF_Login`    | `MSF_Login.exe`    | `build/dev/client/qt-app/`         |
 
 > **Note:** Files, Messaging, and Audit services are stub placeholders - full implementation pending.
 
@@ -119,6 +120,7 @@ cmake --build build/dev --target db-migrate
 ```
 
 **What happens:**
+
 1. `db-up`: Starts PostgreSQL container on port 15432
 2. `db-migrate`: Runs Flyway migrations for all 4 schemas:
    - `auth` schema (users, roles, tokens)
@@ -163,19 +165,20 @@ ENTRYPOINT ["/app/auth-service"]
 ```
 
 **Benefits:**
+
 - Build stage: ~2GB (with gcc, cmake, dev headers)
 - Runtime stage: ~100MB (minimal dependencies)
 - Source code NOT in final image (security)
 
 ### Service Dockerfile Locations
 
-| Service | Dockerfile |
-|---------|------------|
-| Gateway | `ops/docker/gateway.Dockerfile` |
-| Auth | `ops/docker/auth-service.Dockerfile` |
-| Files | `ops/docker/files-service.Dockerfile` |
+| Service   | Dockerfile                                |
+| --------- | ----------------------------------------- |
+| Gateway   | `ops/docker/gateway.Dockerfile`           |
+| Auth      | `ops/docker/auth-service.Dockerfile`      |
+| Files     | `ops/docker/files-service.Dockerfile`     |
 | Messaging | `ops/docker/messaging-service.Dockerfile` |
-| Audit | `ops/docker/audit-service.Dockerfile` |
+| Audit     | `ops/docker/audit-service.Dockerfile`     |
 
 ---
 
@@ -261,7 +264,7 @@ docker compose --env-file config/env/dev/.env -f docker-compose.core.yml logs -f
 
 ## Service Architecture
 
-By default, `docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d` starts the core stack (`gateway`, `auth-service`, infra).  
+By default, `docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d` starts the core stack (`gateway`, `auth-service`, infra).
 Planned services (`audit-service`, `files-service`, `messaging-service`, `deploy-service`) are behind the `full` profile.
 The Qt desktop client container (`qt-client`) is behind the `desktop` profile.
 
@@ -328,6 +331,7 @@ DC="docker compose --env-file config/env/dev/.env -f docker-compose.core.yml"
 ```
 
 #### Start Services
+
 ```bash
 # Core stack
 $DC up -d
@@ -346,6 +350,7 @@ $DC --profile monitoring up -d
 ```
 
 ### Stop Services
+
 ```bash
 # Stop all
 $DC down --remove-orphans
@@ -355,6 +360,7 @@ $DC down -v --remove-orphans
 ```
 
 ### View Logs
+
 ```bash
 # All services
 $DC logs -f
@@ -367,6 +373,7 @@ $DC logs --tail=100 auth-service
 ```
 
 ### Rebuild Services
+
 ```bash
 # Rebuild all
 $DC build
@@ -379,6 +386,7 @@ $DC up -d --build gateway
 ```
 
 ### Database Management
+
 ```bash
 # Run migrations via CMake
 cmake --build build/dev --target db-migrate
@@ -397,6 +405,7 @@ $DC exec -T postgres psql -U securecloud securecloud_dev < backup.sql
 ```
 
 ### Service Health Check
+
 ```bash
 # Check all services
 $DC ps
@@ -409,22 +418,22 @@ curl http://localhost:8002/health  # Audit Service
 
 ## Port Mapping
 
-| Service | Port | Description |
-|---------|------|-------------|
-| Gateway HTTP | 8080 | Main API Gateway |
-| Gateway HTTPS | 8443 | TLS Gateway |
-| Auth Service | 8001 | Authentication |
-| Audit Service | 8002 | Audit Logging |
-| Files Service | 8003 | File Management |
-| Messaging (HTTP) | 8004 | Messaging API |
-| Messaging (WebSocket) | 8005 | Real-time Chat |
-| Deploy Service | 8006 | Deployment |
-| Qt Client (desktop profile) | - | Qt GUI container (uses gateway internally) |
-| PostgreSQL | 15432 | Database |
-| Redis | 16379 | Cache/Sessions |
-| Adminer | 9090 | DB Admin UI |
-| Prometheus | 9091 | Metrics |
-| Grafana | 3000 | Dashboards |
+| Service                     | Port  | Description                                |
+| --------------------------- | ----- | ------------------------------------------ |
+| Gateway HTTP                | 8080  | Main API Gateway                           |
+| Gateway HTTPS               | 8443  | TLS Gateway                                |
+| Auth Service                | 8001  | Authentication                             |
+| Audit Service               | 8002  | Audit Logging                              |
+| Files Service               | 8003  | File Management                            |
+| Messaging (HTTP)            | 8004  | Messaging API                              |
+| Messaging (WebSocket)       | 8005  | Real-time Chat                             |
+| Deploy Service              | 8006  | Deployment                                 |
+| Qt Client (desktop profile) | -     | Qt GUI container (uses gateway internally) |
+| PostgreSQL                  | 15432 | Database                                   |
+| Redis                       | 16379 | Cache/Sessions                             |
+| Adminer                     | 9090  | DB Admin UI                                |
+| Prometheus                  | 9091  | Metrics                                    |
+| Grafana                     | 3000  | Dashboards                                 |
 
 ## Best Practices
 
@@ -434,11 +443,12 @@ curl http://localhost:8002/health  # Audit Service
 # Use .env files for environment-specific config
 config/env/
 +-- dev/.env          # Development settings
-+-- staging/.env      # Staging settings  
++-- staging/.env      # Staging settings
 +-- prod/.env         # Production settings (NOT in git)
 ```
 
 **Key variables to change in production:**
+
 ```env
 # Database - MUST change
 DB_PASS=strong_random_password_here
@@ -467,17 +477,19 @@ healthcheck:
 
 ```yaml
 volumes:
-  sc_pgdata:      # Database persistence (CRITICAL)
-  sc_redis:       # Session cache
-  sc_files:       # Uploaded files
-  sc_logs:        # Application logs
+  sc_pgdata: # Database persistence (CRITICAL)
+  sc_redis: # Session cache
+  sc_files: # Uploaded files
+  sc_logs: # Application logs
 ```
 
 **Data survives:**
+
 - Container restarts
 - `docker compose --env-file config/env/dev/.env -f docker-compose.core.yml down --remove-orphans`
 
 **Data LOST with:**
+
 - `docker compose --env-file config/env/dev/.env -f docker-compose.core.yml down -v --remove-orphans` (removes volumes)
 
 ### 4. Network Isolation
@@ -511,11 +523,13 @@ RUN cmake --build build
 ## Environment Variables
 
 ### Required
+
 - `DB_PASS` - PostgreSQL password
-- `REDIS_PASSWORD` - Redis password  
+- `REDIS_PASSWORD` - Redis password
 - `JWT_SECRET` - JWT signing key (min 32 chars)
 
 ### Optional
+
 - `LOG_LEVEL` - Logging level (debug, info, warn, error)
 - `ENABLE_TLS` - Enable HTTPS on gateway
 - All port overrides (see `config/env/dev/.env`)
@@ -523,11 +537,13 @@ RUN cmake --build build
 ## Monitoring
 
 Start with monitoring profile:
+
 ```bash
 docker compose --env-file config/env/dev/.env -f docker-compose.core.yml --profile monitoring up -d
 ```
 
 Access:
+
 - Prometheus: http://localhost:9091
 - Grafana: http://localhost:3000 (admin/admin)
 
@@ -593,6 +609,7 @@ curl http://localhost:8080/health
 ## Troubleshooting
 
 ### Service won't start
+
 ```bash
 # Check logs
 docker compose --env-file config/env/dev/.env -f docker-compose.core.yml logs service-name
@@ -605,6 +622,7 @@ docker compose --env-file config/env/dev/.env -f docker-compose.core.yml restart
 ```
 
 ### Port already allocated (common on 15432 or 8080)
+
 ```bash
 # Find who owns a host port
 docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 15432
@@ -619,6 +637,7 @@ docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d -
 ```
 
 ### `sc_flyway_auth` stuck in `Waiting`
+
 ```bash
 # Flyway and Postgres logs
 docker compose --env-file config/env/dev/.env -f docker-compose.core.yml logs --tail=200 flyway-auth
@@ -629,6 +648,7 @@ docker compose --env-file config/env/dev/.env -f docker-compose.core.yml config
 ```
 
 ### `db-up` stack conflicts with `core` stack
+
 ```bash
 # db-* CMake targets use ops/compose/compose.dev.yml (container name sc_pg)
 # core stack uses docker-compose.core.yml (container name sc_postgres)
@@ -639,6 +659,7 @@ docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d -
 ```
 
 ### Reset everything (data loss)
+
 ```bash
 docker compose --env-file config/env/dev/.env -f docker-compose.core.yml down -v --remove-orphans
 docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d --build
@@ -647,6 +668,7 @@ docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d -
 ## CI/CD Integration
 
 ### GitHub Actions Example
+
 ```yaml
 - name: Build and test
   run: |
@@ -667,18 +689,21 @@ docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d -
 ## Performance Tuning
 
 ### Resource Limits
+
 Edit `docker-compose.core.yml` to add:
+
 ```yaml
 services:
   gateway:
     deploy:
       resources:
         limits:
-          cpus: '2'
+          cpus: "2"
           memory: 2G
 ```
 
 ### Scaling
+
 ```bash
 # Scale messaging service (full profile)
 docker compose --env-file config/env/dev/.env -f docker-compose.core.yml -f docker-compose.full.yml --profile full up -d --scale messaging-service=3
@@ -700,24 +725,24 @@ docker cp sc_redis:/data/dump.rdb redis_backup_$DATE.rdb
 
 ## Key Files Reference
 
-| Purpose | File |
-|---------|------|
-| Build configuration | `CMakeLists.txt` |
-| Build presets | `CMakePresets.json` |
-| Core stack deployment | `docker-compose.core.yml` |
-| Full/experimental overlay | `docker-compose.full.yml` |
-| Legacy monolithic stack (CI compatibility) | `docker-compose.yml` |
-| Dev database only | `ops/compose/compose.dev.yml` |
-| Service Dockerfiles | `ops/docker/*.Dockerfile` |
-| Environment config | `config/env/dev/.env` |
-| Database migrations | `db/migrations/{schema}/` |
+| Purpose                                    | File                          |
+| ------------------------------------------ | ----------------------------- |
+| Build configuration                        | `CMakeLists.txt`              |
+| Build presets                              | `CMakePresets.json`           |
+| Core stack deployment                      | `docker-compose.core.yml`     |
+| Full/experimental overlay                  | `docker-compose.full.yml`     |
+| Legacy monolithic stack (CI compatibility) | `docker-compose.yml`          |
+| Dev database only                          | `ops/compose/compose.dev.yml` |
+| Service Dockerfiles                        | `ops/docker/*.Dockerfile`     |
+| Environment config                         | `config/env/dev/.env`         |
+| Database migrations                        | `db/migrations/{schema}/`     |
 
 ---
 
 ## Related Documentation
 
-- [README.md](README.md) - Project overview
+- [Project README](../README.md) - Project overview
 - [QUICK_START_FR.md](QUICK_START_FR.md) - Quick start guide (French)
 - [INSTALL_FR.md](INSTALL_FR.md) - Installation guide (French)
-- [docs/architecture.md](docs/architecture.md) - System architecture
-- [docs/security.md](docs/security.md) - Security documentation
+- [architecture.md](architecture.md) - System architecture
+- [security.md](security.md) - Security documentation

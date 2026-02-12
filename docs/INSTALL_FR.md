@@ -13,7 +13,7 @@ Guide complet pour installer et configurer l'environnement de développement Sec
 
 > **Important** : Utilisez toujours le terminal **UCRT64** pour éviter les erreurs de compilation.
 
-##  Installation des Dépendances
+## Installation des Dépendances
 
 ### Méthode Recommandée (CMake)
 
@@ -45,7 +45,7 @@ $env:Path = "C:\msys64\ucrt64\bin;" + $env:Path
 
 Pour rendre permanent, ajoutez à votre profil PowerShell (`$PROFILE`).
 
-##  Configuration de la Base de Données
+## Configuration de la Base de Données
 
 ### 1. Configurer le projet
 
@@ -107,13 +107,13 @@ Ouvrez votre navigateur : **<http://localhost:9090>**
 
 ### Identifiants de connexion
 
-| Champ    | Valeur           |
-|----------|------------------|
-| System   | PostgreSQL       |
-| Server   | postgres         |
-| Username | securecloud      |
-| Password | securecloud      |
-| Database | securecloud_dev  |
+| Champ    | Valeur          |
+| -------- | --------------- |
+| System   | PostgreSQL      |
+| Server   | postgres        |
+| Username | securecloud     |
+| Password | securecloud     |
+| Database | securecloud_dev |
 
 ## Compilation des Services
 
@@ -137,14 +137,14 @@ cmake --build build/dev --target MSF_Login      # Client Qt
 
 ### Presets disponibles
 
-| Preset             | Description                                |
-| ------------------ | ------------------------------------------ |
-| `dev`              | Développement complet (Debug, Ninja)       |
-| `dev-makefiles`    | Alternative si Ninja n'est pas installé  |
-| `dev-gateway-only` | Gateway uniquement                         |
-| `dev-auth-only`    | Auth Service uniquement                    |
-| `dev-client-only`  | Client Qt uniquement                       |
-| `release`          | Build optimisé (Release)                   |
+| Preset             | Description                             |
+| ------------------ | --------------------------------------- |
+| `dev`              | Développement complet (Debug, Ninja)    |
+| `dev-makefiles`    | Alternative si Ninja n'est pas installé |
+| `dev-gateway-only` | Gateway uniquement                      |
+| `dev-auth-only`    | Auth Service uniquement                 |
+| `dev-client-only`  | Client Qt uniquement                    |
+| `release`          | Build optimisé (Release)                |
 
 ### Builds Independants
 
@@ -167,7 +167,7 @@ cmake -B build/client-dev --preset client-dev
 cmake --build build/client-dev
 ```
 
-##  Execution des Tests
+## Execution des Tests
 
 ```bash
 # Executer tous les tests
@@ -180,7 +180,7 @@ ctest --test-dir build/dev -R gateway
 ctest --test-dir build/dev -V
 ```
 
-##  Utilisation avec Docker Compose
+## Utilisation avec Docker Compose
 
 ### Lancer tous les services
 
@@ -203,20 +203,20 @@ docker compose --env-file config/env/dev/.env -f docker-compose.core.yml down --
 
 ## Commandes CMake Utiles
 
-| Commande | Description |
-| ---------- | ------------- |
-| `cmake -B build/dev --preset dev` | Configure le projet |
-| `cmake --build build/dev -j 16` | Compile tout (parallele) |
-| `cmake --build build/dev --target help-targets` | Liste toutes les cibles |
-| `cmake --build build/dev --target db-up` | Lance PostgreSQL |
-| `cmake --build build/dev --target db-down` | Arrete PostgreSQL |
-| `cmake --build build/dev --target db-migrate` | Execute les migrations |
-| `cmake --build build/dev --target db-reset` | Reinitialise la DB |
-| `cmake --build build/dev --target db-adminer` | Lance Adminer |
-| `cmake --build build/dev --target db-psql` | Connexion psql interactive |
-| `cmake --build build/dev --target run-gateway` | Lance la Gateway |
-| `cmake --build build/dev --target run-client` | Lance le Client Qt |
-| `ctest --test-dir build/dev` | Execute les tests |
+| Commande                                        | Description                |
+| ----------------------------------------------- | -------------------------- |
+| `cmake -B build/dev --preset dev`               | Configure le projet        |
+| `cmake --build build/dev -j 16`                 | Compile tout (parallele)   |
+| `cmake --build build/dev --target help-targets` | Liste toutes les cibles    |
+| `cmake --build build/dev --target db-up`        | Lance PostgreSQL           |
+| `cmake --build build/dev --target db-down`      | Arrete PostgreSQL          |
+| `cmake --build build/dev --target db-migrate`   | Execute les migrations     |
+| `cmake --build build/dev --target db-reset`     | Reinitialise la DB         |
+| `cmake --build build/dev --target db-adminer`   | Lance Adminer              |
+| `cmake --build build/dev --target db-psql`      | Connexion psql interactive |
+| `cmake --build build/dev --target run-gateway`  | Lance la Gateway           |
+| `cmake --build build/dev --target run-client`   | Lance le Client Qt         |
+| `ctest --test-dir build/dev`                    | Execute les tests          |
 
 ## Configuration (.env)
 
@@ -242,7 +242,7 @@ GATEWAY_HTTP_PORT=8080
 LOG_LEVEL=debug
 ```
 
-##  Dépannage
+## Dépannage
 
 ### "Ninja not found"
 
@@ -302,6 +302,7 @@ cmake --build build/dev --target db-reset
 ### Erreur "port is already allocated" (15432, 8080, etc.)
 
 Deux stacks Compose peuvent entrer en conflit:
+
 - `ops/compose/compose.dev.yml` (cibles CMake `db-*`, conteneur `sc_pg`)
 - `docker-compose.core.yml` (stack principale, conteneur `sc_postgres`)
 
@@ -326,7 +327,7 @@ Assurez-vous que Qt est installé dans `C:\Qt\6.8.1\mingw_64` ou modifiez `CMAKE
 
 Assurez-vous que Docker Desktop est lancé et que vous êtes dans le terminal UCRT64.
 
-##  Architecture
+## Architecture
 
 ```text
 secureCloud/
@@ -348,7 +349,7 @@ secureCloud/
     └── env/             # Fichiers .env
 ```
 
-##  Sécurité en Développement
+## Sécurité en Développement
 
 **Important** : Les identifiants par défaut sont pour le développement uniquement.
 
@@ -368,7 +369,7 @@ En production, changez :
 5. [ ] Exécuter les tests
 6. [ ] Commencer le développement !
 
-##  Support
+## Support
 
 - Documentation : `docs/`
 - Architecture : `docs/architecture.md`

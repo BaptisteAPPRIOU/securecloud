@@ -44,15 +44,18 @@ try {
         }
     }
 
-    # TLS defaults: strict verification by default, with local dev CA auto-discovery.
+    # TLS defaults: production-like verification (no implicit trust bypass).
     if (-not [Environment]::GetEnvironmentVariable("SECURECLOUD_DEV_ALLOW_SELF_SIGNED", "Process")) {
         [Environment]::SetEnvironmentVariable("SECURECLOUD_DEV_ALLOW_SELF_SIGNED", "false", "Process")
     }
     if (-not [Environment]::GetEnvironmentVariable("SECURECLOUD_TLS_CA_FILE", "Process")) {
-        $DefaultCaPath = Join-Path $ProjectRoot "gateway\config\certs\dev-cert.pem"
+        $DefaultCaPath = Join-Path $ProjectRoot "ops\certs\gateway\ca.crt"
         if (Test-Path $DefaultCaPath) {
             [Environment]::SetEnvironmentVariable("SECURECLOUD_TLS_CA_FILE", $DefaultCaPath, "Process")
             Write-Host "TLS CA configured: $DefaultCaPath" -ForegroundColor Green
+        }
+        else {
+            Write-Host "TLS CA not set (SECURECLOUD_TLS_CA_FILE). Using system trust store only." -ForegroundColor Yellow
         }
     }
 

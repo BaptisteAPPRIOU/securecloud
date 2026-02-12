@@ -32,7 +32,6 @@
 #include <QVBoxLayout>
 #include <QStringList>
 #include <QFile>
-#include <QFileInfo>
 
 namespace {
 bool parseEnvBool(const QByteArray& value, bool default_value) {
@@ -55,18 +54,6 @@ QString resolveTlsCaFile() {
     const QByteArray env = qgetenv("SECURECLOUD_TLS_CA_FILE");
     if (!env.isEmpty()) {
         return QString::fromUtf8(env);
-    }
-
-    const QStringList candidates{
-        QStringLiteral("gateway/config/certs/dev-cert.pem"),
-        QStringLiteral("config/certs/dev-cert.pem"),
-        QStringLiteral("/app/certs/dev-cert.pem")
-    };
-
-    for (const auto& candidate : candidates) {
-        if (QFileInfo::exists(candidate)) {
-            return candidate;
-        }
     }
     return QString();
 }

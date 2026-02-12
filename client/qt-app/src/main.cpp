@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
   const QString allow_self_signed_display =
       allow_self_signed_raw.isEmpty() ? QStringLiteral("<default:false>") : QString::fromUtf8(allow_self_signed_raw);
   const QString tls_ca_file_display =
-      tls_ca_file_raw.isEmpty() ? QStringLiteral("<auto>") : QString::fromUtf8(tls_ca_file_raw);
+      tls_ca_file_raw.isEmpty() ? QStringLiteral("<system trust store>") : QString::fromUtf8(tls_ca_file_raw);
   const QUrl api_base = resolve_api_base();
   qInfo() << "Config: SECURECLOUD_API_BASE=" << api_display << "resolved=" << api_base.toString();
   qInfo() << "Config: SECURECLOUD_DEV_ALLOW_SELF_SIGNED=" << allow_self_signed_display;

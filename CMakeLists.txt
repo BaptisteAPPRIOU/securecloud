@@ -90,22 +90,29 @@ set(SECURECLOUD_ENV_FILE
     "${_default_env_file}"
     CACHE FILEPATH "Environment file used by Docker Compose targets"
 )
-set(SECURECLOUD_DB_COMPOSE_FILE
-    "${CMAKE_SOURCE_DIR}/ops/compose/compose.dev.yml"
-    CACHE FILEPATH "Compose file used by db-* targets"
-)
+set(_default_core_compose_file "${CMAKE_SOURCE_DIR}/ops/compose/compose.core.yml")
+set(_default_full_compose_file "${CMAKE_SOURCE_DIR}/ops/compose/compose.full.yml")
+
 set(SECURECLOUD_CORE_COMPOSE_FILE
-    "${CMAKE_SOURCE_DIR}/docker-compose.core.yml"
+    "${_default_core_compose_file}"
     CACHE FILEPATH "Compose file used by docker-up-core and docker-build targets"
 )
 set(SECURECLOUD_FULL_COMPOSE_FILE
-    "${CMAKE_SOURCE_DIR}/docker-compose.full.yml"
+    "${_default_full_compose_file}"
     CACHE FILEPATH "Overlay compose file used by docker-up-full (planned/experimental services)"
 )
-set(SECURECLOUD_LEGACY_STACK_COMPOSE_FILE
-    "${CMAKE_SOURCE_DIR}/docker-compose.yml"
-    CACHE FILEPATH "Legacy monolithic compose file kept for CI compatibility"
-)
+if((NOT EXISTS "${SECURECLOUD_CORE_COMPOSE_FILE}") AND EXISTS "${_default_core_compose_file}")
+    set(SECURECLOUD_CORE_COMPOSE_FILE
+        "${_default_core_compose_file}"
+        CACHE FILEPATH "Compose file used by docker-up-core and docker-build targets" FORCE
+    )
+endif()
+if((NOT EXISTS "${SECURECLOUD_FULL_COMPOSE_FILE}") AND EXISTS "${_default_full_compose_file}")
+    set(SECURECLOUD_FULL_COMPOSE_FILE
+        "${_default_full_compose_file}"
+        CACHE FILEPATH "Overlay compose file used by docker-up-full (planned/experimental services)" FORCE
+    )
+endif()
 set(SECURECLOUD_FULL_PROFILE "full" CACHE STRING "Compose profile used by docker-up-full target")
 set(SECURECLOUD_DESKTOP_PROFILE "desktop" CACHE STRING "Compose profile used by docker-up-desktop target")
 set(SECURECLOUD_MONITORING_PROFILE "monitoring" CACHE STRING "Compose profile used by docker-up-monitoring target")
@@ -126,9 +133,9 @@ find_program(DOCKER_EXECUTABLE
 )
 
 # Use 'docker compose' (V2) - handles paths with spaces correctly
-set(DOCKER_DB_COMPOSE_ARGS compose --env-file "${SECURECLOUD_ENV_FILE}" -f "${SECURECLOUD_DB_COMPOSE_FILE}")
-set(DOCKER_STACK_CORE_COMPOSE_ARGS compose --env-file "${SECURECLOUD_ENV_FILE}" -f "${SECURECLOUD_CORE_COMPOSE_FILE}")
-set(DOCKER_STACK_FULL_COMPOSE_ARGS compose --env-file "${SECURECLOUD_ENV_FILE}" -f "${SECURECLOUD_CORE_COMPOSE_FILE}" -f "${SECURECLOUD_FULL_COMPOSE_FILE}")
+set(DOCKER_DB_COMPOSE_ARGS compose --project-directory "${CMAKE_SOURCE_DIR}" --env-file "${SECURECLOUD_ENV_FILE}" -f "${SECURECLOUD_CORE_COMPOSE_FILE}" -f "${SECURECLOUD_FULL_COMPOSE_FILE}")
+set(DOCKER_STACK_CORE_COMPOSE_ARGS compose --project-directory "${CMAKE_SOURCE_DIR}" --env-file "${SECURECLOUD_ENV_FILE}" -f "${SECURECLOUD_CORE_COMPOSE_FILE}")
+set(DOCKER_STACK_FULL_COMPOSE_ARGS compose --project-directory "${CMAKE_SOURCE_DIR}" --env-file "${SECURECLOUD_ENV_FILE}" -f "${SECURECLOUD_CORE_COMPOSE_FILE}" -f "${SECURECLOUD_FULL_COMPOSE_FILE}")
 
 # =============================================================================
 # Subprojects
@@ -201,7 +208,7 @@ add_custom_target(help-targets
     COMMAND ${CMAKE_COMMAND} -E echo "  db-psql          - Interactive psql session"
     COMMAND ${CMAKE_COMMAND} -E echo ""
     COMMAND ${CMAKE_COMMAND} -E echo "=== Docker Targets ==="
-    COMMAND ${CMAKE_COMMAND} -E echo "  docker-build     - Build Docker images from docker-compose.core.yml"
+    COMMAND ${CMAKE_COMMAND} -E echo "  docker-build     - Build Docker images from ops/compose/compose.core.yml"
     COMMAND ${CMAKE_COMMAND} -E echo "  docker-build-full - Build Docker images from core + full overlay"
     COMMAND ${CMAKE_COMMAND} -E echo "  docker-up-core   - Start core stack (gateway + auth + infra)"
     COMMAND ${CMAKE_COMMAND} -E echo "  docker-up-full   - Start planned/experimental stack (--profile ${SECURECLOUD_FULL_PROFILE})"
@@ -566,10 +573,9 @@ message(STATUS "Build type:        ${CMAKE_BUILD_TYPE}")
 message(STATUS "Install prefix:    ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "Docker executable: ${DOCKER_EXECUTABLE}")
 message(STATUS "Docker env file:   ${SECURECLOUD_ENV_FILE}")
-message(STATUS "DB compose file:   ${SECURECLOUD_DB_COMPOSE_FILE}")
+message(STATUS "DB compose files:  ${SECURECLOUD_CORE_COMPOSE_FILE} + ${SECURECLOUD_FULL_COMPOSE_FILE}")
 message(STATUS "Core compose file: ${SECURECLOUD_CORE_COMPOSE_FILE}")
 message(STATUS "Full overlay file: ${SECURECLOUD_FULL_COMPOSE_FILE}")
-message(STATUS "Legacy compose:    ${SECURECLOUD_LEGACY_STACK_COMPOSE_FILE}")
 message(STATUS "")
 message(STATUS "Components:")
 message(STATUS "  Gateway:         ${BUILD_GATEWAY}")

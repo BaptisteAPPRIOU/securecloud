@@ -45,83 +45,83 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
 ### High-Level System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Client Layer                            │
-│  ┌──────────────────┐          ┌──────────────────┐            │
-│  │   Qt Desktop     │          │   Web Client     │            │
-│  │   Client         │          │   (Future)       │            │
-│  └────────┬─────────┘          └────────┬─────────┘            │
+┌──────────────────────────────────────────────────────────────────┐
+│                         Client Layer                             │
+│  ┌──────────────────┐          ┌──────────────────┐              │
+│  │   Qt Desktop     │          │   Web Client     │              │
+│  │   Client         │          │   (Future)       │              │
+│  └────────┬─────────┘          └─────────┬────────┘              │
 │           │                              │                       │
 └───────────┼──────────────────────────────┼───────────────────────┘
             │ HTTPS (8443)                 │
             │ HTTP  (8080)                 │
             │                              │
 ┌───────────▼──────────────────────────────▼───────────────────────┐
-│                      Gateway Layer                                │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │              SecureCloud Gateway (:8080/:8443)          │    │
-│  │                                                          │    │
-│  │  • TLS Termination      • JWT Validation                │    │
-│  │  • Dynamic Routing      • RBAC Authorization            │    │
-│  │  • Rate Limiting        • WebSocket Proxy               │    │
-│  │  • Request Correlation  • Metrics Export (:9090)        │    │
-│  └─────────────────────────────────────────────────────────┘    │
+│                      Gateway Layer                               │
+│  ┌─────────────────────────────────────────────────────────┐     │
+│  │              SecureCloud Gateway (:8080/:8443)          │     │
+│  │                                                         │     │
+│  │  • TLS Termination      • JWT Validation                │     │
+│  │  • Dynamic Routing      • RBAC Authorization            │     │
+│  │  • Rate Limiting        • WebSocket Proxy               │     │
+│  │  • Request Correlation  • Metrics Export (:9090)        │     │
+│  └─────────────────────────────────────────────────────────┘     │
 └──────────┬────────────┬────────────┬────────────┬────────────────┘
            │            │            │            │
            │ HTTP       │ HTTP       │ HTTP       │ HTTP
            │ /auth/*    │ /files/*   │ /msg/*     │ /audit/*
            │            │            │            │
 ┌──────────▼────────────▼────────────▼────────────▼────────────────┐
-│                    Microservices Layer                            │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
-│  │   Auth   │  │  Files   │  │Messaging │  │  Audit   │        │
-│  │ Service  │  │ Service  │  │ Service  │  │ Service  │        │
-│  │  :8001   │  │  :8003   │  │  :8004   │  │  :8002   │        │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘        │
-│       │             │             │             │                 │
-└───────┼─────────────┼─────────────┼─────────────┼─────────────────┘
+│                    Microservices Layer                           │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐          │
+│  │   Auth   │  │  Files   │  │Messaging │  │  Audit   │          │
+│  │ Service  │  │ Service  │  │ Service  │  │ Service  │          │
+│  │  :8001   │  │  :8003   │  │  :8004   │  │  :8002   │          │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘          │
+│       │             │             │             │                │
+└───────┼─────────────┼─────────────┼─────────────┼────────────────┘
         │             │             │             │
         │ SQL         │ SQL         │ SQL         │ SQL
         └─────────────┴─────────────┴─────────────┘
                       │
-┌─────────────────────▼─────────────────────────────────────────────┐
-│                      Data Layer                                    │
+┌─────────────────────▼────────────────────────────────────────────┐
+│                      Data Layer                                  │
 │  ┌──────────────────────────────────────────────────────────┐    │
 │  │           PostgreSQL 16 (:15432)                         │    │
-│  │                                                           │    │
+│  │                                                          │    │
 │  │  Schemas:                                                │    │
-│  │  • auth       (users, tenants, roles, sessions)         │    │
-│  │  • files      (documents, permissions, versions)        │    │
-│  │  • messaging  (conversations, messages, delivery)       │    │
-│  │  • audit      (events, compliance logs)                 │    │
-│  │                                                           │    │
-│  │  Volume: sc_pgdata (persistent)                         │    │
+│  │  • auth       (users, tenants, roles, sessions)          │    │
+│  │  • files      (documents, permissions, versions)         │    │
+│  │  • messaging  (conversations, messages, delivery)        │    │
+│  │  • audit      (events, compliance logs)                  │    │
+│  │                                                          │    │
+│  │  Volume: sc_pgdata (persistent)                          │    │
 │  └──────────────────────────────────────────────────────────┘    │
-│                                                                    │
+│                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐    │
 │  │           Redis 7 (:16379)                               │    │
 │  │  • Session cache                                         │    │
 │  │  • Rate limit counters                                   │    │
-│  │  • JWKS cache (30min TTL)                               │    │
-│  │  Volume: sc_redis (AOF persistence)                     │    │
+│  │  • JWKS cache (30min TTL)                                │    │
+│  │  Volume: sc_redis (AOF persistence)                      │    │
 │  └──────────────────────────────────────────────────────────┘    │
-│                                                                    │
+│                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐    │
 │  │           File Storage (Volume: sc_files)                │    │
-│  │  /data/files/tenant_{id}/                               │    │
+│  │  /data/files/tenant_{id}/                                │    │
 │  │    • Encrypted at rest                                   │    │
-│  │    • Path: /data/files/{tenant_id}/{file_id}.enc        │    │
+│  │    • Path: /data/files/{tenant_id}/{file_id}.enc         │    │
 │  └──────────────────────────────────────────────────────────┘    │
-└────────────────────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────┐
-│                    Observability Layer                              │
+┌───────────────────────────────────────────────────────────────────┐
+│                    Observability Layer                            │
 │  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐       │
 │  │  Prometheus    │  │   Grafana      │  │  ELK Stack     │       │
 │  │  (Metrics)     │  │  (Dashboards)  │  │  (Logs)        │       │
 │  │  :9090         │  │  (Future)      │  │  (Future)      │       │
 │  └────────────────┘  └────────────────┘  └────────────────┘       │
-└─────────────────────────────────────────────────────────────────────┘
+└───────────────────────────────────────────────────────────────────┘
 ```
 
 ### Request Flow Diagram
@@ -135,21 +135,21 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
        │    Body: {email, password}
        │
        ▼
-┌──────────────────────────────────────────────┐
-│           Gateway (:8080)                    │
+┌─────────────────────────────────────────────┐
+│           Gateway (:8080)                   │
 │  ┌────────────────────────────────────┐     │
 │  │ 1.1 TLS Termination                │     │
 │  │ 1.2 Generate Request ID            │     │
 │  │ 1.3 Route: /auth/* → auth-service  │     │
 │  │ 1.4 Rate Limit Check (Global/IP)   │     │
 │  └────────────────────────────────────┘     │
-└──────┬───────────────────────────────────────┘
+└──────┬──────────────────────────────────────┘
        │
        │ 2. Proxy to auth-service:8001
        │
        ▼
-┌──────────────────────────────────────────────┐
-│        Auth Service (:8001)                  │
+┌─────────────────────────────────────────────┐
+│        Auth Service (:8001)                 │
 │  ┌────────────────────────────────────┐     │
 │  │ 2.1 Validate credentials           │     │
 │  │ 2.2 Query: auth.users              │     │
@@ -157,20 +157,20 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
 │  │ 2.4 Generate JWT (access + refresh)│     │
 │  │ 2.5 Update last_login_timestamp    │     │
 │  └────────────────────────────────────┘     │
-└──────┬───────────────────────────────────────┘
+└──────┬──────────────────────────────────────┘
        │
        │ 3. Return JWT tokens
        │
        ▼
-┌──────────────────────────────────────────────┐
-│           Gateway (:8080)                    │
+┌─────────────────────────────────────────────┐
+│           Gateway (:8080)                   │
 │  ┌────────────────────────────────────┐     │
 │  │ 3.1 Log audit event                │     │
 │  │ 3.2 Update metrics                 │     │
 │  │     gateway_requests_total++       │     │
 │  │     gateway_upstream_requests++    │     │
 │  └────────────────────────────────────┘     │
-└──────┬───────────────────────────────────────┘
+└──────┬──────────────────────────────────────┘
        │
        │ 4. Response: {access_token, refresh_token, expires_in}
        │
@@ -192,8 +192,8 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
        │    Body: multipart/form-data
        │
        ▼
-┌──────────────────────────────────────────────┐
-│           Gateway (:8080)                    │
+┌─────────────────────────────────────────────┐
+│           Gateway (:8080)                   │
 │  ┌────────────────────────────────────┐     │
 │  │ 1.1 TLS Termination                │     │
 │  │ 1.2 Generate Request/Correlation ID│     │
@@ -207,16 +207,16 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
 │  │     • Check role: "user" required  │     │
 │  │     • Verify tenant_id match       │     │
 │  │ 1.5 Rate Limit (User quota)        │     │
-│  │ 1.6 Route: /files/* → files-service│    │
+│  │ 1.6 Route: /files/* → files-service│     │
 │  └────────────────────────────────────┘     │
-└──────┬───────────────────────────────────────┘
+└──────┬──────────────────────────────────────┘
        │
        │ 2. Proxy to files-service:8003
        │    Headers: X-User-ID, X-Tenant-ID, X-Request-ID
        │
        ▼
-┌──────────────────────────────────────────────┐
-│        Files Service (:8003)                 │
+┌─────────────────────────────────────────────┐
+│        Files Service (:8003)                │
 │  ┌────────────────────────────────────┐     │
 │  │ 2.1 Extract user context from headers │  │
 │  │ 2.2 Validate file size/type        │     │
@@ -228,18 +228,18 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
 │  │     files.documents table          │     │
 │  │ 2.7 Emit audit event (async)       │     │
 │  └────────────────────────────────────┘     │
-└──────┬───────────────────────────────────────┘
+└──────┬──────────────────────────────────────┘
        │
        │ 3. Return file metadata
        │
        ▼
-┌──────────────────────────────────────────────┐
-│           Gateway (:8080)                    │
+┌─────────────────────────────────────────────┐
+│           Gateway (:8080)                   │
 │  ┌────────────────────────────────────┐     │
 │  │ 3.1 Propagate response             │     │
 │  │ 3.2 Update metrics                 │     │
 │  └────────────────────────────────────┘     │
-└──────┬───────────────────────────────────────┘
+└──────┬──────────────────────────────────────┘
        │
        │ 4. Response: {file_id, size, upload_timestamp}
        │
@@ -262,21 +262,21 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
        │    Authorization: Bearer <JWT>
        │
        ▼
-┌──────────────────────────────────────────────┐
-│           Gateway (:8080)                    │
+┌─────────────────────────────────────────────┐
+│           Gateway (:8080)                   │
 │  ┌────────────────────────────────────┐     │
 │  │ 1.1 Detect WebSocket upgrade       │     │
 │  │ 1.2 Validate JWT                   │     │
 │  │ 1.3 Route: /ws/* → messaging       │     │
 │  │ 1.4 Establish bidirectional proxy  │     │
 │  └────────────────────────────────────┘     │
-└──────┬───────────────────────────────────────┘
+└──────┬──────────────────────────────────────┘
        │
        │ 2. WebSocket connection established
        │
        ▼
-┌──────────────────────────────────────────────┐
-│      Messaging Service (:8004)               │
+┌─────────────────────────────────────────────┐
+│      Messaging Service (:8004)              │
 │  ┌────────────────────────────────────┐     │
 │  │ 2.1 Accept WebSocket connection    │     │
 │  │ 2.2 Subscribe to user's channels   │     │
@@ -286,7 +286,7 @@ SecureCloud is a **microservices-based secure file sharing and messaging platfor
 │  │     • Read receipts                │     │
 │  │     • Delivery status              │     │
 │  └────────────────────────────────────┘     │
-└──────┬───────────────────────────────────────┘
+└──────┬──────────────────────────────────────┘
        │
        │ 3. Bidirectional message flow
        │
@@ -822,26 +822,26 @@ networks:
 ### Network Topology
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  Docker Host (Windows/Linux)                            │
-│                                                          │
+┌────────────────────────────────────────────────────────┐
+│  Docker Host (Windows/Linux)                           │
+│                                                        │
 │  ┌────────────────────────────────────────────────┐    │
 │  │  Docker Network: securecloud-net (bridge)      │    │
-│  │                                                 │    │
+│  │                                                │    │
 │  │  Gateway:       172.18.0.2:8080                │    │
 │  │  Auth Service:  172.18.0.3:8001                │    │
 │  │  Files Service: 172.18.0.4:8003                │    │
 │  │  PostgreSQL:    172.18.0.5:5432                │    │
 │  │  Redis:         172.18.0.6:6379                │    │
 │  └────────────────────────────────────────────────┘    │
-│                                                          │
-│  Port Mapping (localhost):                              │
-│  - 8080  → Gateway HTTP                                 │
-│  - 8443  → Gateway HTTPS                                │
-│  - 9090  → Prometheus Metrics                           │
-│  - 15432 → PostgreSQL (debug only)                      │
-│  - 16379 → Redis (debug only)                           │
-└─────────────────────────────────────────────────────────┘
+│                                                        │
+│  Port Mapping (localhost):                             │
+│  - 8080  → Gateway HTTP                                │
+│  - 8443  → Gateway HTTPS                               │
+│  - 9090  → Prometheus Metrics                          │
+│  - 15432 → PostgreSQL (debug only)                     │
+│  - 16379 → Redis (debug only)                          │
+└────────────────────────────────────────────────────────┘
 ```
 
 ### Kubernetes Architecture (Future)
@@ -951,7 +951,8 @@ ConfigMaps/Secrets:
 - [Gateway Source Tree](../gateway/) - Detailed gateway implementation
 - [Data Flow & Communication](#data-flow--communication) - Data architecture details
 - [Security Documentation](security.md) - Security architecture
-- [Docker Compose](../docker-compose.yml) - Complete service definitions
+- [Compose Core](../ops/compose/compose.core.yml) - Core service definitions
+- [Compose Full Overlay](../ops/compose/compose.full.yml) - Planned/experimental service overlay
 - [Database Migrations](../db/migrations/) - Schema definitions
 
 ---

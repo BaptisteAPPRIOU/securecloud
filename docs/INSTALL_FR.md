@@ -73,24 +73,26 @@ Exécutez les migrations manuellement **depuis PowerShell** :
 
 ```powershell
 $envFile = "config/env/dev/.env"
-$compose = "ops/compose/compose.dev.yml"
+$composeCore = "ops/compose/compose.core.yml"
+$composeFull = "ops/compose/compose.full.yml"
 
-docker compose --env-file $envFile -f $compose run --rm flyway-auth
-docker compose --env-file $envFile -f $compose run --rm flyway-messaging
-docker compose --env-file $envFile -f $compose run --rm flyway-files
-docker compose --env-file $envFile -f $compose run --rm flyway-audit
+docker compose --project-directory . --env-file $envFile -f $composeCore -f $composeFull run --rm flyway-auth
+docker compose --project-directory . --env-file $envFile -f $composeCore -f $composeFull run --rm flyway-messaging
+docker compose --project-directory . --env-file $envFile -f $composeCore -f $composeFull run --rm flyway-files
+docker compose --project-directory . --env-file $envFile -f $composeCore -f $composeFull run --rm flyway-audit
 ```
 
 Ou depuis **MSYS2** :
 
 ```bash
 ENV_FILE="config/env/dev/.env"
-COMPOSE="ops/compose/compose.dev.yml"
+COMPOSE_CORE="ops/compose/compose.core.yml"
+COMPOSE_FULL="ops/compose/compose.full.yml"
 
-docker compose --env-file $ENV_FILE -f $COMPOSE run --rm flyway-auth
-docker compose --env-file $ENV_FILE -f $COMPOSE run --rm flyway-messaging
-docker compose --env-file $ENV_FILE -f $COMPOSE run --rm flyway-files
-docker compose --env-file $ENV_FILE -f $COMPOSE run --rm flyway-audit
+docker compose --project-directory . --env-file $ENV_FILE -f $COMPOSE_CORE -f $COMPOSE_FULL run --rm flyway-auth
+docker compose --project-directory . --env-file $ENV_FILE -f $COMPOSE_CORE -f $COMPOSE_FULL run --rm flyway-messaging
+docker compose --project-directory . --env-file $ENV_FILE -f $COMPOSE_CORE -f $COMPOSE_FULL run --rm flyway-files
+docker compose --project-directory . --env-file $ENV_FILE -f $COMPOSE_CORE -f $COMPOSE_FULL run --rm flyway-audit
 ```
 
 ## Interface Web de la Base de Donnees (Adminer)
@@ -185,20 +187,20 @@ ctest --test-dir build/dev -V
 ### Lancer tous les services
 
 ```bash
-docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d --build
+docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml up -d --build
 ```
 
 ### Voir les logs
 
 ```bash
-docker compose --env-file config/env/dev/.env -f docker-compose.core.yml logs -f gateway
-docker compose --env-file config/env/dev/.env -f docker-compose.core.yml logs -f auth-service
+docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml logs -f gateway
+docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml logs -f auth-service
 ```
 
 ### Arrêter les services
 
 ```bash
-docker compose --env-file config/env/dev/.env -f docker-compose.core.yml down --remove-orphans
+docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml down --remove-orphans
 ```
 
 ## Commandes CMake Utiles
@@ -301,10 +303,10 @@ cmake --build build/dev --target db-reset
 
 ### Erreur "port is already allocated" (15432, 8080, etc.)
 
-Deux stacks Compose peuvent entrer en conflit:
+Si vous aviez une ancienne installation, des conteneurs historiques peuvent encore entrer en conflit:
 
-- `ops/compose/compose.dev.yml` (cibles CMake `db-*`, conteneur `sc_pg`)
-- `docker-compose.core.yml` (stack principale, conteneur `sc_postgres`)
+- Ancien conteneur PostgreSQL: `sc_pg`
+- Stack actuelle: `ops/compose/compose.core.yml` (conteneur `sc_postgres`)
 
 ```powershell
 # Identifier le conteneur qui occupe un port
@@ -312,11 +314,11 @@ docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 15432
 docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 8080
 
 # Supprimer le conteneur en conflit (exemples)
-docker rm -f sc_pg
+docker rm -f sc_pg   # ancien nom (legacy)
 docker rm -f compose-adminer-1
 
 # Relancer la stack principale
-docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d --build
+docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml up -d --build
 ```
 
 ### Qt non trouvé

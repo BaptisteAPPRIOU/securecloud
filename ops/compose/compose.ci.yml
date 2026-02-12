@@ -1,23 +1,6 @@
 services:
-  audit-service:
-    profiles: ["stub"]
-
-  files-service:
-    profiles: ["stub"]
-
-  messaging-service:
-    profiles: ["stub"]
-
-  deploy-service:
-    profiles: ["ops"]
-
   adminer:
     profiles: ["admin"]
-
-  gateway:
-    depends_on:
-      auth-service:
-        condition: service_healthy
 
   test-runner:
     build:

@@ -32,8 +32,8 @@ cmake --build build/dev --target run-gateway
 
 ```powershell
 # Compose files:
-#   core: docker-compose.core.yml
-#   full overlay (planned/experimental services): docker-compose.full.yml
+#   core: ops/compose/compose.core.yml
+#   full overlay (planned/experimental services): ops/compose/compose.full.yml
 #   desktop profile: qt-client container
 
 # Build Docker images for the stack
@@ -55,12 +55,12 @@ cmake --build build/dev --target docker-up-monitoring
 Direct Compose equivalent (recommended when debugging startup):
 
 ```powershell
-docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d --build
+docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml up -d --build
 ```
 
 Important:
 - Use `--env-file config/env/dev/.env` to avoid silent fallback to defaults from an empty/missing root `.env`.
-- Do not run `db-up`/`db-adminer` stack and `docker-compose.core.yml` stack at the same time unless ports are changed.
+- `db-*` and `docker-*` CMake targets now use the same compose stack (`ops/compose/compose.core.yml` + `ops/compose/compose.full.yml`).
 
 ### Auth session smoke test (E2E)
 

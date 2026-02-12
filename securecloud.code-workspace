@@ -182,7 +182,7 @@
         "name": "Docker: Gateway",
         "type": "docker",
         "request": "launch",
-        "preLaunchTask": "docker-compose: up",
+        "preLaunchTask": "Docker Compose: Up",
         "platform": "node"
       }
     ]
@@ -257,8 +257,8 @@
       {
         "label": "Docker Compose: Up",
         "type": "shell",
-        "command": "docker-compose",
-        "args": ["up", "-d"],
+        "command": "docker",
+        "args": ["compose", "--project-directory", ".", "-f", "ops/compose/compose.core.yml", "up", "-d"],
         "options": {
           "cwd": "${workspaceFolder:SecureCloud (Root)}"
         },
@@ -268,8 +268,8 @@
       {
         "label": "Docker Compose: Down",
         "type": "shell",
-        "command": "docker-compose",
-        "args": ["down"],
+        "command": "docker",
+        "args": ["compose", "--project-directory", ".", "-f", "ops/compose/compose.core.yml", "down"],
         "options": {
           "cwd": "${workspaceFolder:SecureCloud (Root)}"
         },
@@ -279,8 +279,8 @@
       {
         "label": "Docker Compose: Logs Gateway",
         "type": "shell",
-        "command": "docker-compose",
-        "args": ["logs", "-f", "gateway"],
+        "command": "docker",
+        "args": ["compose", "--project-directory", ".", "-f", "ops/compose/compose.core.yml", "logs", "-f", "gateway"],
         "options": {
           "cwd": "${workspaceFolder:SecureCloud (Root)}"
         },

@@ -54,7 +54,7 @@ QUrl resolve_api_base() {
       return url;
     }
   }
-  return QUrl(QStringLiteral("http://localhost:8443"));
+  return QUrl(QStringLiteral("https://localhost:8443"));
 }
 } // namespace
 

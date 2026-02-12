@@ -171,7 +171,7 @@ services:
       dockerfile: ops/docker/qt-client.Dockerfile
     container_name: sc_qt_client
     environment:
-      SECURECLOUD_API_BASE: ${SECURECLOUD_API_BASE:-http://gateway:8080}
+      SECURECLOUD_API_BASE: ${SECURECLOUD_API_BASE:-https://gateway:8443}
       SECURECLOUD_CLIENT_LOG: /app/logs/qt-client.log
       QT_QPA_PLATFORM: ${QT_QPA_PLATFORM:-offscreen}
     depends_on:

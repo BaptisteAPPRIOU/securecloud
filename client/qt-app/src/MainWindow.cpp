@@ -23,10 +23,50 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
+#include <QSslError>
 #include <QStatusBar>
 #include <QVBoxLayout>
+#include <QStringList>
 
 namespace {
+bool parseEnvBool(const QByteArray& value, bool default_value) {
+    if (value.isEmpty()) {
+        return default_value;
+    }
+
+    const QString normalized = QString::fromUtf8(value).trimmed().toLower();
+    return normalized == QStringLiteral("1")
+        || normalized == QStringLiteral("true")
+        || normalized == QStringLiteral("yes")
+        || normalized == QStringLiteral("on");
+}
+
+bool allowSelfSignedDevCerts() {
+    return parseEnvBool(qgetenv("SECURECLOUD_DEV_ALLOW_SELF_SIGNED"), true);
+}
+
+void maybeIgnoreDevSslErrors(QNetworkReply* reply, const QUrl& url) {
+    if (!reply) {
+        return;
+    }
+    if (url.scheme().compare(QStringLiteral("https"), Qt::CaseInsensitive) != 0) {
+        return;
+    }
+    if (!allowSelfSignedDevCerts()) {
+        return;
+    }
+
+    QObject::connect(reply, &QNetworkReply::sslErrors, reply, [reply](const QList<QSslError>& errors) {
+        QStringList details;
+        details.reserve(errors.size());
+        for (const auto& error : errors) {
+            details.append(error.errorString());
+        }
+        qWarning() << "Ignoring SSL errors for development:" << details.join(QStringLiteral("; "));
+        reply->ignoreSslErrors();
+    });
+}
+
 QUrl apiBaseUrl() {
     QByteArray env = qgetenv("SECURECLOUD_API_BASE");
     if (!env.isEmpty()) {
@@ -35,7 +75,7 @@ QUrl apiBaseUrl() {
             return url;
         }
     }
-    return QUrl(QStringLiteral("http://localhost:8443"));
+    return QUrl(QStringLiteral("https://localhost:8443"));
 }
 
 constexpr int kPageLanding = 0;
@@ -210,6 +250,7 @@ void MainWindow::submitLogin(const QString& email, const QString& password) {
 
     qInfo() << "Login request:" << url.toString() << "bytes=" << body.size();
     QNetworkReply* reply = m_network->post(req, body);
+    maybeIgnoreDevSslErrors(reply, url);
     connect(reply, &QNetworkReply::finished, this, [this, reply, email]() {
         auto finish = [this]() {
             m_loginInFlight = false;
@@ -345,6 +386,7 @@ void MainWindow::performLogout() {
     QByteArray body = QJsonDocument(payload).toJson(QJsonDocument::Compact);
 
     QNetworkReply* reply = m_network->post(req, body);
+    maybeIgnoreDevSslErrors(reply, url);
     connect(reply, &QNetworkReply::finished, this, [reply]() {
         const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         if (reply->error() != QNetworkReply::NoError) {

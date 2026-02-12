@@ -31,7 +31,7 @@ COPY --from=build /src/client/qt-app/build/MSF_Login /app/MSF_Login
 
 RUN mkdir -p /app/logs
 
-ENV SECURECLOUD_API_BASE=http://gateway:8080
+ENV SECURECLOUD_API_BASE=https://gateway:8443
 ENV SECURECLOUD_CLIENT_LOG=/app/logs/qt-client.log
 ENV QT_QPA_PLATFORM=offscreen
 

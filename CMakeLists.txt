@@ -266,7 +266,7 @@ endif()
 if(DOCKER_EXECUTABLE)
     add_custom_target(db-up
         COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} up -d postgres
-        COMMAND ${CMAKE_COMMAND} -E echo "[OK] PostgreSQL started on localhost:${DB_PORT}"
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] PostgreSQL started on internal Docker network (postgres:5432)"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Starting PostgreSQL container"
         VERBATIM

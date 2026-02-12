@@ -94,8 +94,6 @@ services:
     environment:
       <<: *common-env
       SERVICE_PORT: 8002
-    ports:
-      - "${AUDIT_PORT:-8002}:8002"
     depends_on:
       postgres:
         condition: service_healthy
@@ -122,8 +120,6 @@ services:
       SERVICE_PORT: 8003
       STORAGE_PATH: /data/files
       MAX_FILE_SIZE_MB: 100
-    ports:
-      - "${FILES_PORT:-8003}:8003"
     depends_on:
       postgres:
         condition: service_healthy
@@ -150,9 +146,6 @@ services:
       <<: *common-env
       SERVICE_PORT: 8004
       WEBSOCKET_PORT: 8005
-    ports:
-      - "${MESSAGING_PORT:-8004}:8004"
-      - "${WEBSOCKET_PORT:-8005}:8005"
     depends_on:
       postgres:
         condition: service_healthy
@@ -179,8 +172,6 @@ services:
     environment:
       <<: *common-env
       SERVICE_PORT: 8006
-    ports:
-      - "${DEPLOY_PORT:-8006}:8006"
     depends_on:
       postgres:
         condition: service_healthy

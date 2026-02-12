@@ -34,7 +34,7 @@ RUN mkdir -p /app/logs
 ENV SECURECLOUD_API_BASE=https://gateway:8443
 ENV SECURECLOUD_CLIENT_LOG=/app/logs/qt-client.log
 ENV SECURECLOUD_DEV_ALLOW_SELF_SIGNED=false
-ENV SECURECLOUD_TLS_CA_FILE=/app/certs/dev-cert.pem
+ENV SECURECLOUD_TLS_CA_FILE=/app/certs/ca.crt
 ENV QT_QPA_PLATFORM=offscreen
 
 ENTRYPOINT ["/app/MSF_Login"]

@@ -46,8 +46,6 @@ services:
       POSTGRES_PASSWORD: ${DB_PASS:-scpassword}
       POSTGRES_DB: ${DB_NAME:-securecloud}
       POSTGRES_INITDB_ARGS: "-E UTF8"
-    ports:
-      - "${DB_PORT:-${POSTGRES_PORT:-15432}}:5432"
     volumes:
       - sc_pgdata:/var/lib/postgresql/data
     networks:
@@ -63,8 +61,6 @@ services:
     image: redis:7-alpine
     container_name: sc_redis
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispass}
-    ports:
-      - "${REDIS_PORT:-16379}:6379"
     volumes:
       - sc_redis:/data
     networks:
@@ -108,8 +104,6 @@ services:
       SERVICE_PORT: 8001
       JWT_EXPIRY_MINUTES: 60
       REFRESH_TOKEN_DAYS: 30
-    ports:
-      - "${AUTH_PORT:-8001}:8001"
     depends_on:
       postgres:
         condition: service_healthy
@@ -138,20 +132,22 @@ services:
       <<: *common-env
       GATEWAY_PORT: 8080
       GATEWAY_TLS_PORT: 8443
+      GATEWAY_CERT_FILE: ${GATEWAY_CERT_FILE:-/etc/securecloud/certs/tls.crt}
+      GATEWAY_KEY_FILE: ${GATEWAY_KEY_FILE:-/etc/securecloud/certs/tls.key}
       AUTH_SERVICE_ADDR: auth-service:8001
       AUDIT_SERVICE_ADDR: audit-service:8002
       FILES_SERVICE_ADDR: files-service:8003
       MESSAGING_SERVICE_ADDR: messaging-service:8004
       DEPLOY_SERVICE_ADDR: deploy-service:8006
-      ENABLE_TLS: ${ENABLE_TLS:-false}
+      ENABLE_TLS: ${ENABLE_TLS:-true}
     ports:
-      - "${GATEWAY_HTTP_PORT:-8080}:8080"
       - "${GATEWAY_HTTPS_PORT:-8443}:8443"
     depends_on:
       auth-service:
         condition: service_healthy
     volumes:
       - ./gateway/config:/app/config:ro
+      - ${GATEWAY_CERTS_DIR:-./ops/certs/gateway}:/etc/securecloud/certs:ro
       - sc_logs:/app/logs
     networks:
       - securecloud-net
@@ -174,14 +170,14 @@ services:
       SECURECLOUD_API_BASE: ${SECURECLOUD_API_BASE:-https://gateway:8443}
       SECURECLOUD_CLIENT_LOG: /app/logs/qt-client.log
       SECURECLOUD_DEV_ALLOW_SELF_SIGNED: ${SECURECLOUD_DEV_ALLOW_SELF_SIGNED:-false}
-      SECURECLOUD_TLS_CA_FILE: ${SECURECLOUD_TLS_CA_FILE:-/app/certs/dev-cert.pem}
+      SECURECLOUD_TLS_CA_FILE: ${SECURECLOUD_TLS_CA_FILE:-/app/certs/ca.crt}
       QT_QPA_PLATFORM: ${QT_QPA_PLATFORM:-offscreen}
     depends_on:
       gateway:
         condition: service_healthy
     volumes:
       - sc_logs:/app/logs
-      - ./gateway/config/certs:/app/certs:ro
+      - ${GATEWAY_CERTS_DIR:-./ops/certs/gateway}:/app/certs:ro
     networks:
       - securecloud-net
     restart: unless-stopped
@@ -203,6 +199,8 @@ services:
     environment:
       ADMINER_DEFAULT_SERVER: postgres
     restart: unless-stopped
+    profiles:
+      - admin
 
   prometheus:
     image: prom/prometheus:latest

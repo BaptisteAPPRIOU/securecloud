@@ -6,7 +6,7 @@ This document is a practical security baseline for local/dev and production-like
 
 - Authentication: JWT access tokens issued by `auth-service`.
 - Authorization: gateway-side RBAC checks before upstream routing.
-- Transport: HTTPS available on gateway (`8443`), controlled by `ENABLE_TLS`.
+- Transport: HTTPS on gateway (`8443`) with trusted certificate material.
 - Secrets: credentials and JWT secret loaded from environment variables.
 - Auditability: security-sensitive actions should be logged to `audit-service` (full profile path).
 
@@ -27,6 +27,8 @@ DB_PASS=<strong-random-password>
 REDIS_PASSWORD=<strong-random-password>
 JWT_SECRET=<long-random-secret-at-least-32-chars>
 ENABLE_TLS=true
+GATEWAY_CERT_FILE=/etc/securecloud/certs/tls.crt
+GATEWAY_KEY_FILE=/etc/securecloud/certs/tls.key
 LOG_LEVEL=info
 ```
 
@@ -41,8 +43,7 @@ docker compose --project-directory . --env-file config/env/dev/.env -f ops/compo
 If startup fails with `port is already allocated`, identify and remove conflicting containers:
 
 ```powershell
-docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 15432
-docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 8080
+docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 8443
 docker rm -f <conflicting_container>
 ```
 

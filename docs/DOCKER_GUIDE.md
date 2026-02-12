@@ -44,7 +44,7 @@ Complete guide covering the build-to-deploy process for all SecureCloud services
 |  - Infrastructure: PostgreSQL, Redis                      |
 |  - Migrations: Flyway (per schema)                        |
 |  - Services: Gateway, Auth, Files, Messaging, Audit       |
-|  - Monitoring: Prometheus, Grafana, Adminer              |
+|  - Monitoring: Prometheus, Grafana (Adminer in admin profile) |
 +----------------------------------------------------------+
 ```
 
@@ -56,7 +56,7 @@ Complete guide covering the build-to-deploy process for all SecureCloud services
 +-------------------------------------------------------------+
 |                                                             |
 |    +-------------------+                                    |
-|    |      Gateway      | :8080 (HTTP) / :8443 (HTTPS)      |
+|    |      Gateway      | :8443 (HTTPS)                     |
 |    +--------+----------+                                    |
 |             |                                               |
 |       +-----+-----+-----+-----+-----+                      |
@@ -267,10 +267,11 @@ docker compose --project-directory . --env-file config/env/dev/.env -f ops/compo
 By default, `docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml up -d` starts the core stack (`gateway`, `auth-service`, infra).
 Planned services (`audit-service`, `files-service`, `messaging-service`, `deploy-service`) are behind the `full` profile.
 The Qt desktop client container (`qt-client`) is behind the `desktop` profile.
+Adminer is behind the `admin` profile.
 
 ```
 ┌─────────────────────────────────────────┐
-│          Gateway (8080/8443)            │
+│            Gateway (8443)               │
 ├─────────────────────────────────────────┤
 │  ┌──────────────┬──────────────────┐   │
 │  │ Auth Service │  Audit Service   │   │
@@ -285,7 +286,7 @@ The Qt desktop client container (`qt-client`) is behind the `desktop` profile.
          │                    │
     ┌────────┐         ┌──────────┐
     │ Postgres│         │   Redis   │
-    │  :15432 │         │   :16379  │
+    │  :5432  │         │   :6379   │
     └─────────┘         └───────────┘
 ```
 
@@ -410,30 +411,21 @@ $DC exec -T postgres psql -U securecloud securecloud_dev < backup.sql
 # Check all services
 $DC ps
 
-# Check specific service health
-curl http://localhost:8080/health  # Gateway
-curl http://localhost:8001/health  # Auth Service
-curl http://localhost:8002/health  # Audit Service
+# Check gateway health (external entrypoint)
+curl https://localhost:8443/health
 ```
 
 ## Port Mapping
 
 | Service                     | Port  | Description                                |
 | --------------------------- | ----- | ------------------------------------------ |
-| Gateway HTTP                | 8080  | Main API Gateway                           |
-| Gateway HTTPS               | 8443  | TLS Gateway                                |
-| Auth Service                | 8001  | Authentication                             |
-| Audit Service               | 8002  | Audit Logging                              |
-| Files Service               | 8003  | File Management                            |
-| Messaging (HTTP)            | 8004  | Messaging API                              |
-| Messaging (WebSocket)       | 8005  | Real-time Chat                             |
-| Deploy Service              | 8006  | Deployment                                 |
+| Gateway HTTPS               | 8443  | Main API Gateway (external)                |
 | Qt Client (desktop profile) | -     | Qt GUI container (uses gateway internally) |
-| PostgreSQL                  | 15432 | Database                                   |
-| Redis                       | 16379 | Cache/Sessions                             |
-| Adminer                     | 9090  | DB Admin UI                                |
-| Prometheus                  | 9091  | Metrics                                    |
-| Grafana                     | 3000  | Dashboards                                 |
+| Adminer (admin profile)     | 9090  | DB Admin UI (opt-in profile)               |
+| Prometheus                  | 9091  | Metrics (monitoring profile)               |
+| Grafana                     | 3000  | Dashboards (monitoring profile)            |
+
+Internal-only by default (Docker network only): `postgres:5432`, `redis:6379`, `auth-service:8001`, `audit-service:8002`, `files-service:8003`, `messaging-service:8004`, `deploy-service:8006`.
 
 ## Best Practices
 
@@ -458,6 +450,8 @@ JWT_SECRET=your_production_secret_key_minimum_32_characters
 
 # TLS - Enable in production
 ENABLE_TLS=true
+GATEWAY_CERT_FILE=/etc/securecloud/certs/tls.crt
+GATEWAY_KEY_FILE=/etc/securecloud/certs/tls.key
 ```
 
 ### 2. Health Checks
@@ -501,8 +495,8 @@ networks:
 ```
 
 - Services communicate via internal DNS (`auth-service:8001`)
-- Only Gateway exposed externally (ports 8080, 8443)
-- Database NOT exposed in production
+- Only Gateway HTTPS is exposed externally (port 8443)
+- Datastore and backend services are internal-only by default
 
 ### 5. Build Caching
 
@@ -532,7 +526,9 @@ RUN cmake --build build
 
 - `LOG_LEVEL` - Logging level (debug, info, warn, error)
 - `ENABLE_TLS` - Enable HTTPS on gateway
-- All port overrides (see `config/env/dev/.env`)
+- `GATEWAY_CERT_FILE` - Path to trusted gateway certificate inside container
+- `GATEWAY_KEY_FILE` - Path to trusted gateway private key inside container
+- `GATEWAY_CERTS_DIR` - Host directory mounted to `/etc/securecloud/certs`
 
 ## Monitoring
 
@@ -592,7 +588,7 @@ docker compose --project-directory . --env-file config/env/prod/.env -f ops/comp
 
 # 5. Verify all services healthy
 docker compose --project-directory . --env-file config/env/prod/.env -f ops/compose/compose.core.yml -f ops/compose/compose.deploy.yml ps
-curl http://localhost:8080/health
+curl https://localhost:8443/health
 ```
 
 ### Production Checklist
@@ -621,16 +617,14 @@ docker compose --project-directory . --env-file config/env/dev/.env -f ops/compo
 docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml restart service-name
 ```
 
-### Port already allocated (common on 15432 or 8080)
+### Port already allocated (common on 8443)
 
 ```bash
 # Find who owns a host port
-docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 15432
-docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 8080
+docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 8443
 
 # Remove the conflicting container (examples)
-docker rm -f sc_postgres
-docker rm -f compose-adminer-1
+docker rm -f sc_gateway
 
 # Retry core stack
 docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml up -d --build
@@ -732,6 +726,7 @@ docker cp sc_redis:/data/dump.rdb redis_backup_$DATE.rdb
 | Full/experimental overlay                  | `ops/compose/compose.full.yml` |
 | CI/test overlay                            | `ops/compose/compose.ci.yml` |
 | Deploy image overlay                       | `ops/compose/compose.deploy.yml` |
+| Gateway cert mount directory               | `ops/certs/gateway/`           |
 | Service Dockerfiles                        | `ops/docker/*.Dockerfile`     |
 | Environment config                         | `config/env/dev/.env`         |
 | Database migrations                        | `db/migrations/{schema}/`     |
@@ -745,3 +740,4 @@ docker cp sc_redis:/data/dump.rdb redis_backup_$DATE.rdb
 - [INSTALL_FR.md](INSTALL_FR.md) - Installation guide (French)
 - [architecture.md](architecture.md) - System architecture
 - [security.md](security.md) - Security documentation
+- [SERVICE_MTLS.md](SERVICE_MTLS.md) - Service-to-service mTLS rollout plan

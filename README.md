@@ -126,14 +126,13 @@ Open workspace `securecloud.code-workspace`, then use `Ctrl+Shift+B` or `Ctrl+Sh
 
 | Service | Host | Port | User | Password |
 |---------|------|------|------|----------|
-| PostgreSQL | localhost | 15432 | securecloud | securecloud |
-| Adminer (core stack) | localhost | 9090 | - | - |
-| Adminer (db-adminer target) | localhost | 9090 | - | - |
-| Gateway HTTP | localhost | 8080 | - | - |
 | Gateway HTTPS | localhost | 8443 | - | - |
-| Auth Service | localhost | 8001 | - | - |
+| PostgreSQL (internal only by default) | postgres | 5432 | securecloud | securecloud |
+| Redis (internal only by default) | redis | 6379 | - | - |
+| Adminer (admin profile / db-adminer target) | localhost | 9090 | - | - |
 
 > Change all credentials in production (`config/env/prod/.env`).
+> By default, only the gateway is published to the host. Other services stay on the internal Docker network.
 
 ---
 

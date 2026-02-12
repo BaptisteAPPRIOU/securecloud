@@ -301,7 +301,7 @@ docker ps
 cmake --build build/dev --target db-reset
 ```
 
-### Erreur "port is already allocated" (15432, 8080, etc.)
+### Erreur "port is already allocated" (8443, 9090, etc.)
 
 Si vous aviez une ancienne installation, des conteneurs historiques peuvent encore entrer en conflit:
 
@@ -310,11 +310,11 @@ Si vous aviez une ancienne installation, des conteneurs historiques peuvent enco
 
 ```powershell
 # Identifier le conteneur qui occupe un port
-docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 15432
-docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 8080
+docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 8443
+docker ps --format "table {{.Names}}\t{{.Ports}}" | findstr 9090
 
 # Supprimer le conteneur en conflit (exemples)
-docker rm -f sc_pg   # ancien nom (legacy)
+docker rm -f sc_gateway
 docker rm -f compose-adminer-1
 
 # Relancer la stack principale

@@ -38,7 +38,7 @@ cmake --build build/dev --target run-gateway
 ## Quick Checks & Links
 
 - Commande Docker recommandee:
-  `docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d --build`
+  `docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml up -d --build`
 - Pour les details (presets, taches VS Code, troubleshooting), voir `README.md`.
 - Checklist rapide: verifier `db-up` et `db-migrate`, puis demarrer `run-dev.ps1` du service cible.
 

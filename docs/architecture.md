@@ -951,7 +951,8 @@ ConfigMaps/Secrets:
 - [Gateway Source Tree](../gateway/) - Detailed gateway implementation
 - [Data Flow & Communication](#data-flow--communication) - Data architecture details
 - [Security Documentation](security.md) - Security architecture
-- [Docker Compose](../docker-compose.yml) - Complete service definitions
+- [Compose Core](../ops/compose/compose.core.yml) - Core service definitions
+- [Compose Full Overlay](../ops/compose/compose.full.yml) - Planned/experimental service overlay
 - [Database Migrations](../db/migrations/) - Schema definitions
 
 ---

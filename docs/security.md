@@ -35,7 +35,7 @@ LOG_LEVEL=info
 Always use explicit env and compose file selection:
 
 ```bash
-docker compose --env-file config/env/dev/.env -f docker-compose.core.yml up -d --build
+docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml up -d --build
 ```
 
 If startup fails with `port is already allocated`, identify and remove conflicting containers:

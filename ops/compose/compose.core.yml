@@ -1,14 +1,15 @@
 # SecureCloud Docker Compose - Core Stack
 # Usage:
-#   docker compose --project-directory . -f ops/compose/compose.core.yml up -d
-#   docker compose --project-directory . -f ops/compose/compose.core.yml --profile desktop up -d
-#   docker compose --project-directory . -f ops/compose/compose.core.yml --profile monitoring up -d
+#   docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml up -d
+#   docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml --profile desktop up -d
+#   docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml --profile monitoring up -d
 
 x-common-env: &common-env
   DB_HOST: postgres
   DB_PORT: 5432
   DB_NAME: ${DB_NAME:-securecloud}
   DB_USER: ${DB_USER:-scuser}
+  DB_PASS: ${DB_PASS:-scpassword}
   DB_PASSWORD: ${DB_PASS:-scpassword}
   REDIS_HOST: redis
   REDIS_PORT: 6379
@@ -16,6 +17,8 @@ x-common-env: &common-env
   JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
   JWT_ISSUER: ${JWT_ISSUER:-securecloud-auth}
   JWT_AUDIENCE: ${JWT_AUDIENCE:-securecloud-client}
+  JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-900}
+  JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-604800}
   LOG_LEVEL: ${LOG_LEVEL:-info}
 
 x-service-healthcheck: &service-healthcheck
@@ -101,9 +104,8 @@ services:
     container_name: sc_auth_service
     environment:
       <<: *common-env
-      SERVICE_PORT: 8001
-      JWT_EXPIRY_MINUTES: 60
-      REFRESH_TOKEN_DAYS: 30
+      AUTH_PORT: ${AUTH_PORT:-8001}
+      SERVICE_PORT: ${AUTH_PORT:-8001}
     depends_on:
       postgres:
         condition: service_healthy
@@ -130,8 +132,8 @@ services:
     container_name: sc_gateway
     environment:
       <<: *common-env
-      GATEWAY_PORT: 8080
-      GATEWAY_TLS_PORT: 8443
+      GATEWAY_PORT: ${GATEWAY_PORT:-8080}
+      GATEWAY_TLS_PORT: ${GATEWAY_TLS_PORT:-8443}
       GATEWAY_CERT_FILE: ${GATEWAY_CERT_FILE:-/etc/securecloud/certs/tls.crt}
       GATEWAY_KEY_FILE: ${GATEWAY_KEY_FILE:-/etc/securecloud/certs/tls.key}
       AUTH_SERVICE_ADDR: auth-service:8001
@@ -141,7 +143,7 @@ services:
       DEPLOY_SERVICE_ADDR: deploy-service:8006
       ENABLE_TLS: ${ENABLE_TLS:-true}
     ports:
-      - "${GATEWAY_HTTPS_PORT:-8443}:8443"
+      - "${GATEWAY_HTTPS_PORT:-8443}:${GATEWAY_TLS_PORT:-8443}"
     depends_on:
       auth-service:
         condition: service_healthy

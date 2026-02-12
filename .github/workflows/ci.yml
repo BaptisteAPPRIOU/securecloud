@@ -13,6 +13,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  COMPOSE_CI_ARGS: --project-directory . --env-file config/env/staging/.env.example -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml
+
 jobs:
   build-unit:
     name: build + unit (${{ matrix.os }})
@@ -86,18 +89,18 @@ jobs:
 
       - name: Compose up (detached)
         run: |
-          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml up -d --build
+          docker compose $COMPOSE_CI_ARGS up -d --build
 
       - name: Run test-runner
         run: |
-          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml --profile ci run --rm test-runner
+          docker compose $COMPOSE_CI_ARGS --profile ci run --rm test-runner
 
       - name: Dump logs on failure
         if: failure()
         run: |
-          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml logs --no-color
+          docker compose $COMPOSE_CI_ARGS logs --no-color
 
       - name: Compose down
         if: always()
         run: |
-          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml down -v --remove-orphans
+          docker compose $COMPOSE_CI_ARGS down -v --remove-orphans

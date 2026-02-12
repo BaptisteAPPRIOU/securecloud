@@ -1,6 +1,6 @@
 # SecureCloud Docker Compose - Full/Experimental Overlay
 # Usage:
-#   docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.full.yml --profile full up -d
+#   docker compose --project-directory . --env-file config/env/dev/.env -f ops/compose/compose.core.yml -f ops/compose/compose.full.yml --profile full up -d
 #
 # NOTE:
 #   Services in this file are planned/experimental until they have real binaries.
@@ -10,6 +10,7 @@ x-common-env: &common-env
   DB_PORT: 5432
   DB_NAME: ${DB_NAME:-securecloud}
   DB_USER: ${DB_USER:-scuser}
+  DB_PASS: ${DB_PASS:-scpassword}
   DB_PASSWORD: ${DB_PASS:-scpassword}
   REDIS_HOST: redis
   REDIS_PORT: 6379
@@ -17,6 +18,8 @@ x-common-env: &common-env
   JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
   JWT_ISSUER: ${JWT_ISSUER:-securecloud-auth}
   JWT_AUDIENCE: ${JWT_AUDIENCE:-securecloud-client}
+  JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-900}
+  JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-604800}
   LOG_LEVEL: ${LOG_LEVEL:-info}
 
 x-service-healthcheck: &service-healthcheck
@@ -187,4 +190,3 @@ services:
     privileged: true
     profiles:
       - full
-

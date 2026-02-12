@@ -85,27 +85,27 @@ jobs:
           set -euo pipefail
           : "${REGISTRY_OWNER:?REGISTRY_OWNER is not set}"
           : "${IMAGE_TAG:?IMAGE_TAG is not set}"
-          test -f docker-compose.deploy.yml
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci config -q
+          test -f ops/compose/compose.deploy.yml
+          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml -f ops/compose/compose.deploy.yml --profile ci config -q
 
       - name: Deploy (compose up)
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci pull
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci up -d
+          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml -f ops/compose/compose.deploy.yml --profile ci pull
+          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml -f ops/compose/compose.deploy.yml --profile ci up -d
 
       - name: Verify (test-runner)
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci run --rm test-runner
+          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml -f ops/compose/compose.deploy.yml --profile ci run --rm test-runner
 
       - name: Dump logs on failure
         if: failure()
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml logs --no-color
+          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml -f ops/compose/compose.deploy.yml logs --no-color
 
       - name: Compose down
         if: always()
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml down -v --remove-orphans
+          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml -f ops/compose/compose.deploy.yml down -v --remove-orphans
 
   deploy-prod:
     name: deploy (prod) + verify
@@ -132,24 +132,24 @@ jobs:
           set -euo pipefail
           : "${REGISTRY_OWNER:?REGISTRY_OWNER is not set}"
           : "${IMAGE_TAG:?IMAGE_TAG is not set}"
-          test -f docker-compose.deploy.yml
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci config -q
+          test -f ops/compose/compose.deploy.yml
+          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml -f ops/compose/compose.deploy.yml --profile ci config -q
 
       - name: Deploy (compose up)
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci pull
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci up -d
+          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml -f ops/compose/compose.deploy.yml --profile ci pull
+          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml -f ops/compose/compose.deploy.yml --profile ci up -d
 
       - name: Verify (test-runner)
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml --profile ci run --rm test-runner
+          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml -f ops/compose/compose.deploy.yml --profile ci run --rm test-runner
 
       - name: Dump logs on failure
         if: failure()
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml logs --no-color
+          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml -f ops/compose/compose.deploy.yml logs --no-color
 
       - name: Compose down
         if: always()
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.deploy.yml down -v --remove-orphans
+          docker compose --project-directory . -f ops/compose/compose.core.yml -f ops/compose/compose.ci.yml -f ops/compose/compose.deploy.yml down -v --remove-orphans

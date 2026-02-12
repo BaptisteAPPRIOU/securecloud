@@ -7,8 +7,11 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include <memory>
 
 namespace gateway {
+
+class TLSContext;
 
 struct ClientConnection {
     void* socket;
@@ -29,6 +32,8 @@ public:
     explicit HttpServer(const ServerConfig& config);
     ~HttpServer();
     void onRequest(RequestHandler handler);
+    void configure_tls(const std::string& cert_file, const std::string& key_file, bool client_mtls = false);
+    bool is_tls_enabled() const { return tls_enabled_; }
     void start();
     void stop();
     
@@ -40,6 +45,8 @@ private:
     std::queue<ClientConnection> connection_queue_;
     std::mutex queue_mutex_;
     std::condition_variable queue_cv_;
+    std::unique_ptr<TLSContext> tls_context_;
+    bool tls_enabled_{false};
     
     void worker_thread_fn();
     void handle_client(const ClientConnection& conn);

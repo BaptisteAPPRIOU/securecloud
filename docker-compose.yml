@@ -337,7 +337,9 @@ services:
     networks:
       - securecloud-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test:
+        - "CMD-SHELL"
+        - "if [ \"${ENABLE_TLS:-false}\" = \"true\" ]; then curl -k -f https://localhost:${GATEWAY_TLS_PORT:-8443}/health; else curl -f http://localhost:${GATEWAY_PORT:-8080}/health; fi"
       <<: *service-healthcheck
     restart: unless-stopped
 

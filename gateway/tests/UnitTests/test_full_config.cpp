@@ -75,6 +75,17 @@ TEST_F(FullConfigTest, ParsesServerConfig) {
     EXPECT_EQ(cfg.server.port, 8443);
 }
 
+TEST_F(FullConfigTest, ParsesTLSConfig) {
+    create_full_config();
+
+    GatewayConfig cfg = load_gateway_config(test_config_path);
+
+    ASSERT_TRUE(cfg.tls.has_value());
+    EXPECT_EQ(cfg.tls->cert_file, "config/certs/test-cert.pem");
+    EXPECT_EQ(cfg.tls->key_file, "config/certs/test-key.pem");
+    EXPECT_TRUE(cfg.tls->client_mtls);
+}
+
 TEST_F(FullConfigTest, ParsesRoutingRules) {
     create_full_config();
     

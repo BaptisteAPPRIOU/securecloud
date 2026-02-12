@@ -1,5 +1,6 @@
 #include "httpServer.hpp"
 #include "requestContext.hpp"
+#include "tlsContext.hpp"
 #include <spdlog/spdlog.h>
 #include <thread>
 #include <csignal>
@@ -104,6 +105,11 @@ HttpServer::~HttpServer() {
 
 void HttpServer::onRequest(RequestHandler handler) {
     handler_ = std::move(handler);
+}
+
+void HttpServer::configure_tls(const std::string& cert_file, const std::string& key_file, bool client_mtls) {
+    tls_context_ = std::make_unique<TLSContext>(cert_file, key_file, client_mtls);
+    tls_enabled_ = tls_context_ && tls_context_->is_valid();
 }
 
 void HttpServer::stop() {
@@ -211,7 +217,28 @@ void HttpServer::handle_client(const ClientConnection& conn) {
     socket_handle client_socket = static_cast<socket_handle>(reinterpret_cast<uintptr_t>(conn.socket));
     constexpr int kBufferSize = 4096;
     char buffer[kBufferSize];
-    auto bytes_received = recv(client_socket, buffer, kBufferSize - 1, 0);
+    std::unique_ptr<SSLConnection> ssl_connection;
+
+    if (tls_enabled_) {
+        try {
+            SSL* raw_ssl = tls_context_->create_ssl(static_cast<int>(client_socket));
+            ssl_connection = std::make_unique<SSLConnection>(raw_ssl);
+            if (!tls_context_->accept_handshake(ssl_connection->get())) {
+                ssl_connection.reset();
+                close_socket(client_socket);
+                return;
+            }
+        } catch (const std::exception& e) {
+            spdlog::error("TLS setup failed for client {}: {}", conn.client_ip, e.what());
+            ssl_connection.reset();
+            close_socket(client_socket);
+            return;
+        }
+    }
+
+    const int bytes_received = ssl_connection
+        ? ssl_connection->read(buffer, kBufferSize - 1)
+        : static_cast<int>(recv(client_socket, buffer, kBufferSize - 1, 0));
 
     if (bytes_received > 0) {
         buffer[static_cast<size_t>(bytes_received)] = '\0';
@@ -226,16 +253,25 @@ void HttpServer::handle_client(const ClientConnection& conn) {
                 resp = handler_(req);
             }
 
-            std::string http_response = format_http_response(resp);
-            send(client_socket, http_response.c_str(), static_cast<int>(http_response.size()), 0);
+            const std::string http_response = format_http_response(resp);
+            if (ssl_connection) {
+                ssl_connection->write(http_response.c_str(), static_cast<int>(http_response.size()));
+            } else {
+                send(client_socket, http_response.c_str(), static_cast<int>(http_response.size()), 0);
+            }
         } catch (const std::exception& e) {
             spdlog::error("Request handling error: {}", e.what());
             Response error_resp{500, "Internal Server Error", {}};
-            std::string error_response = format_http_response(error_resp);
-            send(client_socket, error_response.c_str(), static_cast<int>(error_response.size()), 0);
+            const std::string error_response = format_http_response(error_resp);
+            if (ssl_connection) {
+                ssl_connection->write(error_response.c_str(), static_cast<int>(error_response.size()));
+            } else {
+                send(client_socket, error_response.c_str(), static_cast<int>(error_response.size()), 0);
+            }
         }
     }
 
+    ssl_connection.reset();
     close_socket(client_socket);
 }
 
@@ -311,7 +347,10 @@ void HttpServer::start() {
     }
 
     spdlog::info("=== SecureCloud Gateway RUNNING ===");
-    spdlog::info("Listening on http://{}:{}", config_.host, config_.port);
+    spdlog::info("Listening on {}://{}:{}",
+                 tls_enabled_ ? "https" : "http",
+                 config_.host,
+                 config_.port);
     spdlog::info("Worker threads: {}", config_.thread_pool_size);
     spdlog::info("Ready to handle requests...");
     spdlog::info("=====================================");

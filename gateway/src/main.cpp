@@ -12,6 +12,7 @@
 #include <fstream>
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -75,6 +76,18 @@ void print_usage(const char* program) {
 
 std::string bool_str(bool value) {
     return value ? "true" : "false";
+}
+
+bool parse_env_bool(const char* value) {
+    if (value == nullptr) {
+        return false;
+    }
+
+    std::string lower(value);
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+
+    return lower == "1" || lower == "true" || lower == "yes" || lower == "on";
 }
 
 std::string upstream_kind_str(UpstreamKind kind) {
@@ -203,6 +216,33 @@ int main(int argc, char* argv[]) {
         spdlog::critical("Tip: Use run-dev.ps1 to load environment variables automatically.");
         return EXIT_FAILURE;
     }
+
+    const char* enable_tls_env = std::getenv("ENABLE_TLS");
+    const bool tls_enabled = parse_env_bool(enable_tls_env);
+
+    if (tls_enabled) {
+        if (!config.tls.has_value()) {
+            spdlog::critical("ENABLE_TLS=true but TLS certificate/key are not configured in gateway YAML.");
+            return EXIT_FAILURE;
+        }
+
+        if (const char* tls_port_env = std::getenv("GATEWAY_TLS_PORT")) {
+            try {
+                config.server.port = std::stoi(tls_port_env);
+            } catch (...) {
+                spdlog::warn("Invalid GATEWAY_TLS_PORT='{}', keeping configured port {}", tls_port_env, config.server.port);
+            }
+        }
+    } else {
+        config.tls.reset();
+        if (const char* http_port_env = std::getenv("GATEWAY_PORT")) {
+            try {
+                config.server.port = std::stoi(http_port_env);
+            } catch (...) {
+                spdlog::warn("Invalid GATEWAY_PORT='{}', keeping configured port {}", http_port_env, config.server.port);
+            }
+        }
+    }
     
     // Configure logging from config
     spdlog::level::level_enum log_level = parse_log_level(config.observability.logs.level);
@@ -307,6 +347,16 @@ int main(int argc, char* argv[]) {
     RestApiEndpoints rest_api(proxy);
     AuthzFilter authz;
     HttpServer server(config.server);
+
+    if (config.tls.has_value()) {
+        try {
+            const auto& tls = *config.tls;
+            server.configure_tls(tls.cert_file, tls.key_file, tls.client_mtls);
+        } catch (const std::exception& e) {
+            spdlog::critical("Failed to initialize TLS: {}", e.what());
+            return EXIT_FAILURE;
+        }
+    }
 
     server.onRequest([&](const Request& r) -> Response {
         if (r.path == "/v1/healthz" || r.path == "/health") {

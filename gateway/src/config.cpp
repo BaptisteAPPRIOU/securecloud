@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <stdexcept>
 #include <cstdlib>
+#include <cstring>
 
 namespace gateway {
 
@@ -45,11 +46,11 @@ static inline std::string unquote(const std::string& s) {
 
 /**
  * Expand environment variables in configuration values.
- * Supports ${VAR_NAME} syntax. Throws runtime_error if variable is not set.
+ * Supports ${VAR_NAME} and ${VAR_NAME:default} syntax.
  * 
  * @param value String that may contain ${VAR_NAME} syntax
  * @return Expanded string with environment variable substituted
- * @throws std::runtime_error if environment variable is not set
+ * @throws std::runtime_error if environment variable is not set and no default is provided
  */
 static inline std::string expand_env_vars(const std::string& value) {
     std::string result = value;
@@ -61,10 +62,22 @@ static inline std::string expand_env_vars(const std::string& value) {
             throw std::runtime_error("Malformed environment variable syntax: missing closing '}' in: " + value);
         }
         
-        std::string var_name = result.substr(pos + 2, end_pos - pos - 2);
+        std::string var_expr = result.substr(pos + 2, end_pos - pos - 2);
+        std::string var_name = var_expr;
+        std::string default_value;
+        const size_t default_sep = var_expr.find(':');
+        if (default_sep != std::string::npos) {
+            var_name = var_expr.substr(0, default_sep);
+            default_value = var_expr.substr(default_sep + 1);
+        }
         const char* env_value = std::getenv(var_name.c_str());
         
-        if (env_value == nullptr) {
+        if (env_value == nullptr || std::string(env_value).empty()) {
+            if (default_sep != std::string::npos) {
+                result.replace(pos, end_pos - pos + 1, default_value);
+                pos += default_value.size();
+                continue;
+            }
             throw std::runtime_error(
                 "Environment variable '" + var_name + "' is not set. " +
                 "Please set it before starting the gateway (e.g., export " + var_name + "=<value>)"
@@ -118,7 +131,7 @@ public:
             // Top-level sections
             if (indent == 0) {
                 if (trimmed.rfind("server:", 0) == 0) {
-                    parse_server_section(config.server);
+                    parse_server_section(config.server, config.tls);
                 } else if (trimmed.rfind("routing:", 0) == 0) {
                     parse_routing_section(config.routes);
                 } else if (trimmed.rfind("upstreams:", 0) == 0) {
@@ -139,10 +152,11 @@ public:
 private:
     std::ifstream& file_;
     
-    void parse_server_section(ServerConfig& server) {
+    void parse_server_section(ServerConfig& server, std::optional<TLSConfig>& tls) {
         std::string line;
         long pos = file_.tellg();
         TLSConfig tls_cfg;
+        bool tls_defined = false;
         
         while (std::getline(file_, line)) {
             std::string trimmed = trim_str(strip_inline_comment(line));
@@ -150,18 +164,25 @@ private:
             
             int indent = get_indent(line);
             if (indent == 0) {
+                if (tls_defined && !tls_cfg.cert_file.empty() && !tls_cfg.key_file.empty()) {
+                    tls = tls_cfg;
+                } else {
+                    tls.reset();
+                }
                 file_.seekg(pos);
                 return;
             }
             
             if (indent == 2) {
                 if (trimmed.rfind("host:", 0) == 0) {
-                    server.host = unquote(trimmed.substr(5));
+                    server.host = expand_env_vars(unquote(trimmed.substr(5)));
                 } else if (trimmed.rfind("port:", 0) == 0) {
                     try {
-                        server.port = std::stoi(trim_str(trimmed.substr(5)));
+                        const std::string raw_port = expand_env_vars(unquote(trimmed.substr(5)));
+                        server.port = std::stoi(trim_str(raw_port));
                     } catch (...) {}
                 } else if (trimmed.rfind("tls:", 0) == 0) {
+                    tls_defined = true;
                     // Parse TLS subsection (indented at level 4)
                     long tls_pos = file_.tellg();
                     while (std::getline(file_, line)) {
@@ -176,9 +197,9 @@ private:
                         
                         if (tls_indent == 4) {
                             if (trimmed.rfind("cert_file:", 0) == 0) {
-                                tls_cfg.cert_file = unquote(trimmed.substr(10));
+                                tls_cfg.cert_file = expand_env_vars(unquote(trimmed.substr(10)));
                             } else if (trimmed.rfind("key_file:", 0) == 0) {
-                                tls_cfg.key_file = unquote(trimmed.substr(9));
+                                tls_cfg.key_file = expand_env_vars(unquote(trimmed.substr(9)));
                             } else if (trimmed.rfind("client_mtls:", 0) == 0) {
                                 tls_cfg.client_mtls = parse_bool(trim_str(trimmed.substr(12)));
                             }
@@ -188,6 +209,12 @@ private:
                 }
             }
             pos = file_.tellg();
+        }
+
+        if (tls_defined && !tls_cfg.cert_file.empty() && !tls_cfg.key_file.empty()) {
+            tls = tls_cfg;
+        } else {
+            tls.reset();
         }
     }
     

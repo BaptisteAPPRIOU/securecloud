@@ -9,7 +9,7 @@ services:
     container_name: sc_pg
     environment: *db-env
     ports:
-    - "15432:5432"
+      - "${DB_PORT:-${POSTGRES_PORT:-15432}}:5432"
     volumes:
       - sc_pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -75,7 +75,7 @@ services:
     image: adminer
     depends_on: [postgres]
     ports:
-      - "8080:8080"
+      - "${ADMINER_PORT:-9090}:8080"
 
 volumes:
   sc_pgdata: {}

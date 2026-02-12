@@ -334,7 +334,7 @@ if(DOCKER_EXECUTABLE)
 
     add_custom_target(db-adminer
         COMMAND "${DOCKER_EXECUTABLE}" ${DOCKER_DB_COMPOSE_ARGS} up -d adminer
-        COMMAND ${CMAKE_COMMAND} -E echo "[OK] Adminer available at: http://localhost:8080"
+        COMMAND ${CMAKE_COMMAND} -E echo "[OK] Adminer available at: http://localhost:9090 (default)"
         COMMAND ${CMAKE_COMMAND} -E echo ""
         COMMAND ${CMAKE_COMMAND} -E echo "Connection details:"
         COMMAND ${CMAKE_COMMAND} -E echo "  System:   PostgreSQL"

@@ -47,7 +47,7 @@ services:
       POSTGRES_DB: ${DB_NAME:-securecloud}
       POSTGRES_INITDB_ARGS: "-E UTF8"
     ports:
-      - "${POSTGRES_PORT:-15432}:5432"
+      - "${DB_PORT:-${POSTGRES_PORT:-15432}}:5432"
     volumes:
       - sc_pgdata:/var/lib/postgresql/data
     networks:
@@ -106,7 +106,6 @@ services:
     environment:
       <<: *common-env
       SERVICE_PORT: 8001
-      JWT_ISSUER: securecloud-auth
       JWT_EXPIRY_MINUTES: 60
       REFRESH_TOKEN_DAYS: 30
     ports:

@@ -12,7 +12,9 @@ endif()
 
 project(auth-service LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+# Ubuntu's libpqxx package is built with a C++17 ABI baseline.
+# Building this target as C++17 avoids source_location symbol mismatches.
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ==========================================
@@ -30,6 +32,33 @@ find_package(Boost REQUIRED COMPONENTS system)
 find_package(OpenSSL REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(PostgreSQL REQUIRED)
+find_package(libpqxx CONFIG QUIET)
+
+set(AUTH_PQXX_TARGET "")
+if(TARGET libpqxx::pqxx)
+    set(AUTH_PQXX_TARGET libpqxx::pqxx)
+elseif(TARGET pqxx::pqxx)
+    set(AUTH_PQXX_TARGET pqxx::pqxx)
+else()
+    set(_auth_pqxx_hints "")
+    foreach(_pg_lib IN LISTS PostgreSQL_LIBRARIES)
+        if(IS_ABSOLUTE "${_pg_lib}")
+            get_filename_component(_pg_lib_dir "${_pg_lib}" DIRECTORY)
+            list(APPEND _auth_pqxx_hints "${_pg_lib_dir}")
+        endif()
+    endforeach()
+    list(REMOVE_DUPLICATES _auth_pqxx_hints)
+
+    find_library(AUTH_PQXX_LIBRARY
+        NAMES pqxx
+        HINTS ${_auth_pqxx_hints}
+        NO_DEFAULT_PATH
+    )
+    if(NOT AUTH_PQXX_LIBRARY)
+        find_library(AUTH_PQXX_LIBRARY NAMES pqxx REQUIRED)
+    endif()
+    set(AUTH_PQXX_TARGET "${AUTH_PQXX_LIBRARY}")
+endif()
 
 # ==========================================
 # jwt-cpp en header-only
@@ -71,8 +100,8 @@ target_link_libraries(auth-service PRIVATE
     OpenSSL::SSL
     OpenSSL::Crypto
     nlohmann_json::nlohmann_json
+    ${AUTH_PQXX_TARGET}
     ${PostgreSQL_LIBRARIES}
-    pqxx
     jwt-cpp::jwt-cpp
 )
 
